@@ -1,0 +1,75 @@
+.theme-popover {
+  width: 220px;
+}
+
+.theme-popover-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.theme-color-title {
+  margin-top: 16px;
+}
+
+.theme-swatches {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, 24px);
+  margin-bottom: 14px;
+}
+
+.theme-swatch {
+  border: 0;
+  border-radius: 50%;
+  height: 24px;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  width: 24px;
+}
+
+.theme-color-input {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.theme-color-input input {
+  border: 0;
+  height: 32px;
+  padding: 0;
+  width: 48px;
+}
+
+.app-shell.theme-dark {
+  background: #141414;
+}
+
+body:has(.app-shell.theme-dark) {
+  background: #141414;
+}
+
+html:has(.app-shell.theme-dark) {
+  background: #141414;
+}
+
+.app-shell.theme-dark .app-header,
+.app-shell.theme-dark .category-panel {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+.app-shell.theme-dark .app-title {
+  color: rgb(255 255 255 / 88%);
+}
+
+.app-shell.theme-light {
+  background: #f5f5f5;
+}
+
+body:has(.app-shell.theme-light) {
+  background: #f5f5f5;
+}
+
+html:has(.app-shell.theme-light) {
+  background: #f5f5f5;
+}
