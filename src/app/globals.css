@@ -1,5 +1,13 @@
-@import url("//at.alicdn.com/t/c/font_4012350_w2czu067rci.css");
+@import url("//at.alicdn.com/t/c/font_4012350_st9xkgh647.css");
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Dancing Script";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/dancing-script-700.ttf") format("truetype");
+}
 
 :root {
   --background: oklch(0.985 0 0);
@@ -133,6 +141,73 @@ button {
 
 .empty-card .ant-card-body {
   width: 100%;
+}
+
+.login-auth-form-dark .ant-input,
+.login-auth-form-dark .ant-input-affix-wrapper,
+.login-auth-form-dark .ant-input-affix-wrapper input {
+  background: #141414 !important;
+  background-image: none !important;
+  color: rgb(255 255 255 / 88%) !important;
+}
+
+.login-auth-form-dark .ant-input:focus,
+.login-auth-form-dark .ant-input:active,
+.login-auth-form-dark .ant-input-affix-wrapper-focused,
+.login-auth-form-dark .ant-input-affix-wrapper-focused input,
+.login-auth-form-dark .ant-input-affix-wrapper input:focus,
+.login-auth-form-dark .ant-input-affix-wrapper input:active {
+  background: #141414 !important;
+  background-image: none !important;
+  color: rgb(255 255 255 / 88%) !important;
+}
+
+.login-auth-form-dark .ant-input::placeholder,
+.login-auth-form-dark .ant-input-affix-wrapper input::placeholder {
+  color: rgb(255 255 255 / 28%) !important;
+}
+
+.login-auth-form-dark input:-webkit-autofill,
+.login-auth-form-dark input:-webkit-autofill:hover,
+.login-auth-form-dark input:-webkit-autofill:focus,
+.login-auth-form-dark input:-webkit-autofill:active {
+  background: #141414 !important;
+  background-image: none !important;
+  caret-color: rgb(255 255 255 / 88%);
+  transition: background-color 9999s ease-in-out 0s;
+  -webkit-box-shadow: 0 0 0 1000px #141414 inset !important;
+  -webkit-text-fill-color: rgb(255 255 255 / 88%) !important;
+}
+
+.login-auth-form-light .ant-input,
+.login-auth-form-light .ant-input-affix-wrapper,
+.login-auth-form-light .ant-input-affix-wrapper input {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: rgb(0 0 0 / 88%) !important;
+}
+
+.login-auth-form-light .ant-input:focus,
+.login-auth-form-light .ant-input:active,
+.login-auth-form-light .ant-input-affix-wrapper-focused,
+.login-auth-form-light .ant-input-affix-wrapper-focused input,
+.login-auth-form-light .ant-input-affix-wrapper input:focus,
+.login-auth-form-light .ant-input-affix-wrapper input:active {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: rgb(0 0 0 / 88%) !important;
+}
+
+.login-auth-form-light input:-webkit-autofill,
+.login-auth-form-light input:-webkit-autofill:hover,
+.login-auth-form-light input:-webkit-autofill:focus,
+.login-auth-form-light input:-webkit-autofill:active {
+  background: #ffffff !important;
+  background-image: none !important;
+  caret-color: rgb(0 0 0 / 88%);
+  transition: background-color 9999s ease-in-out 0s;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: rgb(0 0 0 / 88%) !important;
 }
 
 @media (max-width: 768px) {
