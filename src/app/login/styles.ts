@@ -25,14 +25,14 @@ export const dateNumberClassName = "text-[28px] leading-none";
 export const heroCopyClassName =
   "absolute bottom-14 left-1/2 max-w-[360px] -translate-x-1/2 text-center max-md:bottom-8 max-md:left-8 max-md:max-w-[300px] max-md:translate-x-0 max-md:text-left";
 /** 登录页左侧说明标题的文字颜色样式。 */
-export const heroTitleClassName = "!text-white";
+export const heroTitleClassName = "text-white!";
 /** 登录页左侧说明正文的字号和透明度样式。 */
-export const heroTextClassName = "!text-base ![color:rgb(255_255_255/82%)]";
+export const heroTextClassName = "text-base! [color:rgb(255_255_255/82%)]!";
 /** 登录页右侧登录卡片的宽度和阴影样式。 */
 export const loginCardClassName = "w-full max-w-[400px] border-0 shadow-none";
 /** 登录页右侧 Storage 品牌文字的样式。 */
 export const loginBrandClassName =
-  "mb-[18px] inline-block !text-[24px] !leading-none font-extrabold text-[#22b96f]";
+  "mb-[18px] inline-block text-[24px]! leading-none! font-extrabold text-[#22b96f]";
 
 /** 登录页整体网格布局的基础样式。 */
 const loginPageBaseClassName =

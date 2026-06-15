@@ -12,5 +12,5 @@ export default async function Home() {
     redirect("/login");
   }
 
-  return <HomePage initialTheme={readThemeConfig()} />;
+  return <HomePage initialTheme={readThemeConfig()} user={session.user} />;
 }
