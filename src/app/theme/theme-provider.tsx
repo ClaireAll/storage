@@ -36,6 +36,9 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
           borderRadius: 8,
+          colorLink: themeConfig.color,
+          colorLinkActive: themeConfig.color,
+          colorLinkHover: themeConfig.color,
           colorPrimary: themeConfig.color,
         },
       }}

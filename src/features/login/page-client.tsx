@@ -15,7 +15,7 @@ import {
 import { SessionProvider, signIn } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { reqPost } from "@/utils/request";
 import {
   dateNumberClassName,
@@ -83,16 +83,6 @@ function getSystemThemeMode(): LoginThemeMode {
     : "light";
 }
 
-/** 订阅浏览器系统明暗主题变化，参数 onStoreChange 用于通知 React 重新读取主题快照。 */
-function subscribeSystemTheme(onStoreChange: () => void) {
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  mediaQuery.addEventListener("change", onStoreChange);
-
-  return () => {
-    mediaQuery.removeEventListener("change", onStoreChange);
-  };
-}
-
 /** 获取图片区域需要展示的年月日。 */
 function getDisplayDate(): DisplayDate {
   const now = new Date();
@@ -111,11 +101,8 @@ function LoginForm() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const systemThemeMode = useSyncExternalStore(
-    subscribeSystemTheme,
-    getSystemThemeMode,
-    () => "light",
-  );
+  const [systemThemeMode, setSystemThemeMode] =
+    useState<LoginThemeMode>("light");
   const [selectedThemeMode, setSelectedThemeMode] =
     useState<LoginThemeMode | null>(null);
   const themeMode = selectedThemeMode ?? systemThemeMode;
@@ -123,6 +110,21 @@ function LoginForm() {
     useState<DisplayDate>(initialDisplayDate);
   const isRegister = mode === "register";
   const isDark = themeMode === "dark";
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    /** 同步浏览器系统明暗主题到登录页状态。 */
+    const syncSystemThemeMode = () => {
+      setSystemThemeMode(getSystemThemeMode());
+    };
+
+    syncSystemThemeMode();
+    mediaQuery.addEventListener("change", syncSystemThemeMode);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncSystemThemeMode);
+    };
+  }, []);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
