@@ -30,9 +30,9 @@ import {
 } from "antd";
 import { SessionProvider, signOut } from "next-auth/react";
 import { useMemo, useRef, useState } from "react";
-import { ThemeControl } from "@/app/theme/theme-control";
-import { ThemeProvider } from "@/app/theme/theme-provider";
-import type { ThemeConfig } from "@/app/theme/types";
+import { ThemeControl } from "@/app/(pages)/theme/theme-control";
+import { ThemeProvider } from "@/app/(pages)/theme/theme-provider";
+import type { ThemeConfig } from "@/app/(pages)/theme/types";
 
 const stats = [
   { label: "物品", value: 0, icon: <InboxOutlined /> },

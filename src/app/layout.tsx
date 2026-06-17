@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
-import "./theme/theme.css";
+import "./(pages)/theme/theme.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { isThemeColor, isThemeMode } from "@/app/theme/constants";
-import { writeThemeConfig } from "@/app/theme/env";
+import { isThemeColor, isThemeMode } from "@/app/(pages)/theme/constants";
+import { writeThemeConfig } from "@/app/(pages)/theme/env";
 
 export async function POST(request: Request) {
   const payload = await request.json();

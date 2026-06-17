@@ -181,18 +181,12 @@ https://oss.console.aliyun.com/bucket/oss-cn-hangzhou/claire-storage/data-securi
 ```txt
 src/
   app/
-    api/                 # Next.js Route Handler，只保留接口入口和路由路径
-    login/               # 登录页路由入口
-    theme/               # 主题配置、主题控件和主题样式
-    page.tsx             # 首页路由入口，负责读取 session 和首屏数据
-
-  features/
-    home/                # 首页前端页面、资料弹窗和库存入口界面
-    login/               # 登录/注册页客户端组件和页面样式
-
-  server/
-    oss/                 # OSS 签名等服务端逻辑
-    users/               # 用户资料更新、密码校验、旧头像清理等服务端逻辑
+    (pages)/             # 页面路由组，不出现在 URL 中
+      home/              # 首页路由，URL 为 /home
+      login/             # 登录页路由，URL 为 /login
+      theme/             # 主题配置、主题控件和主题样式
+    api/                 # 所有接口实现，对外保持 /api 路径
+    page.tsx             # 根路径入口，统一 redirect 到 /home
 
   utils/
     request.ts           # 浏览器请求封装
@@ -203,6 +197,6 @@ src/
 约定：
 
 - `src/app` 主要放 Next.js 约定式路由文件，避免堆放复杂页面或业务实现。
-- 前端交互和页面组件优先放到 `src/features/*`，由路由入口导入使用。
-- 服务端业务逻辑优先放到 `src/server/*`，`src/app/api/*/route.ts` 只保留请求入口。
+- `src/app/api/*` 放所有接口实现，直接对外提供 `/api/*` 路径。
+- 页面、前端 UI 交互和主题相关代码优先放到 `src/app/(pages)/*`。
 - Supabase 连接继续使用 `src/utils/supabase`，不再使用 `src/app/database` 直连 PostgreSQL。

@@ -158,7 +158,7 @@ function LoginForm() {
         );
       }
 
-      router.replace("/");
+      router.replace("/home");
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "操作失败");
