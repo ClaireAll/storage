@@ -1,6 +1,11 @@
 import HomePage from "./home-view";
-import { readThemeConfig } from "@/app/(pages)/theme/env";
+import {
+  getThemeConfigFromRow,
+  isThemeMode,
+} from "@/app/(pages)/theme/constants";
+import type { ThemeDatabaseRow } from "@/app/(pages)/theme/types";
 import { auth } from "../../../../auth";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 export const dynamic = "force-dynamic";
@@ -24,15 +29,27 @@ export default async function Home() {
   }
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("users")
-    .select("name,phone,avatar")
-    .eq("id", session.user.id)
-    .maybeSingle<HomeProfile>();
+  const [{ data }, { data: themeData }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("name,phone,avatar")
+      .eq("id", session.user.id)
+      .maybeSingle<HomeProfile>(),
+    supabase
+      .from("theme")
+      .select(
+        "id,theme,texture,light_theme_color,light_theme_bg,light_theme_text,dark_theme_color,dark_theme_bg,dark_theme_text",
+      )
+      .eq("id", session.user.id)
+      .maybeSingle<ThemeDatabaseRow>(),
+  ]);
+  const cookieStore = await cookies();
+  const themeModeCookie = cookieStore.get("storage-theme-mode")?.value ?? "";
+  const themeMode = isThemeMode(themeModeCookie) ? themeModeCookie : undefined;
 
   return (
     <HomePage
-      initialTheme={readThemeConfig()}
+      initialTheme={getThemeConfigFromRow(themeData, themeMode)}
       user={{
         avatar: data?.avatar ?? null,
         name: data?.name ?? session.user.name,

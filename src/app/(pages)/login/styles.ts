@@ -36,7 +36,7 @@ export const loginBrandClassName =
 
 /** 登录页整体网格布局的基础样式。 */
 const loginPageBaseClassName =
-  "relative grid min-h-dvh grid-cols-[2fr_1fr] max-md:grid-cols-1";
+  "app-textured-shell app-texture-bokeh relative grid min-h-dvh grid-cols-[2fr_1fr] max-md:grid-cols-1";
 /** 登录页整体深色主题背景样式。 */
 const loginPageDarkClassName = "bg-[#101413]";
 /** 登录页整体浅色主题背景样式。 */

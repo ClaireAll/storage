@@ -179,7 +179,16 @@ function LoginForm() {
         },
       }}
     >
-      <main className={getLoginPageClassName(isDark)}>
+      <main
+        className={getLoginPageClassName(isDark)}
+        style={
+          {
+            "--app-shell-bg": isDark ? "#101413" : "#eef0ed",
+            "--app-texture-color": "#22b96f",
+            "--app-texture-text": isDark ? "#f5f5f5" : "#26332d",
+          } as React.CSSProperties
+        }
+      >
         <button
           aria-label={isDark ? "切换为浅色主题" : "切换为深色主题"}
           className={getThemeButtonClassName(isDark)}

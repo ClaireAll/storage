@@ -56,7 +56,7 @@ src/
 - 已实现 NextAuth Credentials 登录链路：`/login`、`/api/users/auth/[...nextauth]`、`/api/users/register`、`/api/users`。
 - 已实现登录 / 注册页，包含明暗主题、日期展示、登录背景图和 Ant Design 表单。
 - 已实现首页登录保护；首页 URL 为 `/home`，未登录跳转 `/login`，根路径 `/` 跳转 `/home`。
-- 已实现主题配置：读取 `.env.local`，右上角可切换明暗模式和主题色，Ant Design primary/link token 跟随主题色。
+- 已实现主题配置：右上角颜色按钮进入 `/theme` 设置页，可选择浅色、深色或跟随系统；浅色/深色两套调色板写入 Supabase `theme` 表，显示模式暂存 cookie；Ant Design primary/link/background/text token 跟随当前调色板。
 - 已实现个人资料编辑：编辑名称、展示手机号、修改密码收起展开、旧密码校验、退出登录。
 - 已实现头像上传链路：弹窗本地预览，保存时上传 OSS 并写库，保存成功后删除当前用户旧头像。
 - 已完成工程结构调整：删除 `src/app/database`，移除 `postgres`，接口实现回到 `src/app/api`，页面和前端 UI 统一到 `src/app/(pages)`。
@@ -81,13 +81,6 @@ src/
 ## 环境变量
 
 项目依赖 `.env.local`，敏感信息不要提交。
-
-主题：
-
-```env
-THEME="dark"
-THEME_COLOR="#13c2c2"
-```
 
 Supabase：
 
@@ -116,6 +109,16 @@ ALIYUN_OSS_PUBLIC_BASE_URL=
 - `phone`
 - `password`
 - `avatar`
+
+当前已使用 `theme` 表，至少需要：
+
+- `id`：用户 id
+- `light_theme_color`
+- `light_theme_bg`
+- `light_theme_text`
+- `dark_theme_color`
+- `dark_theme_bg`
+- `dark_theme_text`
 
 后续库存功能建议继续设计：
 

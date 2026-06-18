@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { SharedThemeTexture } from "./(pages)/theme/shared-theme-texture";
 import "./(pages)/theme/theme.css";
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body>
+        <SharedThemeTexture />
         <AntdRegistry>{children}</AntdRegistry>
       </body>
     </html>

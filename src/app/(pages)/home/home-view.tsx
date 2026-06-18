@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  getThemeShellBackground,
+  mixHexColor,
+} from "@/app/(pages)/theme/colors";
+import { ThemeTexturePublisher } from "@/app/(pages)/theme/shared-theme-texture";
+import { ThemeControl } from "@/app/(pages)/theme/theme-control";
+import { ThemeProvider } from "@/app/(pages)/theme/theme-provider";
+import { ThemeShellBackground } from "@/app/(pages)/theme/theme-shell-background";
+import type { ThemeConfig } from "@/app/(pages)/theme/types";
 import { cn } from "@/lib/utils";
 import { uploadImageToOss } from "@/utils/oss";
 import { reqPost } from "@/utils/request";
@@ -30,9 +39,6 @@ import {
 } from "antd";
 import { SessionProvider, signOut } from "next-auth/react";
 import { useMemo, useRef, useState } from "react";
-import { ThemeControl } from "@/app/(pages)/theme/theme-control";
-import { ThemeProvider } from "@/app/(pages)/theme/theme-provider";
-import type { ThemeConfig } from "@/app/(pages)/theme/types";
 
 const stats = [
   { label: "物品", value: 0, icon: <InboxOutlined /> },
@@ -80,8 +86,7 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isPasswordFieldsVisible, setIsPasswordFieldsVisible] =
-    useState(false);
+  const [isPasswordFieldsVisible, setIsPasswordFieldsVisible] = useState(false);
   const [isAvatarEditHovered, setIsAvatarEditHovered] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(user.avatar ?? "");
@@ -220,283 +225,356 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
   return (
     <SessionProvider basePath="/api/users/auth">
       <ThemeProvider initialTheme={initialTheme}>
-        {({ themeConfig, updateTheme }) => {
-          const isDark = themeConfig.mode === "dark";
+        {({ activePalette, resolvedMode, themeConfig }) => {
+          const isDark = resolvedMode === "dark";
+          const homeShellBackground = getThemeShellBackground(
+            activePalette,
+            resolvedMode,
+          );
+          const homeHeaderBackground = mixHexColor(
+            activePalette.bg,
+            "#ffffff",
+            isDark ? 16 : 12,
+          );
+          const homeSurfaceBackground = activePalette.bg;
+          const homeBorderColor = mixHexColor(
+            activePalette.bg,
+            activePalette.text,
+            isDark ? 18 : 12,
+          );
+          const homeMenuHoverBackground = mixHexColor(
+            activePalette.bg,
+            activePalette.color,
+            isDark ? 16 : 8,
+          );
+          const homeMenuSelectedBackground = mixHexColor(
+            activePalette.bg,
+            activePalette.color,
+            isDark ? 26 : 14,
+          );
+          const homeMenuSelectedColor = mixHexColor(
+            activePalette.text,
+            activePalette.color,
+            isDark ? 38 : 52,
+          );
 
           return (
-            <Layout
-            className={cn(
-              "app-shell min-h-dvh",
-              isDark ? "bg-neutral-950" : "bg-neutral-100",
-              `theme-${themeConfig.mode}`,
-            )}
-          >
-            <header
-              className={cn(
-                "flex items-center justify-between gap-4 border-b px-8 py-2 max-md:flex-col max-md:items-start max-md:p-5",
-                isDark ? "bg-neutral-900" : "bg-white",
-              )}
-              style={{
-                borderBottomColor: isDark ? "#262626" : "#f0f0f0",
-              }}
-            >
-              <div className="flex items-center gap-3.5">
-                <button
-                  aria-label="编辑个人资料"
-                  className="group relative rounded-full border-0 bg-transparent p-0"
-                  onClick={openProfileModal}
-                  type="button"
-                >
-                  <Avatar
-                    alt={profile.name ?? "用户头像"}
-                    className={cn(
-                      "size-16! text-white! text-[44px]! leading-[64px]! shrink-0",
-                      {
-                        "text-[#141414]!": isDark,
-                        "text-white!": !isDark,
-                      },
-                    )}
-                    icon={<i className="iconfont icon-avatar text-[64px]!" />}
-                    key={headerAvatarUrl ?? "default-header-avatar"}
-                    src={headerAvatarUrl}
-                    style={{
-                      backgroundColor: themeConfig.color,
-                    }}
-                  />
-                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
-                    <EditOutlined className="text-xl" />
-                  </span>
-                </button>
-                <span
-                  className="flex h-16 items-center font-['Dancing_Script',cursive] text-[38px] leading-none"
-                  style={{
-                    color: themeConfig.color,
-                  }}
-                >
-                  {profile.name ?? "用户"}
-                </span>
-              </div>
-              <Space wrap>
-                <Button icon={<SearchOutlined />}>搜索</Button>
-                <Button icon={<PlusOutlined />} type="primary">
-                  添加物品
-                </Button>
-                <ThemeControl
-                  themeConfig={themeConfig}
-                  updateTheme={updateTheme}
-                />
-              </Space>
-            </header>
-
-            <main className="mx-auto w-full max-w-[1200px] px-8 pb-10 pt-6 max-md:p-5">
-              <section className="mb-6 grid grid-cols-3 gap-4 max-md:grid-cols-1">
-                {stats.map((stat) => (
-                  <Card key={stat.label}>
-                    <Statistic
-                      prefix={stat.icon}
-                      title={stat.label}
-                      value={stat.value}
-                    />
-                  </Card>
-                ))}
-              </section>
-
-              <section className="grid grid-cols-[260px_minmax(0,1fr)] gap-6 max-md:grid-cols-1">
-                <aside
+            <>
+              <ThemeShellBackground color={homeShellBackground} />
+              <ThemeTexturePublisher
+                background={homeShellBackground}
+                color={activePalette.color}
+                text={activePalette.text}
+                texture={themeConfig.texture}
+              />
+              <Layout
+                className={cn(
+                  "app-shell app-textured-shell home-shell flex min-h-dvh flex-1 flex-col",
+                  isDark ? "bg-neutral-950" : "bg-neutral-100",
+                  `theme-${resolvedMode}`,
+                  `app-texture-${themeConfig.texture}`,
+                )}
+                style={
+                  {
+                    "--app-shell-bg": homeShellBackground,
+                    "--app-texture-color": activePalette.color,
+                    "--app-texture-text": activePalette.text,
+                    "--home-theme-bg": activePalette.bg,
+                    "--home-theme-color": activePalette.color,
+                    "--home-menu-hover-bg": homeMenuHoverBackground,
+                    "--home-menu-selected-bg": homeMenuSelectedBackground,
+                    "--home-menu-selected-color": homeMenuSelectedColor,
+                    "--home-theme-text": activePalette.text,
+                    color: activePalette.text,
+                    minHeight: "100dvh",
+                  } as React.CSSProperties
+                }
+              >
+                <header
                   className={cn(
-                    "rounded-lg border p-4",
-                    isDark ? "bg-neutral-900" : "bg-white",
+                    "flex items-center justify-between gap-4 border-b px-8 py-2 max-md:flex-col max-md:items-start max-md:p-5",
                   )}
                   style={{
-                    borderColor: isDark ? "#262626" : "#f0f0f0",
+                    backgroundColor: homeHeaderBackground,
+                    borderBottomColor: homeBorderColor,
                   }}
                 >
-                  <Typography.Title level={5}>分类</Typography.Title>
-                  <Menu
-                    defaultSelectedKeys={["书籍"]}
-                    items={menuItems}
-                    mode="inline"
-                  />
-                </aside>
+                  <div className="flex items-center gap-3.5">
+                    <button
+                      aria-label="编辑个人资料"
+                      className="group relative rounded-full border-0 bg-transparent p-0"
+                      onClick={openProfileModal}
+                      type="button"
+                    >
+                      <Avatar
+                        alt={profile.name ?? "用户头像"}
+                        className={cn(
+                          "size-16! text-white! text-[44px]! leading-[64px]! shrink-0",
+                          {
+                            "text-[#141414]!": isDark,
+                            "text-white!": !isDark,
+                          },
+                        )}
+                        icon={
+                          <i className="iconfont icon-avatar text-[64px]!" />
+                        }
+                        key={headerAvatarUrl ?? "default-header-avatar"}
+                        src={headerAvatarUrl}
+                        style={{
+                          backgroundColor: activePalette.color,
+                        }}
+                      />
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                        <EditOutlined className="text-xl" />
+                      </span>
+                    </button>
+                    <span
+                      className="flex h-16 items-center font-['Dancing_Script',cursive] text-[38px] leading-none"
+                      style={{
+                        color: activePalette.color,
+                      }}
+                    >
+                      {profile.name ?? "用户"}
+                    </span>
+                  </div>
+                  <Space wrap>
+                    <Button icon={<SearchOutlined />}>搜索</Button>
+                    <Button icon={<PlusOutlined />} type="primary">
+                      添加物品
+                    </Button>
+                    <ThemeControl />
+                  </Space>
+                </header>
 
-                <Card
-                  className="flex min-h-[420px] items-center justify-center"
-                  classNames={{ body: "w-full" }}
-                >
-                  <Empty
-                    description="还没有物品"
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  >
-                    <Typography.Paragraph type="secondary">
-                      添加第一件物品，开始记录它的存放位置、分类和图片。
-                    </Typography.Paragraph>
-                    <Flex justify="center">
-                      <Button icon={<PlusOutlined />} type="primary">
-                        添加第一件物品
-                      </Button>
-                    </Flex>
-                  </Empty>
-                </Card>
-              </section>
-            </main>
-            <Modal
-              centered
-              footer={[
-                <Button key="cancel" onClick={closeProfileModal}>
-                  取消
-                </Button>,
-                <Button
-                  htmlType="submit"
-                  key="save"
-                  loading={isSavingProfile}
-                  onClick={() => profileForm.submit()}
-                  type="primary"
-                >
-                  保存
-                </Button>,
-              ]}
-              mask={{
-                closable: false,
-              }}
-              onCancel={closeProfileModal}
-              open={isProfileModalOpen}
-              title="编辑个人资料"
-              width={520}
-            >
-              <input
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarFileChange}
-                ref={avatarFileInputRef}
-                type="file"
-              />
-              <div className="mb-8 flex justify-center">
-                <div className="relative">
-                  <Avatar
-                    alt={profile.name ?? "用户头像"}
-                    className={cn(
-                      "size-28! text-white! text-[76px]! leading-[112px]! shrink-0",
-                      {
-                        "text-[#141414]!": isDark,
-                        "text-white!": !isDark,
-                      },
-                    )}
-                    icon={<i className="iconfont icon-avatar text-[112px]!" />}
-                    key={modalAvatarUrl ?? "default-profile-avatar"}
-                    src={modalAvatarUrl}
-                    style={{ backgroundColor: themeConfig.color }}
-                  />
-                  <Button
-                    aria-label="上传头像"
-                    className="absolute! bottom-0 right-0 z-10 size-9! rounded-full border-2 border-white/70 p-0! text-white! shadow-lg backdrop-blur-[1px]"
-                    icon={<EditOutlined />}
-                    disabled={isSavingProfile}
-                    onMouseEnter={() => setIsAvatarEditHovered(true)}
-                    onMouseLeave={() => setIsAvatarEditHovered(false)}
-                    onClick={() => avatarFileInputRef.current?.click()}
-                    shape="circle"
+                <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 pb-6 pt-6 max-md:p-5">
+                  <section className="grid grid-cols-3 gap-4 max-md:grid-cols-1">
+                    {stats.map((stat) => (
+                      <Card
+                        className="shadow-[0_20px_80px_rgb(0_0_0_/_18%)]"
+                        key={stat.label}
+                        style={{
+                          backgroundColor: homeSurfaceBackground,
+                          borderColor: homeBorderColor,
+                        }}
+                      >
+                        <Statistic
+                          prefix={stat.icon}
+                          title={stat.label}
+                          value={stat.value}
+                        />
+                      </Card>
+                    ))}
+                  </section>
+
+                  <section className="grid flex-1 grid-cols-[260px_minmax(0,1fr)] gap-6 max-md:grid-cols-1">
+                    <aside
+                      className={cn(
+                        "h-full rounded-lg border p-4 shadow-[0_20px_80px_rgb(0_0_0_/_18%)]",
+                      )}
+                      style={{
+                        backgroundColor: homeSurfaceBackground,
+                        borderColor: homeBorderColor,
+                      }}
+                    >
+                      <Typography.Title level={5}>分类</Typography.Title>
+                      <Menu
+                        className="home-category-menu"
+                        defaultSelectedKeys={["书籍"]}
+                        items={menuItems}
+                        mode="inline"
+                      />
+                    </aside>
+
+                    <Card
+                      className="flex h-full min-h-[420px] items-center justify-center shadow-[0_20px_80px_rgb(0_0_0_/_18%)]"
+                      classNames={{
+                        body: "flex h-full w-full items-center justify-center",
+                      }}
+                      style={{
+                        backgroundColor: homeSurfaceBackground,
+                        borderColor: homeBorderColor,
+                      }}
+                    >
+                      <Empty
+                        description="还没有物品"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      >
+                        <Typography.Paragraph type="secondary">
+                          添加第一件物品，开始记录它的存放位置、分类和图片。
+                        </Typography.Paragraph>
+                        <Flex justify="center">
+                          <Button icon={<PlusOutlined />} type="primary">
+                            添加第一件物品
+                          </Button>
+                        </Flex>
+                      </Empty>
+                    </Card>
+                  </section>
+                  <div
+                    className="min-h-28 rounded-lg border shadow-[0_20px_80px_rgb(0_0_0_/_18%)]"
                     style={{
-                      backgroundColor: isAvatarEditHovered
-                        ? "rgb(82 82 82 / 56%)"
-                        : "rgb(82 82 82 / 32%)",
+                      backgroundColor: homeSurfaceBackground,
+                      borderColor: homeBorderColor,
                     }}
                   />
-                </div>
-              </div>
-
-              {profileError ? (
-                <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
-                  {profileError}
-                </div>
-              ) : null}
-
-              <Form
-                colon={false}
-                form={profileForm}
-                labelAlign="left"
-                labelCol={{ span: 6 }}
-                layout="horizontal"
-                onFinish={saveProfile}
-                requiredMark={false}
-                wrapperCol={{ span: 18 }}
-              >
-                <Form.Item
-                  label="用户名称"
-                  name="name"
-                  rules={[{ required: true, message: "请输入用户名称" }]}
-                >
-                  <Input placeholder="请输入用户名称" />
-                </Form.Item>
-                <Form.Item hidden name="avatar">
-                  <Input />
-                </Form.Item>
-                <Form.Item label="手机号">
-                  <Input disabled value={profile.phone ?? ""} />
-                </Form.Item>
-                {isPasswordFieldsVisible ? (
-                  <>
-                    <Form.Item
-                      dependencies={["password"]}
-                      label="旧密码"
-                      name="oldPassword"
-                      rules={[
-                        ({ getFieldValue }) => ({
-                          /** 当填写新密码时校验旧密码是否同步填写，参数 value 为旧密码输入值。 */
-                          validator(_, value) {
-                            const nextPassword = getFieldValue("password");
-
-                            if (!nextPassword || value) {
-                              return Promise.resolve();
-                            }
-
-                            return Promise.reject(
-                              new Error("修改密码时请输入旧密码"),
-                            );
-                          },
-                        }),
-                      ]}
-                    >
-                      <Input.Password placeholder="请输入旧密码" />
-                    </Form.Item>
-                    <Form.Item
-                      label="新密码"
-                      name="password"
-                      rules={[{ min: 4, message: "密码最少 4 位" }]}
-                    >
-                      <Input.Password placeholder="请输入新密码" />
-                    </Form.Item>
-                    <Form.Item label=" ">
-                      <Button onClick={hidePasswordFields} type="link">
-                        收起
+                </main>
+                <Modal
+                  centered
+                  footer={
+                    <div className="flex items-center justify-between gap-3">
+                      <Button
+                        danger
+                        loading={isSigningOut}
+                        onClick={logout}
+                        type="text"
+                      >
+                        退出登录
                       </Button>
-                    </Form.Item>
-                  </>
-                ) : (
-                  <Form.Item label="密码">
-                    <Button
-                      onClick={() => setIsPasswordFieldsVisible(true)}
-                      type="link"
-                    >
-                      修改密码
-                    </Button>
-                  </Form.Item>
-                )}
-              </Form>
-              <div
-                className="mt-6 border-t pt-4"
-                style={{ borderColor: isDark ? "#262626" : "#f0f0f0" }}
-              >
-                <Button
-                  danger
-                  loading={isSigningOut}
-                  onClick={logout}
-                  type="text"
+                      <Space>
+                        <Button onClick={closeProfileModal}>取消</Button>
+                        <Button
+                          htmlType="submit"
+                          loading={isSavingProfile}
+                          onClick={() => profileForm.submit()}
+                          type="primary"
+                        >
+                          保存
+                        </Button>
+                      </Space>
+                    </div>
+                  }
+                  mask={{
+                    closable: false,
+                  }}
+                  onCancel={closeProfileModal}
+                  open={isProfileModalOpen}
+                  title="编辑个人资料"
+                  width={520}
                 >
-                  退出登录
-                </Button>
-              </div>
-            </Modal>
-            </Layout>
+                  <input
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarFileChange}
+                    ref={avatarFileInputRef}
+                    type="file"
+                  />
+                  <div className="mb-8 flex justify-center">
+                    <div className="relative">
+                      <Avatar
+                        alt={profile.name ?? "用户头像"}
+                        className={cn(
+                          "size-28! text-white! text-[76px]! leading-[112px]! shrink-0",
+                          {
+                            "text-[#141414]!": isDark,
+                            "text-white!": !isDark,
+                          },
+                        )}
+                        icon={
+                          <i className="iconfont icon-avatar text-[112px]!" />
+                        }
+                        key={modalAvatarUrl ?? "default-profile-avatar"}
+                        src={modalAvatarUrl}
+                        style={{ backgroundColor: activePalette.color }}
+                      />
+                      <Button
+                        aria-label="上传头像"
+                        className="absolute! bottom-0 right-0 z-10 size-9! rounded-full border-2 border-white/70 p-0! text-white! shadow-lg backdrop-blur-[1px]"
+                        icon={<EditOutlined />}
+                        disabled={isSavingProfile}
+                        onMouseEnter={() => setIsAvatarEditHovered(true)}
+                        onMouseLeave={() => setIsAvatarEditHovered(false)}
+                        onClick={() => avatarFileInputRef.current?.click()}
+                        shape="circle"
+                        style={{
+                          backgroundColor: isAvatarEditHovered
+                            ? "rgb(82 82 82 / 56%)"
+                            : "rgb(82 82 82 / 32%)",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {profileError ? (
+                    <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
+                      {profileError}
+                    </div>
+                  ) : null}
+
+                  <Form
+                    colon={false}
+                    form={profileForm}
+                    labelAlign="left"
+                    labelCol={{ span: 6 }}
+                    layout="horizontal"
+                    onFinish={saveProfile}
+                    requiredMark={false}
+                    wrapperCol={{ span: 18 }}
+                  >
+                    <Form.Item
+                      label="用户名称"
+                      name="name"
+                      rules={[{ required: true, message: "请输入用户名称" }]}
+                    >
+                      <Input placeholder="请输入用户名称" />
+                    </Form.Item>
+                    <Form.Item hidden name="avatar">
+                      <Input />
+                    </Form.Item>
+                    <Form.Item label="手机号">
+                      <Input disabled value={profile.phone ?? ""} />
+                    </Form.Item>
+                    {isPasswordFieldsVisible ? (
+                      <>
+                        <Form.Item
+                          dependencies={["password"]}
+                          label="旧密码"
+                          name="oldPassword"
+                          rules={[
+                            ({ getFieldValue }) => ({
+                              /** 当填写新密码时校验旧密码是否同步填写，参数 value 为旧密码输入值。 */
+                              validator(_, value) {
+                                const nextPassword = getFieldValue("password");
+
+                                if (!nextPassword || value) {
+                                  return Promise.resolve();
+                                }
+
+                                return Promise.reject(
+                                  new Error("修改密码时请输入旧密码"),
+                                );
+                              },
+                            }),
+                          ]}
+                        >
+                          <Input.Password placeholder="请输入旧密码" />
+                        </Form.Item>
+                        <Form.Item
+                          label="新密码"
+                          name="password"
+                          rules={[{ min: 4, message: "密码最少 4 位" }]}
+                        >
+                          <Input.Password placeholder="请输入新密码" />
+                        </Form.Item>
+                        <Form.Item label=" ">
+                          <Button onClick={hidePasswordFields} type="link">
+                            收起
+                          </Button>
+                        </Form.Item>
+                      </>
+                    ) : (
+                      <Form.Item label="密码">
+                        <Button
+                          onClick={() => setIsPasswordFieldsVisible(true)}
+                          type="link"
+                        >
+                          修改密码
+                        </Button>
+                      </Form.Item>
+                    )}
+                  </Form>
+                </Modal>
+              </Layout>
+            </>
           );
         }}
       </ThemeProvider>

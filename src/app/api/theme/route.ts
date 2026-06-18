@@ -1,20 +1,47 @@
 import { NextResponse } from "next/server";
-import { isThemeColor, isThemeMode } from "@/app/(pages)/theme/constants";
-import { writeThemeConfig } from "@/app/(pages)/theme/env";
+import {
+  getThemeRowFromConfig,
+  isThemeConfig,
+} from "@/app/(pages)/theme/constants";
+import { createClient } from "@/utils/supabase/server";
+import { auth } from "../../../../auth";
 
+/** 保存当前登录用户的主题配置，参数 request 为客户端提交的主题配置请求。 */
 export async function POST(request: Request) {
-  const payload = await request.json();
-  const mode = typeof payload.mode === "string" ? payload.mode : "";
-  const color = typeof payload.color === "string" ? payload.color : "";
+  const session = await auth();
 
-  if (!isThemeMode(mode) || !isThemeColor(color)) {
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "请先登录" }, { status: 401 });
+  }
+
+  const payload = await request.json();
+
+  if (!isThemeConfig(payload)) {
     return NextResponse.json(
       { message: "主题配置无效" },
       { status: 400 },
     );
   }
 
-  await writeThemeConfig({ mode, color });
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("theme")
+    .upsert(getThemeRowFromConfig(session.user.id, payload), {
+      onConflict: "id",
+    });
 
-  return NextResponse.json({ mode, color });
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  const response = NextResponse.json(payload);
+
+  response.cookies.set("storage-theme-mode", payload.mode, {
+    httpOnly: false,
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  return response;
 }
