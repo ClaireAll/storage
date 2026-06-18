@@ -1,5 +1,7 @@
 "use client";
 
+import { CategoryIcon } from "@/app/(pages)/common/category-icon";
+import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-modal";
 import {
   getThemeShellBackground,
   mixHexColor,
@@ -13,8 +15,6 @@ import { cn } from "@/lib/utils";
 import { uploadImageToOss } from "@/utils/oss";
 import { reqPost } from "@/utils/request";
 import {
-  AppstoreOutlined,
-  BookOutlined,
   EditOutlined,
   EnvironmentOutlined,
   InboxOutlined,
@@ -38,15 +38,27 @@ import {
   Typography,
 } from "antd";
 import { SessionProvider, signOut } from "next-auth/react";
+import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+
+const categories = [
+  {
+    label: "衣服",
+    href: "/home/clothes",
+    iconClassName: "icon-clothes",
+  },
+  {
+    label: "裤子",
+    href: "/home/pants",
+    iconClassName: "icon-pants",
+  },
+];
 
 const stats = [
   { label: "物品", value: 0, icon: <InboxOutlined /> },
-  { label: "分类", value: 6, icon: <TagsOutlined /> },
+  { label: "分类", value: categories.length, icon: <TagsOutlined /> },
   { label: "位置", value: 0, icon: <EnvironmentOutlined /> },
 ];
-
-const categories = ["衣物", "鞋履", "书籍", "电子设备", "日用品", "其他"];
 
 /** 首页左上角展示的用户基础信息。 */
 type HomeUser = {
@@ -76,14 +88,22 @@ type HomePageProps = {
   initialTheme: ThemeConfig;
   /** 当前登录用户信息，用于展示头像。 */
   user: HomeUser;
+  /** 当前路由选中的分类路径，用于控制右侧内容区展示。 */
+  activeCategoryHref?: string;
 };
 
-export default function HomePage({ initialTheme, user }: HomePageProps) {
+export default function HomePage({
+  activeCategoryHref,
+  initialTheme,
+  user,
+}: HomePageProps) {
   const [profileForm] = Form.useForm<ProfileFormValues>();
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const avatarPreviewObjectUrlRef = useRef<string | null>(null);
   const [profile, setProfile] = useState<HomeUser>(user);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isClothesCreateModalOpen, setIsClothesCreateModalOpen] =
+    useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isPasswordFieldsVisible, setIsPasswordFieldsVisible] = useState(false);
@@ -91,17 +111,61 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
   const [profileError, setProfileError] = useState("");
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(user.avatar ?? "");
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [visibleCategoryHrefs, setVisibleCategoryHrefs] = useState(() =>
+    categories.map((category) => category.href),
+  );
   const headerAvatarUrl = profile.avatar || undefined;
   const modalAvatarUrl = avatarPreviewUrl || profile.avatar || undefined;
+  const isAllCategoriesVisible =
+    visibleCategoryHrefs.length === categories.length;
+  const visibleCategories = categories.filter((category) =>
+    visibleCategoryHrefs.includes(category.href),
+  );
   const menuItems = useMemo(
     () =>
-      categories.map((category) => ({
-        key: category,
-        icon: category === "书籍" ? <BookOutlined /> : <AppstoreOutlined />,
-        label: category,
+      visibleCategories.map((category) => ({
+        key: category.href,
+        className: cn("hover:scale-[1.1]", {
+          "scale-[1.1]": activeCategoryHref === category.href,
+        }),
+        icon: <CategoryIcon name={category.iconClassName} />,
+        label: <Link href={category.href}>{category.label}</Link>,
       })),
-    [],
+    [visibleCategories],
   );
+  const activeCategory = categories.find(
+    (category) => category.href === activeCategoryHref,
+  );
+  const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
+  const isClothesPage = activeCategoryHref === "/home/clothes";
+  const emptyDescription = activeCategory
+    ? `还没有${activeCategory.label}物品`
+    : "还没有物品";
+
+  /** 切换分类复选按钮，并控制左侧分类列表显示哪些项。 */
+  function toggleCategoryVisible(categoryHref: string) {
+    setVisibleCategoryHrefs((currentHrefs) =>
+      currentHrefs.includes(categoryHref)
+        ? currentHrefs.filter((href) => href !== categoryHref)
+        : [...currentHrefs, categoryHref],
+    );
+  }
+
+  /** 切换全部分类复选按钮，全选时再次点击会清空左侧分类列表。 */
+  function toggleAllCategoriesVisible() {
+    setVisibleCategoryHrefs((currentHrefs) =>
+      currentHrefs.length === categories.length
+        ? []
+        : categories.map((category) => category.href),
+    );
+  }
+
+  /** 打开衣服新增弹窗，仅衣服分类页面可用。 */
+  function openClothesCreateModal() {
+    if (isClothesPage) {
+      setIsClothesCreateModalOpen(true);
+    }
+  }
 
   /** 释放头像本地预览地址，避免重复选择图片后残留浏览器内存。 */
   function revokeAvatarPreviewObjectUrl() {
@@ -252,11 +316,7 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
             activePalette.color,
             isDark ? 26 : 14,
           );
-          const homeMenuSelectedColor = mixHexColor(
-            activePalette.text,
-            activePalette.color,
-            isDark ? 38 : 52,
-          );
+          const homeMenuSelectedColor = activePalette.color;
 
           return (
             <>
@@ -339,7 +399,12 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                   </div>
                   <Space wrap>
                     <Button icon={<SearchOutlined />}>搜索</Button>
-                    <Button icon={<PlusOutlined />} type="primary">
+                    <Button
+                      disabled={!isClothesPage}
+                      icon={<PlusOutlined />}
+                      onClick={openClothesCreateModal}
+                      type="primary"
+                    >
                       添加物品
                     </Button>
                     <ThemeControl />
@@ -350,18 +415,72 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                   <section className="grid grid-cols-3 gap-4 max-md:grid-cols-1">
                     {stats.map((stat) => (
                       <Card
-                        className="shadow-[0_20px_80px_rgb(0_0_0_/_18%)]"
+                        className="shadow-[0_20px_80px_rgb(0_0_0/18%)]"
                         key={stat.label}
                         style={{
                           backgroundColor: homeSurfaceBackground,
                           borderColor: homeBorderColor,
                         }}
                       >
-                        <Statistic
-                          prefix={stat.icon}
-                          title={stat.label}
-                          value={stat.value}
-                        />
+                        {stat.label === "分类" ? (
+                          <>
+                            <div className="flex items-center justify-between gap-3">
+                              <Typography.Text type="secondary">
+                                {stat.icon}
+                                {stat.label}
+                              </Typography.Text>
+                              <Typography.Text type="secondary">
+                                <span>{stat.value}</span>
+                              </Typography.Text>
+                            </div>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <Button
+                                aria-pressed={isAllCategoriesVisible}
+                                onClick={toggleAllCategoriesVisible}
+                                size="small"
+                                style={{ height: 32 }}
+                                type={
+                                  isAllCategoriesVisible ? "primary" : "default"
+                                }
+                              >
+                                全部
+                              </Button>
+                              {categories.map((category) => {
+                                const isCategoryActive =
+                                  visibleCategoryHrefs.includes(category.href);
+
+                                return (
+                                  <Button
+                                    aria-pressed={isCategoryActive}
+                                    icon={
+                                      <CategoryIcon
+                                        hasPadding={false}
+                                        name={category.iconClassName}
+                                      />
+                                    }
+                                    key={category.href}
+                                    onClick={() =>
+                                      toggleCategoryVisible(category.href)
+                                    }
+                                    size="small"
+                                    style={{ height: 32 }}
+                                    type={
+                                      isCategoryActive ? "primary" : "default"
+                                    }
+                                  >
+                                    {category.label}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        ) : (
+                          <Statistic
+                            prefix={stat.icon}
+                            title={stat.label}
+                            value={stat.value}
+                          />
+                        )}
                       </Card>
                     ))}
                   </section>
@@ -369,7 +488,7 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                   <section className="grid flex-1 grid-cols-[260px_minmax(0,1fr)] gap-6 max-md:grid-cols-1">
                     <aside
                       className={cn(
-                        "h-full rounded-lg border p-4 shadow-[0_20px_80px_rgb(0_0_0_/_18%)]",
+                        "h-full rounded-lg border p-4 shadow-[0_20px_80px_rgb(0_0_0/18%)]",
                       )}
                       style={{
                         backgroundColor: homeSurfaceBackground,
@@ -379,14 +498,14 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                       <Typography.Title level={5}>分类</Typography.Title>
                       <Menu
                         className="home-category-menu"
-                        defaultSelectedKeys={["书籍"]}
                         items={menuItems}
                         mode="inline"
+                        selectedKeys={selectedCategoryKeys}
                       />
                     </aside>
 
                     <Card
-                      className="flex h-full min-h-[420px] items-center justify-center shadow-[0_20px_80px_rgb(0_0_0_/_18%)]"
+                      className="flex h-full min-h-[420px] items-center justify-center shadow-[0_20px_80px_rgb(0_0_0/18%)]"
                       classNames={{
                         body: "flex h-full w-full items-center justify-center",
                       }}
@@ -396,14 +515,19 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                       }}
                     >
                       <Empty
-                        description="还没有物品"
+                        description={emptyDescription}
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                       >
                         <Typography.Paragraph type="secondary">
                           添加第一件物品，开始记录它的存放位置、分类和图片。
                         </Typography.Paragraph>
                         <Flex justify="center">
-                          <Button icon={<PlusOutlined />} type="primary">
+                          <Button
+                            disabled={!isClothesPage}
+                            icon={<PlusOutlined />}
+                            onClick={openClothesCreateModal}
+                            type="primary"
+                          >
                             添加第一件物品
                           </Button>
                         </Flex>
@@ -411,7 +535,7 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                     </Card>
                   </section>
                   <div
-                    className="min-h-28 rounded-lg border shadow-[0_20px_80px_rgb(0_0_0_/_18%)]"
+                    className="min-h-28 rounded-lg border shadow-[0_20px_80px_rgb(0_0_0/18%)]"
                     style={{
                       backgroundColor: homeSurfaceBackground,
                       borderColor: homeBorderColor,
@@ -420,6 +544,7 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                 </main>
                 <Modal
                   centered
+                  className="profile-edit-modal"
                   footer={
                     <div className="flex items-center justify-between gap-3">
                       <Button
@@ -501,6 +626,7 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                   ) : null}
 
                   <Form
+                    autoComplete="off"
                     colon={false}
                     form={profileForm}
                     labelAlign="left"
@@ -515,13 +641,22 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                       name="name"
                       rules={[{ required: true, message: "请输入用户名称" }]}
                     >
-                      <Input placeholder="请输入用户名称" />
+                      <Input
+                        autoComplete="new-password"
+                        name="storage-profile-display-title"
+                        placeholder="请输入用户名称"
+                      />
                     </Form.Item>
                     <Form.Item hidden name="avatar">
-                      <Input />
+                      <Input autoComplete="off" name="storage-profile-avatar" />
                     </Form.Item>
                     <Form.Item label="手机号">
-                      <Input disabled value={profile.phone ?? ""} />
+                      <Input
+                        autoComplete="new-password"
+                        disabled
+                        name="storage-profile-phone-readonly"
+                        value={profile.phone ?? ""}
+                      />
                     </Form.Item>
                     {isPasswordFieldsVisible ? (
                       <>
@@ -546,14 +681,22 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                             }),
                           ]}
                         >
-                          <Input.Password placeholder="请输入旧密码" />
+                          <Input.Password
+                            autoComplete="new-password"
+                            name="storage-profile-old-secret"
+                            placeholder="请输入旧密码"
+                          />
                         </Form.Item>
                         <Form.Item
                           label="新密码"
                           name="password"
                           rules={[{ min: 4, message: "密码最少 4 位" }]}
                         >
-                          <Input.Password placeholder="请输入新密码" />
+                          <Input.Password
+                            autoComplete="new-password"
+                            name="storage-profile-new-secret"
+                            placeholder="请输入新密码"
+                          />
                         </Form.Item>
                         <Form.Item label=" ">
                           <Button onClick={hidePasswordFields} type="link">
@@ -573,6 +716,11 @@ export default function HomePage({ initialTheme, user }: HomePageProps) {
                     )}
                   </Form>
                 </Modal>
+                <ClothesCreateModal
+                  onClose={() => setIsClothesCreateModalOpen(false)}
+                  open={isClothesCreateModalOpen}
+                  themeColor={activePalette.color}
+                />
               </Layout>
             </>
           );

@@ -37,13 +37,20 @@ function getOssConfig() {
   };
 }
 
-/** 根据当前用户和文件名生成头像在 OSS 中的对象 Key。 */
-function createAvatarObjectKey(userId: string, fileName: string) {
+/** OSS 允许前端上传的业务目录。 */
+type OssUploadDirectory = "avatars" | "clothes";
+
+/** 根据当前用户、业务目录和文件名生成图片在 OSS 中的对象 Key。 */
+function createImageObjectKey(
+  userId: string,
+  fileName: string,
+  directory: OssUploadDirectory,
+) {
   const extension = fileName.includes(".")
     ? fileName.split(".").pop()?.toLowerCase()
     : "png";
 
-  return `avatars/${userId}/${Date.now()}-${randomUUID()}.${extension || "png"}`;
+  return `${directory}/${userId}/${Date.now()}-${randomUUID()}.${extension || "png"}`;
 }
 
 /** 生成 OSS PostObject 策略字符串，参数 objectKey 为本次允许上传的对象 Key。 */
@@ -68,7 +75,7 @@ function signPolicy(policy: string, accessKeySecret: string) {
   return createHmac("sha1", accessKeySecret).update(policy).digest("base64");
 }
 
-/** 为当前登录用户生成一次头像直传 OSS 的 PostObject 签名。 */
+/** 为当前登录用户生成一次图片直传 OSS 的 PostObject 签名。 */
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -76,15 +83,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const { fileName } = (await request.json()) as { fileName?: string };
+  const { directory = "avatars", fileName } = (await request.json()) as {
+    directory?: OssUploadDirectory;
+    fileName?: string;
+  };
 
   if (!fileName) {
     return NextResponse.json({ message: "缺少文件名" }, { status: 400 });
   }
 
+  if (directory !== "avatars" && directory !== "clothes") {
+    return NextResponse.json({ message: "上传目录无效" }, { status: 400 });
+  }
+
   try {
     const ossConfig = getOssConfig();
-    const key = createAvatarObjectKey(session.user.id, fileName);
+    const key = createImageObjectKey(session.user.id, fileName, directory);
     const policy = createPolicy(key);
     const signature = signPolicy(policy, ossConfig.accessKeySecret);
     const result: OssPolicyResponse = {

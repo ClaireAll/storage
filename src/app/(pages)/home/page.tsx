@@ -21,7 +21,8 @@ type HomeProfile = {
   phone?: string | null;
 };
 
-export default async function Home() {
+/** 渲染主页壳，参数 activeCategoryHref 控制右侧内容区展示的分类。 */
+export async function renderHomePage(activeCategoryHref?: string) {
   const session = await auth();
 
   if (!session?.user) {
@@ -49,6 +50,7 @@ export default async function Home() {
 
   return (
     <HomePage
+      activeCategoryHref={activeCategoryHref}
       initialTheme={getThemeConfigFromRow(themeData, themeMode)}
       user={{
         avatar: data?.avatar ?? null,
@@ -57,4 +59,8 @@ export default async function Home() {
       }}
     />
   );
+}
+
+export default async function Home() {
+  return renderHomePage();
 }

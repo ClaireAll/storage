@@ -10,7 +10,7 @@ type OssPolicyResponse = {
   fields: Record<string, string>;
 };
 
-/** 校验待上传文件是否为头像图片，参数 file 为用户选择的本地文件。 */
+/** 校验待上传文件是否为图片，参数 file 为用户选择的本地文件。 */
 function validateImageFile(file: File) {
   if (!file.type.startsWith("image/")) {
     throw new Error("请选择图片文件");
@@ -21,12 +21,19 @@ function validateImageFile(file: File) {
   }
 }
 
+/** 图片上传到 OSS 时可指定的业务目录。 */
+type OssUploadDirectory = "avatars" | "clothes";
+
 /** 将图片直传到阿里云 OSS，参数 file 为用户选择的本地图片文件。 */
-export async function uploadImageToOss(file: File) {
+export async function uploadImageToOss(
+  file: File,
+  opts: { directory?: OssUploadDirectory } = {},
+) {
   validateImageFile(file);
 
   const policy = await reqPost<OssPolicyResponse>("/api/oss/policy", {
     data: {
+      directory: opts.directory ?? "avatars",
       fileName: file.name,
     },
   });
