@@ -1,0 +1,52 @@
+﻿.home-category-menu.ant-menu {
+  background: transparent;
+  border-inline-end: 0 !important;
+  color: var(--home-theme-text);
+}
+
+.home-category-menu .ant-menu-item {
+  color: var(--home-theme-text);
+}
+
+.home-category-menu .ant-menu-item:hover,
+.home-category-menu .ant-menu-submenu-title:hover {
+  background: var(--home-menu-hover-bg) !important;
+  color: var(--home-menu-selected-color) !important;
+}
+
+.home-category-menu .ant-menu-item-selected {
+  background: var(--home-menu-selected-bg) !important;
+  color: var(--home-menu-selected-color) !important;
+}
+
+.home-category-menu .ant-menu-item:hover a,
+.home-category-menu .ant-menu-item-selected a {
+  color: inherit;
+}
+
+.home-category-menu .ant-menu-item .ant-menu-item-icon,
+.home-category-menu .ant-menu-item-selected .ant-menu-item-icon {
+  color: currentColor;
+}
+
+.home-shell .ant-btn-default:not(:disabled) {
+  background: var(--home-theme-bg);
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 42%,
+    transparent
+  );
+  color: var(--home-theme-text);
+}
+
+.home-shell .ant-btn-default:not(:disabled):hover,
+.home-shell .ant-btn-default:not(:disabled):focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-bg) 78%,
+    var(--home-theme-color) 22%
+  ) !important;
+  border-color: var(--home-theme-color) !important;
+  color: var(--home-theme-text) !important;
+}
+

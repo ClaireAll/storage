@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { SharedThemeTexture } from "./(pages)/theme/shared-theme-texture";
-import "./(pages)/theme/theme.css";
-import "./globals.css";
+import "./(pages)/theme/theme.less";
+import "./globals.less";
 
 export const metadata: Metadata = {
   title: "storage",

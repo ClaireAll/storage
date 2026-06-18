@@ -1,0 +1,793 @@
+﻿.app-shell {
+  background: transparent !important;
+  min-height: 100dvh;
+}
+
+/* 全局主题壳：负责把页面背景色同步到 Ant Design 外层页面。 */
+.app-shell.theme-dark {
+  background: transparent;
+}
+
+body:has(.app-shell.theme-dark) {
+  background: var(--app-shell-bg, #141414);
+}
+
+html:has(.app-shell.theme-dark) {
+  background: var(--app-shell-bg, #141414);
+}
+
+.app-shell.theme-light {
+  background: transparent;
+}
+
+.app-shell .ant-btn,
+.app-shell .ant-btn::before,
+.app-shell .ant-btn::after {
+  box-shadow: none !important;
+}
+
+.app-shell .ant-btn {
+  outline: 0 !important;
+}
+
+/* 纹理容器：所有页面共用，同一张整屏动画背景叠加中间遮罩层。 */
+.app-textured-shell {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+/* 纹理伪元素：before 是整屏动画层，after 是压住中间内容区的遮罩层。 */
+.app-textured-shell::before,
+.app-textured-shell::after {
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+}
+
+/* 整屏动画层：每个纹理类型只改这层的背景和动画。 */
+.app-textured-shell::before {
+  z-index: 0;
+}
+
+/* 中间遮罩层：让动画主要露出在两侧，中间保持页面背景色。 */
+.app-textured-shell::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--app-shell-bg, transparent) 20%, transparent) 16%,
+    var(--app-shell-bg, transparent) 30%,
+    var(--app-shell-bg, transparent) 70%,
+    color-mix(in srgb, var(--app-shell-bg, transparent) 20%, transparent) 84%,
+    transparent 100%
+  );
+  z-index: 1;
+}
+
+@property --geometry-spin {
+  inherits: false;
+  initial-value: 0deg;
+  syntax: "<angle>";
+}
+
+/* 无纹路：关闭整屏动画层和中间遮罩层。 */
+.app-texture-none::before,
+.app-texture-none::after {
+  display: none;
+}
+
+/* 散景动画：整屏多圆点漂移，颜色保留主题色 hue，分别设置不同明暗和透明度。 */
+.app-texture-bokeh::before,
+.theme-shared-texture.theme-texture-bokeh,
+.theme-live-preview-texture.theme-texture-bokeh {
+  animation: texture-bokeh-flow 18s ease-in-out infinite;
+  background:
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 76% 62% / 0.56) 0 35%, transparent 37%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 44% 34% / 0.42) 0 32%, transparent 34%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 88% 78% / 0.5) 0 32%, transparent 34%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 58% 48% / 0.46) 0 30%, transparent 32%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 92% 38% / 0.4) 0 34%, transparent 36%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 50% 72% / 0.52) 0 32%, transparent 34%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 68% 28% / 0.38) 0 31%, transparent 33%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 84% 56% / 0.48) 0 30%, transparent 32%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 40% 82% / 0.44) 0 33%, transparent 35%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 72% 42% / 0.5) 0 31%, transparent 33%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 62% 66% / 0.44) 0 30%, transparent 32%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 96% 52% / 0.42) 0 31%, transparent 33%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 36% 24% / 0.36) 0 28%, transparent 30%),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 80% 74% / 0.48) 0 32%, transparent 34%);
+  background-position:
+    -6% 12%,
+    6% 30%,
+    -4% 58%,
+    10% 78%,
+    -8% 88%,
+    14% 46%,
+    4% 94%,
+    106% 10%,
+    94% 24%,
+    104% 48%,
+    90% 70%,
+    108% 84%,
+    86% 36%,
+    98% 92%;
+  background-repeat: no-repeat;
+  background-size:
+    18% 18%,
+    34% 34%,
+    12% 12%,
+    29% 29%,
+    15% 15%,
+    38% 38%,
+    21% 21%,
+    32% 32%,
+    14% 14%,
+    36% 36%,
+    11% 11%,
+    26% 26%,
+    9% 9%,
+    24% 24%;
+  filter: blur(10px) saturate(1.22);
+  opacity: 0.82;
+}
+
+/* 几何动画：三角形、圆形、方块等主题色几何图案从下往上漂移。 */
+.app-texture-geometry::before,
+.app-texture-squares::before,
+.theme-live-preview-texture.theme-texture-geometry,
+.theme-live-preview-texture.theme-texture-squares {
+  animation:
+    texture-geometry-lift 16s linear infinite,
+    texture-geometry-spin 11s linear infinite;
+  --geometry-image-set:
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 82% 62% / 0.5) 0 48%, transparent 50%),
+    conic-gradient(from calc(150deg + var(--geometry-spin)) at 50% 72%, transparent 0 31%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 66% 54% / 0.44) 0 48%, transparent 0),
+    conic-gradient(from calc(45deg + var(--geometry-spin)), hsl(from var(--app-texture-color, var(--theme-preview-color)) h 92% 68% / 0.48) 0 25%, transparent 0 50%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 92% 68% / 0.48) 0 75%, transparent 0),
+    conic-gradient(from calc(45deg - var(--geometry-spin)), transparent 0 12.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 56% 44% / 0.4) 0 37.5%, transparent 0 62.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 56% 44% / 0.4) 0 87.5%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 72% 76% / 0.46) 0 46%, transparent 48%),
+    conic-gradient(from calc(220deg - var(--geometry-spin)) at 52% 72%, transparent 0 29%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 88% 50% / 0.48) 0 47%, transparent 0),
+    conic-gradient(from calc(18deg + var(--geometry-spin)), hsl(from var(--app-texture-color, var(--theme-preview-color)) h 48% 60% / 0.38) 0 25%, transparent 0 50%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 48% 60% / 0.38) 0 75%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 96% 58% / 0.5) 0 46%, transparent 48%),
+    conic-gradient(from calc(45deg + var(--geometry-spin)), transparent 0 12.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 40% 72% / 0.42) 0 37.5%, transparent 0 62.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 40% 72% / 0.42) 0 87.5%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 60% 48% / 0.36) 0 48%, transparent 50%),
+    conic-gradient(from calc(90deg + var(--geometry-spin)) at 50% 72%, transparent 0 32%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 78% 70% / 0.48) 0 49%, transparent 0),
+    conic-gradient(from calc(75deg - var(--geometry-spin)), hsl(from var(--app-texture-color, var(--theme-preview-color)) h 52% 56% / 0.4) 0 25%, transparent 0 50%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 52% 56% / 0.4) 0 75%, transparent 0),
+    conic-gradient(from calc(45deg + var(--geometry-spin)), transparent 0 12.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 86% 42% / 0.44) 0 37.5%, transparent 0 62.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 86% 42% / 0.44) 0 87.5%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 44% 64% / 0.42) 0 46%, transparent 48%),
+    conic-gradient(from calc(120deg + var(--geometry-spin)), hsl(from var(--app-texture-color, var(--theme-preview-color)) h 94% 74% / 0.46) 0 25%, transparent 0 50%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 94% 74% / 0.46) 0 75%, transparent 0),
+    conic-gradient(from calc(235deg - var(--geometry-spin)) at 56% 74%, transparent 0 30%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 68% 38% / 0.38) 0 50%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 80% 56% / 0.48) 0 46%, transparent 48%),
+    conic-gradient(from calc(15deg - var(--geometry-spin)), hsl(from var(--app-texture-color, var(--theme-preview-color)) h 50% 78% / 0.4) 0 25%, transparent 0 50%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 50% 78% / 0.4) 0 75%, transparent 0),
+    conic-gradient(from calc(135deg + var(--geometry-spin)) at 50% 70%, transparent 0 32%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 90% 62% / 0.46) 0 50%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 58% 52% / 0.36) 0 48%, transparent 50%),
+    conic-gradient(from calc(60deg + var(--geometry-spin)), hsl(from var(--app-texture-color, var(--theme-preview-color)) h 74% 68% / 0.42) 0 25%, transparent 0 50%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 74% 68% / 0.42) 0 75%, transparent 0),
+    conic-gradient(from calc(45deg - var(--geometry-spin)), transparent 0 12.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 38% 46% / 0.38) 0 37.5%, transparent 0 62.5%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 38% 46% / 0.38) 0 87.5%, transparent 0),
+    conic-gradient(from calc(25deg + var(--geometry-spin)) at 48% 70%, transparent 0 29%, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 98% 58% / 0.5) 0 47%, transparent 0),
+    radial-gradient(circle, hsl(from var(--app-texture-color, var(--theme-preview-color)) h 62% 72% / 0.42) 0 46%, transparent 48%);
+  --geometry-size-set:
+    8px 8px,
+    48px 48px,
+    15px 15px,
+    64px 64px,
+    10px 10px,
+    42px 42px,
+    26px 26px,
+    72px 72px,
+    18px 18px,
+    34px 34px,
+    55px 55px,
+    12px 12px,
+    68px 68px,
+    24px 24px,
+    39px 39px,
+    82px 82px,
+    14px 14px,
+    50px 50px,
+    29px 29px,
+    60px 60px,
+    20px 20px,
+    9px 9px,
+    45px 45px,
+    31px 31px;
+  background-image: var(--geometry-image-set), var(--geometry-image-set);
+  background-position:
+    3vw 10vh,
+    18vw 19vh,
+    8vw 30vh,
+    24vw 42vh,
+    5vw 55vh,
+    19vw 68vh,
+    78vw 8vh,
+    93vw 21vh,
+    84vw 35vh,
+    98vw 49vh,
+    73vw 63vh,
+    89vw 78vh,
+    12vw 88vh,
+    25vw 102vh,
+    2vw 116vh,
+    16vw 130vh,
+    82vw 92vh,
+    96vw 108vh,
+    70vw 124vh,
+    86vw 140vh,
+    7vw 152vh,
+    28vw 166vh,
+    76vw 156vh,
+    94vw 174vh,
+    3vw 110vh,
+    18vw 119vh,
+    8vw 130vh,
+    24vw 142vh,
+    5vw 155vh,
+    19vw 168vh,
+    78vw 108vh,
+    93vw 121vh,
+    84vw 135vh,
+    98vw 149vh,
+    73vw 163vh,
+    89vw 178vh,
+    12vw 188vh,
+    25vw 202vh,
+    2vw 216vh,
+    16vw 230vh,
+    82vw 192vh,
+    96vw 208vh,
+    70vw 224vh,
+    86vw 240vh,
+    7vw 252vh,
+    28vw 266vh,
+    76vw 256vh,
+    94vw 274vh;
+  background-repeat: no-repeat;
+  background-size: var(--geometry-size-set), var(--geometry-size-set);
+  filter: saturate(1.22) contrast(1.1);
+  opacity: 0.9;
+  will-change: background-position;
+}
+
+.app-texture-geometry::before,
+.app-texture-squares::before {
+  inset: 0;
+}
+
+.theme-live-preview-texture.theme-texture-geometry,
+.theme-live-preview-texture.theme-texture-squares {
+  inset: 0;
+}
+
+/* 页面内容层：确保真实 UI 始终盖在纹理和遮罩之上。 */
+.app-textured-shell > * {
+  position: relative;
+  z-index: 2;
+}
+
+.app-texture-geometry::before,
+.app-texture-squares::before,
+.app-texture-bokeh::before,
+.app-texture-meteor::before,
+.app-texture-meteor::after,
+.theme-live-preview-texture.theme-texture-geometry,
+.theme-live-preview-texture.theme-texture-squares {
+  display: none;
+}
+
+.theme-shared-texture-root {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: 1;
+}
+
+.theme-shared-texture {
+  display: block;
+  inset: 0;
+  position: absolute;
+}
+
+.theme-shared-texture.theme-texture-none,
+.theme-shared-texture.theme-texture-geometry,
+.theme-shared-texture.theme-texture-meteor {
+  display: none;
+}
+
+.theme-meteor-lines {
+  display: none;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+}
+
+.theme-meteor-lines-active {
+  display: block;
+}
+
+.theme-meteor-line {
+  animation: theme-meteor-drop var(--falling-line-duration) linear
+    var(--falling-line-delay) 1 both;
+  background: transparent;
+  display: block;
+  height: var(--falling-line-height);
+  left: var(--falling-line-left);
+  position: absolute;
+  top: calc(var(--falling-line-height) * -1);
+  transform: translateX(-50%);
+  width: var(--falling-line-width);
+}
+
+.theme-meteor-line::before,
+.theme-meteor-line::after {
+  content: "";
+  display: block;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.theme-meteor-line::before {
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      hsl(from var(--app-texture-color, var(--theme-preview-color)) h 90% 74% / 0.03) 16%,
+      hsl(from var(--app-texture-color, var(--theme-preview-color)) h 96% 68% / 0.12) 48%,
+      hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 60% / 0.34) 78%,
+      hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 52% / 0.72) 100%
+    );
+  border-radius: 999px;
+  box-shadow:
+    0 0 5px hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 54% / 0.2);
+  filter: blur(0.1px);
+  height: 100%;
+  top: 0;
+  width: var(--falling-line-width);
+}
+
+.theme-meteor-line::after {
+  background: linear-gradient(
+    to bottom,
+    hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 68% / 0.42) 0%,
+    hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 56% / 0.76) 46%,
+    hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 50% / var(--falling-line-alpha)) 100%
+  );
+  border-radius: 999px;
+  box-shadow:
+    0 0 5px hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 52% / 0.36),
+    0 0 10px hsl(from var(--app-texture-color, var(--theme-preview-color)) h 100% 48% / 0.14);
+  bottom: 0;
+  height: var(--falling-line-head-height);
+  width: var(--falling-line-head-width);
+}
+
+.theme-shared-geometry-texture {
+  position: absolute;
+}
+
+.app-texture-geometry::after,
+.app-texture-squares::after,
+.theme-geometry-texture-preview::after {
+  display: none;
+}
+
+.app-textured-shell > .theme-geometry-texture {
+  z-index: 0;
+}
+
+.theme-geometry-texture {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+}
+
+.theme-geometry-texture-preview {
+  position: absolute;
+  z-index: 0;
+}
+
+.theme-geometry-texture-preview::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--theme-preview-bg) 20%, transparent) 16%,
+    var(--theme-preview-bg) 30%,
+    var(--theme-preview-bg) 70%,
+    color-mix(in srgb, var(--theme-preview-bg) 20%, transparent) 84%,
+    transparent 100%
+  );
+  content: "";
+  inset: 0;
+  position: absolute;
+}
+
+.theme-geometry-item {
+  animation: theme-geometry-rise var(--geometry-duration) linear var(--geometry-delay) 1 both;
+  background: hsl(
+    from var(--app-texture-color, var(--theme-preview-color))
+    h
+    var(--geometry-saturation)
+    var(--geometry-lightness)
+    / var(--geometry-alpha)
+  );
+  display: block;
+  height: var(--geometry-size);
+  left: var(--geometry-left);
+  position: absolute;
+  top: var(--geometry-top, 0);
+  transform-origin: 50% 50%;
+  width: var(--geometry-size);
+}
+
+.theme-geometry-circle {
+  border-radius: 999px;
+}
+
+.theme-geometry-diamond {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.theme-geometry-triangle {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+@keyframes theme-geometry-rise {
+  from {
+    transform:
+      translate3d(var(--geometry-drift-start), var(--geometry-start-y), 0)
+      rotate(var(--geometry-rotate-start));
+  }
+  to {
+    transform:
+      translate3d(var(--geometry-drift-end), var(--geometry-end-y), 0)
+      rotate(calc(var(--geometry-rotate-start) + var(--geometry-rotate-turn)));
+  }
+}
+
+/* 散景关键帧：只移动圆点背景位置，避免遮罩层跟着移动。 */
+@keyframes texture-bokeh-flow {
+  0% {
+    background-position:
+      -6% 12%,
+      6% 30%,
+      -4% 58%,
+      10% 78%,
+      -8% 88%,
+      14% 46%,
+      4% 94%,
+      106% 10%,
+      94% 24%,
+      104% 48%,
+      90% 70%,
+      108% 84%,
+      86% 36%,
+      98% 92%;
+  }
+  18% {
+    background-position:
+      calc(-6% + 46px) calc(12% + 118px),
+      calc(6% - 122px) calc(30% + 24px),
+      calc(-4% + 88px) calc(58% - 94px),
+      calc(10% - 42px) calc(78% + 106px),
+      calc(-8% + 116px) calc(88% - 52px),
+      calc(14% - 78px) calc(46% - 128px),
+      calc(4% + 28px) calc(94% - 176px),
+      calc(106% - 108px) calc(10% + 34px),
+      calc(94% + 64px) calc(24% + 118px),
+      calc(104% - 42px) calc(48% - 138px),
+      calc(90% + 122px) calc(70% + 26px),
+      calc(108% - 54px) calc(84% - 162px),
+      calc(86% + 88px) calc(36% - 74px),
+      calc(98% - 126px) calc(92% + 18px);
+  }
+  41% {
+    background-position:
+      calc(-6% - 82px) calc(12% + 36px),
+      calc(6% + 54px) calc(30% - 142px),
+      calc(-4% + 132px) calc(58% + 108px),
+      calc(10% - 124px) calc(78% - 72px),
+      calc(-8% + 32px) calc(88% - 188px),
+      calc(14% + 96px) calc(46% + 84px),
+      calc(4% - 104px) calc(94% - 48px),
+      calc(106% + 72px) calc(10% + 126px),
+      calc(94% - 118px) calc(24% + 42px),
+      calc(104% + 96px) calc(48% + 102px),
+      calc(90% - 64px) calc(70% - 146px),
+      calc(108% + 44px) calc(84% - 76px),
+      calc(86% - 132px) calc(36% + 118px),
+      calc(98% + 74px) calc(92% - 136px);
+  }
+  63% {
+    background-position:
+      calc(-6% + 128px) calc(12% - 46px),
+      calc(6% - 46px) calc(30% + 164px),
+      calc(-4% - 58px) calc(58% - 156px),
+      calc(10% + 92px) calc(78% + 34px),
+      calc(-8% - 72px) calc(88% - 98px),
+      calc(14% - 134px) calc(46% + 142px),
+      calc(4% + 118px) calc(94% - 126px),
+      calc(106% - 68px) calc(10% - 62px),
+      calc(94% + 132px) calc(24% + 168px),
+      calc(104% - 152px) calc(48% - 44px),
+      calc(90% + 42px) calc(70% - 186px),
+      calc(108% - 132px) calc(84% - 24px),
+      calc(86% + 104px) calc(36% + 66px),
+      calc(98% - 58px) calc(92% - 208px);
+  }
+  82% {
+    background-position:
+      calc(-6% - 34px) calc(12% + 154px),
+      calc(6% + 118px) calc(30% - 38px),
+      calc(-4% + 36px) calc(58% + 142px),
+      calc(10% - 96px) calc(78% - 178px),
+      calc(-8% + 146px) calc(88% - 132px),
+      calc(14% + 42px) calc(46% - 96px),
+      calc(4% - 74px) calc(94% - 214px),
+      calc(106% + 108px) calc(10% + 72px),
+      calc(94% - 54px) calc(24% - 122px),
+      calc(104% + 44px) calc(48% + 154px),
+      calc(90% - 142px) calc(70% + 58px),
+      calc(108% + 92px) calc(84% - 154px),
+      calc(86% - 76px) calc(36% - 132px),
+      calc(98% + 126px) calc(92% - 68px);
+  }
+  100% {
+    background-position:
+      -6% 12%,
+      6% 30%,
+      -4% 58%,
+      10% 78%,
+      -8% 88%,
+      14% 46%,
+      4% 94%,
+      106% 10%,
+      94% 24%,
+      104% 48%,
+      90% 70%,
+      108% 84%,
+      86% 36%,
+      98% 92%;
+  }
+}
+
+/* 几何图案关键帧：双队列整体上移一个视口高度，循环首尾视觉等价。 */
+@keyframes texture-geometry-lift {
+  0% {
+    background-position:
+      3vw 10vh,
+      18vw 19vh,
+      8vw 30vh,
+      24vw 42vh,
+      5vw 55vh,
+      19vw 68vh,
+      78vw 8vh,
+      93vw 21vh,
+      84vw 35vh,
+      98vw 49vh,
+      73vw 63vh,
+      89vw 78vh,
+      12vw 88vh,
+      25vw 102vh,
+      2vw 116vh,
+      16vw 130vh,
+      82vw 92vh,
+      96vw 108vh,
+      70vw 124vh,
+      86vw 140vh,
+      7vw 152vh,
+      28vw 166vh,
+      76vw 156vh,
+      94vw 174vh,
+      3vw 110vh,
+      18vw 119vh,
+      8vw 130vh,
+      24vw 142vh,
+      5vw 155vh,
+      19vw 168vh,
+      78vw 108vh,
+      93vw 121vh,
+      84vw 135vh,
+      98vw 149vh,
+      73vw 163vh,
+      89vw 178vh,
+      12vw 188vh,
+      25vw 202vh,
+      2vw 216vh,
+      16vw 230vh,
+      82vw 192vh,
+      96vw 208vh,
+      70vw 224vh,
+      86vw 240vh,
+      7vw 252vh,
+      28vw 266vh,
+      76vw 256vh,
+      94vw 274vh;
+  }
+  37% {
+    background-position:
+      7vw -27vh,
+      13vw -18vh,
+      15vw -7vh,
+      20vw 5vh,
+      1vw 18vh,
+      25vw 31vh,
+      83vw -29vh,
+      88vw -16vh,
+      91vw -2vh,
+      94vw 12vh,
+      80vw 26vh,
+      95vw 41vh,
+      8vw 51vh,
+      31vw 65vh,
+      6vw 79vh,
+      21vw 93vh,
+      77vw 55vh,
+      100vw 71vh,
+      74vw 87vh,
+      91vw 103vh,
+      13vw 115vh,
+      23vw 129vh,
+      81vw 119vh,
+      90vw 137vh,
+      7vw 73vh,
+      13vw 82vh,
+      15vw 93vh,
+      20vw 105vh,
+      1vw 118vh,
+      25vw 131vh,
+      83vw 71vh,
+      88vw 84vh,
+      91vw 98vh,
+      94vw 112vh,
+      80vw 126vh,
+      95vw 141vh,
+      8vw 151vh,
+      31vw 165vh,
+      6vw 179vh,
+      21vw 193vh,
+      77vw 155vh,
+      100vw 171vh,
+      74vw 187vh,
+      91vw 203vh,
+      13vw 215vh,
+      23vw 229vh,
+      81vw 219vh,
+      90vw 237vh;
+  }
+  71% {
+    background-position:
+      1vw -61vh,
+      21vw -52vh,
+      5vw -41vh,
+      27vw -29vh,
+      9vw -16vh,
+      15vw -3vh,
+      75vw -63vh,
+      97vw -50vh,
+      79vw -36vh,
+      100vw -22vh,
+      71vw -8vh,
+      87vw 7vh,
+      14vw 17vh,
+      22vw 31vh,
+      3vw 45vh,
+      18vw 59vh,
+      85vw 21vh,
+      92vw 37vh,
+      69vw 53vh,
+      98vw 69vh,
+      5vw 81vh,
+      30vw 95vh,
+      72vw 85vh,
+      96vw 103vh,
+      1vw 39vh,
+      21vw 48vh,
+      5vw 59vh,
+      27vw 71vh,
+      9vw 84vh,
+      15vw 97vh,
+      75vw 37vh,
+      97vw 50vh,
+      79vw 64vh,
+      100vw 78vh,
+      71vw 92vh,
+      87vw 107vh,
+      14vw 117vh,
+      22vw 131vh,
+      3vw 145vh,
+      18vw 159vh,
+      85vw 121vh,
+      92vw 137vh,
+      69vw 153vh,
+      98vw 169vh,
+      5vw 181vh,
+      30vw 195vh,
+      72vw 185vh,
+      96vw 203vh;
+  }
+  100% {
+    background-position:
+      3vw -90vh,
+      18vw -81vh,
+      8vw -70vh,
+      24vw -58vh,
+      5vw -45vh,
+      19vw -32vh,
+      78vw -92vh,
+      93vw -79vh,
+      84vw -65vh,
+      98vw -51vh,
+      73vw -37vh,
+      89vw -22vh,
+      12vw -12vh,
+      25vw 2vh,
+      2vw 16vh,
+      16vw 30vh,
+      82vw -8vh,
+      96vw 8vh,
+      70vw 24vh,
+      86vw 40vh,
+      7vw 52vh,
+      28vw 66vh,
+      76vw 56vh,
+      94vw 74vh,
+      3vw 10vh,
+      18vw 19vh,
+      8vw 30vh,
+      24vw 42vh,
+      5vw 55vh,
+      19vw 68vh,
+      78vw 8vh,
+      93vw 21vh,
+      84vw 35vh,
+      98vw 49vh,
+      73vw 63vh,
+      89vw 78vh,
+      12vw 88vh,
+      25vw 102vh,
+      2vw 116vh,
+      16vw 130vh,
+      82vw 92vh,
+      96vw 108vh,
+      70vw 124vh,
+      86vw 140vh,
+      7vw 152vh,
+      28vw 166vh,
+      76vw 156vh,
+      94vw 174vh;
+  }
+}
+
+@keyframes texture-geometry-spin {
+  from {
+    --geometry-spin: 0deg;
+  }
+  to {
+    --geometry-spin: 360deg;
+  }
+}
+
+/* 流星动画关键帧：主题色流星错峰从上往下坠落。 */
+@keyframes theme-meteor-drop {
+  from {
+    top: calc(var(--falling-line-height) * -1);
+  }
+  to {
+    top: 115%;
+  }
+}
+
+/* 动画降级：尊重系统减少动态效果设置。 */
+@media (prefers-reduced-motion: reduce) {
+  .app-textured-shell::before,
+  .app-textured-shell::after,
+  .theme-meteor-line,
+  .theme-geometry-item {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+

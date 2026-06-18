@@ -4,7 +4,9 @@ import { uploadImageToOss } from "@/utils/oss";
 import { reqPost } from "@/utils/request";
 import { UploadOutlined } from "@ant-design/icons";
 import {
+  App,
   Button,
+  DatePicker,
   Form,
   Input,
   InputNumber,
@@ -14,7 +16,15 @@ import {
   Tooltip,
   Typography,
 } from "antd";
+import dayjs, { type Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
+import {
+  createCroppedImageFile,
+  extractAverageColor,
+  isHexColor,
+} from "./clothes-image";
+import { useDraggableModal } from "./use-draggable-modal";
+import { useImageCrop } from "./use-image-crop";
 
 /** 添加衣服弹窗接收的属性。 */
 type ClothesCreateModalProps = {
@@ -32,8 +42,8 @@ type ClothesCreateModalProps = {
 type ClothesCreateFormValues = {
   /** 衣服名字。 */
   name: string;
-  /** 购买日期，格式为 yyyy-mm-dd。 */
-  timeStamp: string;
+  /** 购买日期。 */
+  timeStamp: Dayjs;
   /** 价格。 */
   price: number;
   /** 季节。 */
@@ -41,158 +51,8 @@ type ClothesCreateFormValues = {
 };
 
 const seasons = ["春", "夏", "秋", "冬"];
-const cropSize = 800;
 const formControlWidthClassName = "w-[200px] max-w-full";
 const fallbackColor = "#8b8b8b";
-const hexColorPattern = /^#[0-9a-fA-F]{6}$/;
-const cropPreviewSize = 260;
-
-/** 获取当前本地日期字符串，格式为 yyyy-mm-dd。 */
-function getTodayDateString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const date = String(now.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${date}`;
-}
-
-/** 将 RGB 数值转换为十六进制颜色字符串。 */
-function rgbToHex(red: number, green: number, blue: number) {
-  return `#${[red, green, blue]
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("")}`;
-}
-
-/** 判断用户填写的颜色是否为完整的十六进制颜色。 */
-function isHexColor(color: string) {
-  return hexColorPattern.test(color);
-}
-
-/** 限制图片拖拽偏移范围，避免裁剪区域露出空白。 */
-function clampCropOffset(value: number, limit: number) {
-  return Math.max(-limit, Math.min(limit, value));
-}
-
-/** 计算当前图片相对方块尺寸与缩放下，某个方向可以移动的最大比例。 */
-function getCropOffsetLimit(sizeRatio: number, scale: number) {
-  return Math.max(0, (sizeRatio * scale - 1) / 2);
-}
-
-/** 从图片对象地址中提取平均颜色。 */
-function extractAverageColor(imageUrl: string) {
-  return new Promise<string>((resolve, reject) => {
-    const image = new Image();
-
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d", { willReadFrequently: true });
-      const size = 80;
-
-      if (!context) {
-        reject(new Error("无法读取图片颜色"));
-        return;
-      }
-
-      canvas.width = size;
-      canvas.height = size;
-      context.drawImage(image, 0, 0, size, size);
-
-      const { data } = context.getImageData(0, 0, size, size);
-      let red = 0;
-      let green = 0;
-      let blue = 0;
-      let count = 0;
-
-      for (let index = 0; index < data.length; index += 4) {
-        const alpha = data[index + 3];
-
-        if (alpha < 128) {
-          continue;
-        }
-
-        red += data[index];
-        green += data[index + 1];
-        blue += data[index + 2];
-        count += 1;
-      }
-
-      if (!count) {
-        reject(new Error("未识别到可用颜色"));
-        return;
-      }
-
-      resolve(
-        rgbToHex(
-          Math.round(red / count),
-          Math.round(green / count),
-          Math.round(blue / count),
-        ),
-      );
-    };
-    image.onerror = () => reject(new Error("图片读取失败"));
-    image.src = imageUrl;
-  });
-}
-
-/** 将图片按当前裁剪参数生成正方形图片文件。 */
-function createCroppedImageFile(
-  imageUrl: string,
-  sourceFileName: string,
-  cropScale: number,
-  cropOffsetX: number,
-  cropOffsetY: number,
-) {
-  return new Promise<File>((resolve, reject) => {
-    const image = new Image();
-
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-
-      if (!context) {
-        reject(new Error("无法裁剪图片"));
-        return;
-      }
-
-      canvas.width = cropSize;
-      canvas.height = cropSize;
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, cropSize, cropSize);
-
-      const baseScale = Math.max(
-        cropSize / image.naturalWidth,
-        cropSize / image.naturalHeight,
-      );
-      const drawWidth = image.naturalWidth * baseScale * cropScale;
-      const drawHeight = image.naturalHeight * baseScale * cropScale;
-      const drawX = (cropSize - drawWidth) / 2 + cropOffsetX * cropSize;
-      const drawY = (cropSize - drawHeight) / 2 + cropOffsetY * cropSize;
-
-      context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error("图片裁剪失败"));
-            return;
-          }
-
-          const fileName = sourceFileName.replace(/\.[^.]+$/, "");
-
-          resolve(
-            new File([blob], `${fileName || "clothes"}-crop.jpg`, {
-              type: "image/jpeg",
-            }),
-          );
-        },
-        "image/jpeg",
-        0.92,
-      );
-    };
-    image.onerror = () => reject(new Error("图片读取失败"));
-    image.src = imageUrl;
-  });
-}
 
 /** 添加衣服弹窗。 */
 export function ClothesCreateModal({
@@ -201,34 +61,39 @@ export function ClothesCreateModal({
   open,
   themeColor,
 }: ClothesCreateModalProps) {
+  const { message } = App.useApp();
   const [form] = Form.useForm<ClothesCreateFormValues>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewObjectUrlRef = useRef<string | null>(null);
   const sourceObjectUrlRef = useRef<string | null>(null);
   const [color, setColor] = useState("");
-  const [cropOffsetX, setCropOffsetX] = useState(0);
-  const [cropOffsetY, setCropOffsetY] = useState(0);
-  const [cropScale, setCropScale] = useState(1);
-  const [cropImageAspectRatio, setCropImageAspectRatio] = useState(1);
   const [cropSourceUrl, setCropSourceUrl] = useState("");
   const [imageError, setImageError] = useState("");
+  const [isDragOverUpload, setIsDragOverUpload] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+  const [isUploadPasteReady, setIsUploadPasteReady] = useState(false);
   const [sourceFileName, setSourceFileName] = useState("");
-  const cropFrameRef = useRef<HTMLDivElement>(null);
-  const cropDragStartRef = useRef<{
-    originX: number;
-    originY: number;
-    pointerX: number;
-    pointerY: number;
-  } | null>(null);
-  const dragStartRef = useRef<{
-    originX: number;
-    originY: number;
-    pointerX: number;
-    pointerY: number;
-  } | null>(null);
+  const {
+    changeCropScale,
+    cropFrameRef,
+    cropOffsetX,
+    cropOffsetY,
+    cropScale,
+    dragCrop,
+    getCropImageStyle,
+    resetCrop,
+    setCropImageAspectRatio,
+    startDragCrop,
+    stopDragCrop,
+  } = useImageCrop();
+  const {
+    drag: dragModal,
+    position: modalPosition,
+    resetPosition: resetModalPosition,
+    startDrag: startDragModal,
+    stopDrag: stopDragModal,
+  } = useDraggableModal();
 
   /** 释放本地图片预览地址。 */
   function revokePreviewObjectUrl() {
@@ -254,19 +119,17 @@ export function ClothesCreateModal({
       fileInputRef.current.value = "";
     }
     setColor("");
-    setCropOffsetX(0);
-    setCropOffsetY(0);
-    setCropImageAspectRatio(1);
-    setCropScale(1);
+    resetCrop();
     setCropSourceUrl("");
     setImageError("");
     setIsCropping(false);
+    setIsUploadPasteReady(false);
     setSourceFileName("");
     form.setFieldsValue({
       name: "",
       price: 0,
       season: seasons[0],
-      timeStamp: getTodayDateString(),
+      timeStamp: dayjs(),
     });
   }
 
@@ -274,141 +137,6 @@ export function ClothesCreateModal({
   function closeModal() {
     resetDraft();
     onClose();
-  }
-
-  /** 按下弹窗标题栏时记录拖拽起点。 */
-  function startDragModal(event: React.PointerEvent<HTMLDivElement>) {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragStartRef.current = {
-      originX: modalPosition.x,
-      originY: modalPosition.y,
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-    };
-  }
-
-  /** 拖拽标题栏时移动弹窗。 */
-  function dragModal(event: React.PointerEvent<HTMLDivElement>) {
-    const dragStart = dragStartRef.current;
-
-    if (!dragStart) {
-      return;
-    }
-
-    setModalPosition({
-      x: dragStart.originX + event.clientX - dragStart.pointerX,
-      y: dragStart.originY + event.clientY - dragStart.pointerY,
-    });
-  }
-
-  /** 松开标题栏时结束拖拽。 */
-  function stopDragModal(event: React.PointerEvent<HTMLDivElement>) {
-    dragStartRef.current = null;
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  /** 按下裁剪图片时记录拖拽起点。 */
-  function startDragCrop(event: React.PointerEvent<HTMLDivElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    cropDragStartRef.current = {
-      originX: cropOffsetX,
-      originY: cropOffsetY,
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-    };
-  }
-
-  /** 拖拽裁剪图片时更新图片偏移。 */
-  function dragCrop(event: React.PointerEvent<HTMLDivElement>) {
-    const dragStart = cropDragStartRef.current;
-    const cropFrame = cropFrameRef.current;
-
-    if (!dragStart || !cropFrame) {
-      return;
-    }
-
-    if (event.buttons !== 1) {
-      stopDragCrop(event);
-      return;
-    }
-
-    const frameRect = cropFrame.getBoundingClientRect();
-
-    if (!frameRect.width || !frameRect.height) {
-      return;
-    }
-
-    const renderedWidthRatio =
-      cropImageAspectRatio >= 1 ? cropImageAspectRatio : 1;
-    const renderedHeightRatio =
-      cropImageAspectRatio >= 1 ? 1 : 1 / cropImageAspectRatio;
-    const cropOffsetXLimit = getCropOffsetLimit(
-      renderedWidthRatio,
-      cropScale,
-    );
-    const cropOffsetYLimit = getCropOffsetLimit(
-      renderedHeightRatio,
-      cropScale,
-    );
-    const nextCropOffsetX = clampCropOffset(
-      dragStart.originX +
-        (event.clientX - dragStart.pointerX) / frameRect.width,
-      cropOffsetXLimit,
-    );
-    const nextCropOffsetY = clampCropOffset(
-      dragStart.originY +
-        (event.clientY - dragStart.pointerY) / frameRect.height,
-      cropOffsetYLimit,
-    );
-
-    setCropOffsetX((currentOffsetX) =>
-      Math.abs(currentOffsetX - nextCropOffsetX) < 0.001
-        ? currentOffsetX
-        : nextCropOffsetX,
-    );
-    setCropOffsetY((currentOffsetY) =>
-      Math.abs(currentOffsetY - nextCropOffsetY) < 0.001
-        ? currentOffsetY
-        : nextCropOffsetY,
-    );
-  }
-
-  /** 松开裁剪图片时结束拖拽。 */
-  function stopDragCrop(event: React.PointerEvent<HTMLDivElement>) {
-    cropDragStartRef.current = null;
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  /** 调整缩放时同步收敛拖拽偏移，避免缩小时露出空白。 */
-  function changeCropScale(nextScale: number) {
-    const renderedWidthRatio =
-      cropImageAspectRatio >= 1 ? cropImageAspectRatio : 1;
-    const renderedHeightRatio =
-      cropImageAspectRatio >= 1 ? 1 : 1 / cropImageAspectRatio;
-    const cropOffsetXLimit = getCropOffsetLimit(
-      renderedWidthRatio,
-      nextScale,
-    );
-    const cropOffsetYLimit = getCropOffsetLimit(
-      renderedHeightRatio,
-      nextScale,
-    );
-
-    setCropScale(nextScale);
-    setCropOffsetX((currentOffsetX) =>
-      clampCropOffset(currentOffsetX, cropOffsetXLimit),
-    );
-    setCropOffsetY((currentOffsetY) =>
-      clampCropOffset(currentOffsetY, cropOffsetYLimit),
-    );
   }
 
   useEffect(
@@ -419,9 +147,12 @@ export function ClothesCreateModal({
     [],
   );
 
-  /** 选择衣服图片后创建预览，并尝试提取主色。 */
-  async function handleImageChange(fileList: FileList | null) {
-    const file = fileList?.[0];
+  /** 选择衣服图片后创建预览，并尝试提取主色，参数 files 为用户选择、拖拽或粘贴的文件列表。 */
+  async function handleImageChange(files: ArrayLike<File> | null) {
+    setIsDragOverUpload(false);
+    setIsUploadPasteReady(false);
+
+    const file = files?.[0];
 
     if (!file) {
       return;
@@ -440,10 +171,7 @@ export function ClothesCreateModal({
     revokePreviewObjectUrl();
     revokeSourceObjectUrl();
     setColor("");
-    setCropOffsetX(0);
-    setCropOffsetY(0);
-    setCropImageAspectRatio(1);
-    setCropScale(1);
+    resetCrop();
     setIsCropping(true);
     setImageError("");
     setSourceFileName(file.name);
@@ -466,9 +194,67 @@ export function ClothesCreateModal({
     }
   }
 
+  /** 文件拖入上传区时保持浏览器不打开图片，并显示上传区高亮。 */
+  function dragOverUpload(event: React.DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOverUpload(true);
+  }
+
+  /** 文件离开上传区时取消上传区高亮。 */
+  function dragLeaveUpload(event: React.DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOverUpload(false);
+  }
+
+  /** 在上传区释放文件时读取拖拽图片并进入裁剪流程。 */
+  function dropUpload(event: React.DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    handleImageChange(event.dataTransfer.files);
+  }
+
+  /** 在上传区粘贴图片时读取剪贴板图片并进入裁剪流程。 */
+  function pasteUpload(event: React.ClipboardEvent<HTMLElement>) {
+    const imageFiles = Array.from(event.clipboardData.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+
+    if (!imageFiles.length) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    handleImageChange(imageFiles);
+  }
+
+  /** 单击上传区时只聚焦并标记为可粘贴，不立即打开文件选择器。 */
+  function focusUploadForPaste(event: React.MouseEvent<HTMLButtonElement>) {
+    if (isCropping) {
+      event.preventDefault();
+      return;
+    }
+
+    setIsUploadPasteReady(true);
+  }
+
+  /** 双击上传区时打开本地文件选择器。 */
+  function openUploadFilePicker(event: React.MouseEvent<HTMLButtonElement>) {
+    if (isCropping) {
+      event.preventDefault();
+      return;
+    }
+
+    fileInputRef.current?.click();
+  }
+
   /** 提交新增衣服表单。 */
   async function submitClothes(values: ClothesCreateFormValues) {
-    if (!cropSourceUrl || !sourceObjectUrlRef.current) {
+    const currentCropSourceUrl = cropSourceUrl;
+
+    if (!currentCropSourceUrl || !sourceObjectUrlRef.current) {
       setImageError("请上传衣服图片");
       return;
     }
@@ -478,11 +264,13 @@ export function ClothesCreateModal({
 
     try {
       const croppedFile = await createCroppedImageFile(
-        cropSourceUrl,
-        sourceFileName || "clothes.jpg",
-        cropScale,
-        cropOffsetX,
-        cropOffsetY,
+        {
+          cropOffsetX,
+          cropOffsetY,
+          cropScale,
+          imageUrl: currentCropSourceUrl,
+          sourceFileName: sourceFileName || "clothes.jpg",
+        },
       );
       const croppedObjectUrl = URL.createObjectURL(croppedFile);
       let clothesColor = color;
@@ -500,6 +288,8 @@ export function ClothesCreateModal({
         return;
       }
 
+      closeModal();
+
       const picUrl = await uploadImageToOss(croppedFile, {
         directory: "clothes",
       });
@@ -511,16 +301,18 @@ export function ClothesCreateModal({
           pic_url: picUrl,
           price: Number(values.price.toFixed(2)),
           season: values.season,
-          timeStamp: values.timeStamp,
+          timeStamp: values.timeStamp.format("YYYY-MM-DD"),
         },
       });
 
       onCreated?.();
-      closeModal();
+      message.success("保存成功");
     } catch (error) {
-      setImageError(
-        error instanceof Error ? error.message : "保存衣服信息失败",
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "保存衣服信息失败";
+
+      setImageError(errorMessage);
+      message.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -530,7 +322,7 @@ export function ClothesCreateModal({
     <Modal
       afterOpenChange={(nextOpen) => {
         if (nextOpen) {
-          setModalPosition({ x: 0, y: 0 });
+          resetModalPosition();
           resetDraft();
         }
       }}
@@ -570,15 +362,18 @@ export function ClothesCreateModal({
         <div className="space-y-3">
           <div className="w-full">
             <button
-              className="clothes-create-upload flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-dashed text-sm"
-              onClick={(event) => {
-                if (isCropping) {
-                  event.preventDefault();
-                  return;
-                }
-
-                fileInputRef.current?.click();
-              }}
+              className={`clothes-create-upload flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-dashed text-sm transition-colors ${
+                isDragOverUpload ? "is-drag-over" : ""
+              } ${
+                isUploadPasteReady ? "is-paste-ready" : ""
+              }`}
+              onBlur={() => setIsUploadPasteReady(false)}
+              onClick={focusUploadForPaste}
+              onDoubleClick={openUploadFilePicker}
+              onDragLeave={dragLeaveUpload}
+              onDragOver={dragOverUpload}
+              onDrop={dropUpload}
+              onPaste={pasteUpload}
               type="button"
             >
               {cropSourceUrl && isCropping ? (
@@ -604,24 +399,14 @@ export function ClothesCreateModal({
                       }
                     }}
                     src={cropSourceUrl}
-                    style={{
-                      height:
-                        cropImageAspectRatio >= 1
-                          ? "100%"
-                          : `${100 / cropImageAspectRatio}%`,
-                      transform: `translate(-50%, -50%) translate(${cropOffsetX * cropPreviewSize}px, ${cropOffsetY * cropPreviewSize}px) scale(${cropScale})`,
-                      width:
-                        cropImageAspectRatio >= 1
-                          ? `${cropImageAspectRatio * 100}%`
-                          : "100%",
-                    }}
+                    style={getCropImageStyle()}
                   />
                   <span className="pointer-events-none absolute inset-0 border-2 border-white/80 shadow-[inset_0_0_0_9999px_rgb(0_0_0/12%)]" />
                 </div>
               ) : (
                 <span className="flex flex-col items-center gap-2">
                   <UploadOutlined className="text-2xl" />
-                  上传衣服图片
+                  双击 / 拖拽 / 粘贴上传
                 </span>
               )}
             </button>
@@ -633,9 +418,6 @@ export function ClothesCreateModal({
             ref={fileInputRef}
             type="file"
           />
-          {imageError && (
-            <Typography.Text type="danger">{imageError}</Typography.Text>
-          )}
         </div>
 
         <div className="flex flex-col">
@@ -669,7 +451,11 @@ export function ClothesCreateModal({
               name="timeStamp"
               rules={[{ message: "请选择购买日期", required: true }]}
             >
-              <Input className={formControlWidthClassName} type="date" />
+              <DatePicker
+                className={formControlWidthClassName}
+                format="YYYY-MM-DD"
+                placeholder="请选择购买日期"
+              />
             </Form.Item>
 
             <Form.Item
@@ -739,6 +525,8 @@ export function ClothesCreateModal({
                   />
                 </Tooltip>
               </div>
+            ) : imageError ? (
+              <Typography.Text type="danger">{imageError}</Typography.Text>
             ) : null}
           </div>
           <div className="flex justify-end gap-3">

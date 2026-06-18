@@ -14,14 +14,7 @@ import type { ThemeConfig } from "@/app/(pages)/theme/types";
 import { cn } from "@/lib/utils";
 import { uploadImageToOss } from "@/utils/oss";
 import { reqPost } from "@/utils/request";
-import {
-  EditOutlined,
-  EnvironmentOutlined,
-  InboxOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  TagsOutlined,
-} from "@ant-design/icons";
+import { EditOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import {
   Avatar,
   Button,
@@ -40,25 +33,7 @@ import {
 import { SessionProvider, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-
-const categories = [
-  {
-    label: "衣服",
-    href: "/home/clothes",
-    iconClassName: "icon-clothes",
-  },
-  {
-    label: "裤子",
-    href: "/home/pants",
-    iconClassName: "icon-pants",
-  },
-];
-
-const stats = [
-  { label: "物品", value: 0, icon: <InboxOutlined /> },
-  { label: "分类", value: categories.length, icon: <TagsOutlined /> },
-  { label: "位置", value: 0, icon: <EnvironmentOutlined /> },
-];
+import { homeCategories, homeStats } from "./home-config";
 
 /** 首页左上角展示的用户基础信息。 */
 type HomeUser = {
@@ -112,28 +87,27 @@ export default function HomePage({
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(user.avatar ?? "");
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [visibleCategoryHrefs, setVisibleCategoryHrefs] = useState(() =>
-    categories.map((category) => category.href),
+    homeCategories.map((category) => category.href),
   );
   const headerAvatarUrl = profile.avatar || undefined;
   const modalAvatarUrl = avatarPreviewUrl || profile.avatar || undefined;
   const isAllCategoriesVisible =
-    visibleCategoryHrefs.length === categories.length;
-  const visibleCategories = categories.filter((category) =>
-    visibleCategoryHrefs.includes(category.href),
-  );
+    visibleCategoryHrefs.length === homeCategories.length;
   const menuItems = useMemo(
     () =>
-      visibleCategories.map((category) => ({
-        key: category.href,
-        className: cn("hover:scale-[1.1]", {
-          "scale-[1.1]": activeCategoryHref === category.href,
-        }),
-        icon: <CategoryIcon name={category.iconClassName} />,
-        label: <Link href={category.href}>{category.label}</Link>,
-      })),
-    [visibleCategories],
+      homeCategories
+        .filter((category) => visibleCategoryHrefs.includes(category.href))
+        .map((category) => ({
+          key: category.href,
+          className: cn("hover:scale-[1.1]", {
+            "scale-[1.1] font-bold": activeCategoryHref === category.href,
+          }),
+          icon: <CategoryIcon name={category.iconClassName} />,
+          label: <Link href={category.href}>{category.label}</Link>,
+        })),
+    [activeCategoryHref, visibleCategoryHrefs],
   );
-  const activeCategory = categories.find(
+  const activeCategory = homeCategories.find(
     (category) => category.href === activeCategoryHref,
   );
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
@@ -154,9 +128,9 @@ export default function HomePage({
   /** 切换全部分类复选按钮，全选时再次点击会清空左侧分类列表。 */
   function toggleAllCategoriesVisible() {
     setVisibleCategoryHrefs((currentHrefs) =>
-      currentHrefs.length === categories.length
+      currentHrefs.length === homeCategories.length
         ? []
-        : categories.map((category) => category.href),
+        : homeCategories.map((category) => category.href),
     );
   }
 
@@ -413,7 +387,7 @@ export default function HomePage({
 
                 <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-8 pb-6 pt-6 max-md:p-5">
                   <section className="grid grid-cols-3 gap-4 max-md:grid-cols-1">
-                    {stats.map((stat) => (
+                    {homeStats.map((stat) => (
                       <Card
                         className="shadow-[0_20px_80px_rgb(0_0_0/18%)]"
                         key={stat.label}
@@ -445,7 +419,7 @@ export default function HomePage({
                               >
                                 全部
                               </Button>
-                              {categories.map((category) => {
+                              {homeCategories.map((category) => {
                                 const isCategoryActive =
                                   visibleCategoryHrefs.includes(category.href);
 

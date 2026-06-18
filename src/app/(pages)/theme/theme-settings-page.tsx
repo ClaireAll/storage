@@ -528,7 +528,11 @@ function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
           getPopupContainer={(triggerNode) =>
             triggerNode.parentElement ?? document.body
           }
-          popupClassName="theme-texture-select-popup"
+          classNames={{
+            popup: {
+              root: "theme-texture-select-popup",
+            },
+          }}
           popupMatchSelectWidth={false}
           value={value.texture}
         />

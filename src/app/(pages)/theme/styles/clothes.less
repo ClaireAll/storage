@@ -1,0 +1,117 @@
+﻿.theme-dark .clothes-create-upload {
+  background: rgb(255 255 255 / 6%);
+  border-color: rgb(255 255 255 / 18%);
+  color: rgb(255 255 255 / 62%);
+}
+
+.theme-light .clothes-create-upload {
+  background: rgb(0 0 0 / 5%);
+  border-color: rgb(0 0 0 / 14%);
+  color: rgb(0 0 0 / 45%);
+}
+
+.clothes-create-upload.is-drag-over,
+.clothes-create-upload.is-paste-ready,
+.clothes-create-upload:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 12%,
+    transparent
+  );
+  border-color: var(--clothes-create-theme-color);
+  color: var(--clothes-create-theme-color);
+  outline: none;
+}
+
+.theme-dark .clothes-create-color-picker {
+  background: #141414;
+  border-color: rgb(255 255 255 / 18%);
+}
+
+.theme-light .clothes-create-color-picker {
+  background: #ffffff;
+  border-color: rgb(0 0 0 / 10%);
+}
+
+.theme-dark .clothes-create-crop-toolbar {
+  background: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 28%,
+    rgb(20 20 20 / 92%)
+  );
+}
+
+.theme-light .clothes-create-crop-toolbar {
+  background: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 18%,
+    rgb(255 255 255 / 92%)
+  );
+}
+
+.clothes-create-crop-toolbar .ant-slider-track,
+.clothes-create-crop-toolbar .ant-slider-tracks {
+  background-color: var(--clothes-create-theme-color) !important;
+}
+
+.clothes-create-crop-toolbar .ant-slider-handle::after {
+  box-shadow: 0 0 0 2px var(--clothes-create-theme-color) !important;
+}
+
+.clothes-create-crop-toolbar .ant-slider-handle:focus::after,
+.clothes-create-crop-toolbar .ant-slider-handle:hover::after {
+  box-shadow: 0 0 0 4px
+    color-mix(in srgb, var(--clothes-create-theme-color) 20%, transparent) !important;
+}
+
+.theme-dark .clothes-create-modal .ant-input,
+.theme-dark .clothes-create-modal .ant-input-number,
+.theme-dark .clothes-create-modal .ant-input-number-input,
+.theme-dark .clothes-create-modal .ant-picker,
+.theme-dark .clothes-create-modal .ant-picker-input > input,
+.theme-dark .clothes-create-modal .ant-segmented {
+  background: #141414;
+  color: rgb(255 255 255 / 88%);
+}
+
+.theme-dark .clothes-create-modal .ant-input::placeholder,
+.theme-dark .clothes-create-modal .ant-picker-input > input::placeholder {
+  color: rgb(255 255 255 / 28%);
+}
+
+.theme-dark .clothes-create-modal .ant-input:-webkit-autofill,
+.theme-dark .clothes-create-modal .ant-input:-webkit-autofill:hover,
+.theme-dark .clothes-create-modal .ant-input:-webkit-autofill:focus,
+.theme-dark .clothes-create-modal input:-webkit-autofill,
+.theme-dark .clothes-create-modal input:-webkit-autofill:hover,
+.theme-dark .clothes-create-modal input:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgb(255 255 255 / 88%) !important;
+  box-shadow: 0 0 0 1000px #141414 inset !important;
+  caret-color: rgb(255 255 255 / 88%);
+  transition: background-color 9999s ease-out;
+}
+
+.theme-dark .clothes-create-modal .ant-input:focus,
+.theme-dark .clothes-create-modal .ant-input:hover,
+.theme-dark .clothes-create-modal .ant-picker-focused,
+.theme-dark .clothes-create-modal .ant-picker:hover {
+  background-color: #141414 !important;
+  color: rgb(255 255 255 / 88%) !important;
+}
+
+.clothes-create-modal .ant-input-number {
+  width: 200px;
+}
+
+.clothes-create-modal .ant-picker {
+  width: 200px;
+}
+
+.clothes-create-modal .ant-segmented-item {
+  flex: 1 1 0;
+}
+
+.clothes-create-modal .ant-segmented-item-selected,
+.clothes-create-modal .ant-segmented-item-selected .ant-segmented-item-label {
+  color: var(--clothes-create-theme-color) !important;
+}
