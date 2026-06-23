@@ -143,6 +143,7 @@ ALIYUN_OSS_PUBLIC_BASE_URL=
 - Tailwind v4 的 important 写法用类名末尾 `!`，不要把 `!` 放在类名前。
 - 运行时动态样式值，例如用户选择的主题色，不要写成 Tailwind 任意值类；使用 React `style` 或受控 CSS 变量。
 - React / Next.js UI 改动要主动检查 hydration mismatch 风险。
+- 所有依赖默认安装最新版，使用的时候查看最新的文档。
 
 ## Hydration 风险规则
 

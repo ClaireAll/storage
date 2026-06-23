@@ -22,9 +22,9 @@ import {
   createCroppedImageFile,
   extractAverageColor,
   isHexColor,
-} from "./clothes-image";
-import { useDraggableModal } from "./use-draggable-modal";
-import { useImageCrop } from "./use-image-crop";
+  useDraggableModal,
+  useImageCrop,
+} from "./clothes-utils";
 
 /** 添加衣服弹窗接收的属性。 */
 type ClothesCreateModalProps = {

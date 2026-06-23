@@ -1,5 +1,5 @@
-@import url("//at.alicdn.com/t/c/font_4012350_yuzgw9l4per.css");
-@import (css) "tailwindcss";
+@import url("https://at.alicdn.com/t/c/font_4012350_yuzgw9l4per.css");
+@import "tailwindcss" source("../");
 
 @font-face {
   font-family: "Dancing Script";

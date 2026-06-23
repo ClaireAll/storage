@@ -6,6 +6,7 @@ import type {
   ThemePalette,
   ThemeTexture,
 } from "./types";
+import { isSupportedThemeColor } from "./theme-utils";
 
 export const themeModes: ThemeMode[] = ["system", "light", "dark"];
 
@@ -58,6 +59,19 @@ export const defaultThemeConfig: ThemeConfig = {
   texture: THEME_TEXTURES[0].value,
 };
 
+export const themeConfigCacheKey = "storage-theme-config";
+export const themeConfigChangeEventName = "storage-theme-config-change";
+
+/** 查找与当前调色板完全匹配的主题，参数 options 为主题列表，value 为当前调色板。 */
+export function findThemeOption(options: ThemeOption[], value: ThemePalette) {
+  return options.find(
+    (option) =>
+      option.bg === value.bg &&
+      option.color === value.color &&
+      option.text === value.text,
+  );
+}
+
 /** 判断传入字符串是否为合法主题模式。 */
 export function isThemeMode(value: string): value is ThemeMode {
   return value === "light" || value === "dark" || value === "system";
@@ -90,7 +104,7 @@ function normalizeThemeTexture(
 
 /** 判断传入字符串是否为 6 位十六进制颜色值。 */
 export function isThemeColor(value: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(value);
+  return isSupportedThemeColor(value);
 }
 
 /** 判断传入值是否为合法调色板。 */

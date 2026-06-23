@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import type { AnimationEvent } from "react";
 import { useEffect, useState } from "react";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
+import { randomFloat, randomInt } from "./theme-utils";
 import type { ThemeTexture } from "./types";
 
 export const themeTextureChangeEvent = "storage-theme-texture-change";
@@ -43,7 +44,11 @@ export function SharedThemeTexture() {
   useEffect(() => {
     function handleTextureChange(event: Event) {
       const customEvent = event as CustomEvent<ThemeTextureChangeDetail>;
-      setTextureDetail(customEvent.detail);
+      setTextureDetail((currentDetail) =>
+        isSameTextureDetail(currentDetail, customEvent.detail)
+          ? currentDetail
+          : customEvent.detail,
+      );
     }
 
     window.addEventListener(themeTextureChangeEvent, handleTextureChange);
@@ -76,6 +81,19 @@ export function SharedThemeTexture() {
         texture={textureDetail.texture}
       />
     </div>
+  );
+}
+
+/** 判断两组主题纹理参数是否一致，用于避免跨页面切换时重复刷新共享纹理。 */
+function isSameTextureDetail(
+  currentDetail: ThemeTextureChangeDetail,
+  nextDetail: ThemeTextureChangeDetail,
+) {
+  return (
+    currentDetail.background === nextDetail.background &&
+    currentDetail.color === nextDetail.color &&
+    currentDetail.text === nextDetail.text &&
+    currentDetail.texture === nextDetail.texture
   );
 }
 
@@ -211,13 +229,4 @@ function createFallingLight(
     runId: Math.random().toString(36).slice(2),
     width: `${randomInt(1, 2)}px`,
   };
-}
-
-function randomFloat(min: number, max: number, digits = 1) {
-  const value = min + Math.random() * (max - min);
-  return Number(value.toFixed(digits));
-}
-
-function randomInt(min: number, max: number) {
-  return Math.floor(min + Math.random() * (max - min + 1));
 }

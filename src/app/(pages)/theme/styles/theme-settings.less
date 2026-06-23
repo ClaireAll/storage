@@ -22,9 +22,16 @@ html:has(.app-shell.theme-light) {
   border-bottom: 1px solid color-mix(in srgb, var(--theme-page-text) 16%, transparent);
   display: grid;
   gap: 14px;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   min-height: 72px;
   padding: 12px 24px;
+}
+
+.theme-settings-header-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .theme-settings-main {
@@ -371,17 +378,21 @@ html:has(.app-shell.theme-light) {
   border: 1px solid color-mix(in srgb, var(--theme-page-text) 16%, transparent);
   border-left: 0;
   border-radius: 0 7px 7px 0;
+  color: var(--theme-page-text);
   height: 32px;
   margin: 0;
-  padding: 3px 6px;
   transform: translateX(-1px);
-  width: 44px;
+  width: 132px;
 }
 
 .theme-custom-picker:hover,
 .theme-custom-picker:focus {
   background: color-mix(in srgb, var(--theme-page-bg) 82%, #ffffff 18%);
   border-color: var(--theme-page-color);
+}
+
+.theme-custom-picker .ant-color-picker-trigger-text {
+  color: var(--theme-page-text);
 }
 
 .theme-live-preview {
@@ -522,6 +533,7 @@ html:has(.app-shell.theme-light) {
   .theme-settings-main,
   .theme-settings-toolbar,
   .theme-settings-actions,
+  .theme-settings-header-actions,
   .theme-live-preview {
     align-items: stretch;
     grid-template-columns: 1fr;
@@ -529,7 +541,8 @@ html:has(.app-shell.theme-light) {
 
   .theme-settings-header,
   .theme-settings-toolbar,
-  .theme-settings-actions {
+  .theme-settings-actions,
+  .theme-settings-header-actions {
     flex-direction: column;
   }
 

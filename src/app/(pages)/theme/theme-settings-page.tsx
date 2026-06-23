@@ -11,6 +11,7 @@ import {
 import {
   App,
   Button,
+  ColorPicker,
   Input,
   Layout,
   Segmented,
@@ -19,16 +20,26 @@ import {
   Typography,
 } from "antd";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { getThemeShellBackground } from "./colors";
-import { DARK_THEMES, LIGHT_THEMES, THEME_TEXTURES } from "./constants";
+import { useEffect, useState } from "react";
+import {
+  DARK_THEMES,
+  findThemeOption,
+  LIGHT_THEMES,
+  THEME_TEXTURES,
+} from "./constants";
 import {
   ThemeFallingLights,
   ThemeTexturePublisher,
 } from "./shared-theme-texture";
+import { themeReturnMarkerKey } from "./theme-control";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { ThemeProvider } from "./theme-provider";
 import { ThemeShellBackground } from "./theme-shell-background";
+import {
+  getReadableTextColor,
+  getThemeShellBackground,
+  withColorAlpha,
+} from "./theme-utils";
 import type {
   ThemeConfig,
   ThemeMode,
@@ -104,7 +115,7 @@ function ThemeSettingsContent({
 }: {
   /** 当前已经保存并实际应用的调色板。 */
   appliedPalette: ThemePalette;
-  /** 当前已经保存并实际应用的背景纹路。 */
+  /** 当前已经保存并实际应用的背景纹理。 */
   appliedTexture: ThemeConfig["texture"];
   /** 页面打开时使用的主题配置。 */
   initialTheme: ThemeConfig;
@@ -127,14 +138,28 @@ function ThemeSettingsContent({
     resolvedMode,
   );
 
+  useEffect(() => {
+    router.prefetch("/home");
+  }, [router]);
+
+  /** 返回首页，来自首页进入主题页时优先复用浏览器历史，避免重新拉取动态首页。 */
+  function returnHome() {
+    const shouldReuseHomeHistory =
+      window.sessionStorage.getItem(themeReturnMarkerKey) === "true";
+
+    if (shouldReuseHomeHistory) {
+      window.sessionStorage.removeItem(themeReturnMarkerKey);
+      router.back();
+      return;
+    }
+
+    router.replace("/home");
+  }
+
   /** 切换显示模式，参数 mode 为浅色、深色或系统。 */
   function changeMode(mode: ThemeMode) {
     setDraftTheme((current) => ({
       ...current,
-      dark:
-        mode === "dark" || mode === "system" ? DARK_THEMES[0] : current.dark,
-      light:
-        mode === "light" || mode === "system" ? LIGHT_THEMES[0] : current.light,
       mode,
     }));
   }
@@ -190,7 +215,10 @@ function ThemeSettingsContent({
             "--theme-page-button-text": appliedButtonText,
             "--theme-page-color": appliedPalette.color,
             "--theme-page-text": appliedPalette.text,
-            "--theme-page-text-muted": `${appliedPalette.text}b3`,
+            "--theme-page-text-muted": withColorAlpha(
+              appliedPalette.text,
+              0.7,
+            ),
             "--app-shell-bg": appliedShellBackground,
             "--app-texture-color": appliedPalette.color,
             "--app-texture-text": appliedPalette.text,
@@ -198,12 +226,6 @@ function ThemeSettingsContent({
         }
       >
         <header className="theme-settings-header">
-          <Button
-            className="theme-settings-icon-button"
-            aria-label="返回首页"
-            icon={<ArrowLeftOutlined />}
-            onClick={() => router.push("/home")}
-          />
           <div>
             <Typography.Title className="m-0! theme-settings-title" level={4}>
               主题设置
@@ -212,15 +234,23 @@ function ThemeSettingsContent({
               使用浅色、深色，或匹配系统设置
             </Typography.Text>
           </div>
-          <Button
-            className="theme-settings-save"
-            icon={<SaveOutlined />}
-            loading={isSaving}
-            onClick={saveTheme}
-            type="primary"
-          >
-            保存
-          </Button>
+          <div className="theme-settings-header-actions">
+            <Button
+              aria-label="返回首页"
+              className="theme-settings-icon-button"
+              icon={<ArrowLeftOutlined />}
+              onClick={returnHome}
+            />
+            <Button
+              className="theme-settings-save"
+              icon={<SaveOutlined />}
+              loading={isSaving}
+              onClick={saveTheme}
+              type="primary"
+            >
+              保存
+            </Button>
+          </div>
         </header>
 
         <main className="theme-settings-main flex-1">
@@ -327,7 +357,9 @@ function ThemeSettingsContent({
               </div>
               <div
                 className="theme-live-preview-search"
-                style={{ borderColor: `${previewPalette.text}2e` }}
+                style={{
+                  borderColor: withColorAlpha(previewPalette.text, 0.18),
+                }}
               >
                 输入框 / 搜索状态
               </div>
@@ -346,7 +378,7 @@ function ThemeSettingsContent({
                 <button
                   className="theme-live-preview-ghost-button"
                   style={{
-                    borderColor: `${previewPalette.text}33`,
+                    borderColor: withColorAlpha(previewPalette.text, 0.2),
                     color: previewPalette.text,
                   }}
                   type="button"
@@ -369,7 +401,7 @@ function ThemeSettingsContent({
                       backgroundColor:
                         index === 1
                           ? previewPalette.color
-                          : `${previewPalette.text}18`,
+                          : withColorAlpha(previewPalette.text, 0.09),
                       color:
                         index === 1 ? previewAccentText : previewPalette.text,
                     }}
@@ -380,7 +412,9 @@ function ThemeSettingsContent({
               </div>
               <div
                 className="theme-live-preview-list-row"
-                style={{ borderColor: `${previewPalette.text}24` }}
+                style={{
+                  borderColor: withColorAlpha(previewPalette.text, 0.14),
+                }}
               >
                 <span style={{ backgroundColor: previewPalette.color }} />
                 <strong>列表行 / 卡片边框</strong>
@@ -443,7 +477,7 @@ function ThemePanel({
               onClick={() => selectTheme(option.name)}
               style={{
                 backgroundColor: option.bg,
-                borderColor: isSelected ? option.color : `${option.text}33`,
+                borderColor: isSelected ? option.color : `${option.text}`,
                 color: option.text,
               }}
               type="button"
@@ -477,10 +511,11 @@ function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
         ...value[mode],
         [field]: nextValue,
       },
+      mode,
     });
   }
 
-  /** 修改背景纹路，参数 texture 为用户选择的纹路类型。 */
+  /** 修改背景纹理，参数 texture 为用户选择的纹理类型。 */
   function changeTexture(texture: ThemeConfig["texture"]) {
     onChange({
       ...value,
@@ -597,11 +632,13 @@ function CustomColorInput({
           onChange={(event) => onChange(event.target.value)}
           value={value}
         />
-        <input
+        <ColorPicker
           aria-label={`自定义${label}`}
           className="theme-custom-picker"
-          onChange={(event) => onChange(event.target.value)}
-          type="color"
+          disabledAlpha={false}
+          format="rgb"
+          onChange={(_, css) => onChange(css)}
+          showText
           value={value}
         />
       </span>
@@ -622,25 +659,4 @@ function ThemeIcon({ palette }: { /** 调色板。 */ palette: ThemePalette }) {
       Aa
     </span>
   );
-}
-
-/** 查找与当前调色板完全匹配的主题，参数 options 为主题列表，value 为当前调色板。 */
-function findThemeOption(options: ThemeOption[], value: ThemePalette) {
-  return options.find(
-    (option) =>
-      option.bg === value.bg &&
-      option.color === value.color &&
-      option.text === value.text,
-  );
-}
-
-/** 根据背景色计算可读文字色，参数 color 为十六进制颜色。 */
-function getReadableTextColor(color: string) {
-  const normalizedColor = color.replace("#", "");
-  const red = Number.parseInt(normalizedColor.slice(0, 2), 16);
-  const green = Number.parseInt(normalizedColor.slice(2, 4), 16);
-  const blue = Number.parseInt(normalizedColor.slice(4, 6), 16);
-  const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
-
-  return brightness > 150 ? "#252833" : "#ffffff";
 }

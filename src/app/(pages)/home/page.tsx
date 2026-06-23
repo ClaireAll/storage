@@ -4,12 +4,13 @@ import {
   isThemeMode,
 } from "@/app/(pages)/theme/constants";
 import type { ThemeDatabaseRow } from "@/app/(pages)/theme/types";
+import { createClient } from "@/utils/supabase/server";
 import { auth } from "../../../../auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
-export const dynamic = "force-dynamic";
+import type { ReactNode } from "react";
 
+export const dynamic = "force-dynamic";
 
 /** 首页使用的用户资料结构。 */
 type HomeProfile = {
@@ -21,8 +22,32 @@ type HomeProfile = {
   phone?: string | null;
 };
 
-/** 渲染主页壳，参数 activeCategoryHref 控制右侧内容区展示的分类。 */
-export async function renderHomePage(activeCategoryHref?: string) {
+type HomeContentLoaderContext = {
+  /** 当前登录用户 ID。 */
+  userId: string;
+  /** 当前请求使用的 Supabase 服务端客户端。 */
+  supabase: Awaited<ReturnType<typeof createClient>>;
+};
+
+type HomeContentResult = {
+  /** 当前分类物品数量。 */
+  itemCount?: number;
+  /** 当前分类页提供的内容区域。 */
+  content?: ReactNode;
+};
+
+type RenderHomePageOptions = {
+  /** 当前路由选中的分类路径。 */
+  activeCategoryHref?: string;
+  /** 分类页内容加载器，只应由具体分类页面传入。 */
+  loadContent?: (
+    context: HomeContentLoaderContext,
+  ) => Promise<HomeContentResult>;
+};
+
+/** 渲染主页壳，分类页可通过 loadContent 注入自己的内容区域。 */
+export async function renderHomePage(options: RenderHomePageOptions = {}) {
+  const { activeCategoryHref, loadContent } = options;
   const session = await auth();
 
   if (!session?.user) {
@@ -30,7 +55,10 @@ export async function renderHomePage(activeCategoryHref?: string) {
   }
 
   const supabase = await createClient();
-  const [{ data }, { data: themeData }] = await Promise.all([
+  const contentPromise: Promise<HomeContentResult> = loadContent
+    ? loadContent({ supabase, userId: session.user.id })
+    : Promise.resolve({});
+  const [profileResult, themeResult, contentResult] = await Promise.all([
     supabase
       .from("users")
       .select("name,phone,avatar")
@@ -43,21 +71,26 @@ export async function renderHomePage(activeCategoryHref?: string) {
       )
       .eq("id", session.user.id)
       .maybeSingle<ThemeDatabaseRow>(),
+    contentPromise,
   ]);
   const cookieStore = await cookies();
   const themeModeCookie = cookieStore.get("storage-theme-mode")?.value ?? "";
   const themeMode = isThemeMode(themeModeCookie) ? themeModeCookie : undefined;
+  const profile = profileResult.data;
 
   return (
     <HomePage
       activeCategoryHref={activeCategoryHref}
-      initialTheme={getThemeConfigFromRow(themeData, themeMode)}
+      initialTheme={getThemeConfigFromRow(themeResult.data, themeMode)}
+      itemCount={contentResult.itemCount ?? 0}
       user={{
-        avatar: data?.avatar ?? null,
-        name: data?.name ?? session.user.name,
-        phone: data?.phone ?? session.user.phone,
+        avatar: profile?.avatar ?? null,
+        name: profile?.name ?? session.user.name,
+        phone: profile?.phone ?? session.user.phone,
       }}
-    />
+    >
+      {contentResult.content}
+    </HomePage>
   );
 }
 

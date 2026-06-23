@@ -1,7 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
+import { pick, randomFloat, randomInt } from "./theme-utils";
 import type { ThemeTexture } from "./types";
 
 type GeometryShape = "circle" | "diamond" | "square" | "triangle";
@@ -103,8 +105,6 @@ export function ThemeGeometryTexture({
       return;
     }
 
-    let frameId = 0;
-
     function removeItemsAboveTop() {
       const containerTop =
         containerRef.current?.getBoundingClientRect().top ?? 0;
@@ -123,13 +123,11 @@ export function ThemeGeometryTexture({
         );
         completedItemIds.forEach((itemId) => itemRefs.current.delete(itemId));
       }
-
-      frameId = requestAnimationFrame(removeItemsAboveTop);
     }
 
-    frameId = requestAnimationFrame(removeItemsAboveTop);
+    const cleanupTimer = window.setInterval(removeItemsAboveTop, 420);
 
-    return () => cancelAnimationFrame(frameId);
+    return () => window.clearInterval(cleanupTimer);
   }, [texture]);
 
   if (texture !== "geometry") {
@@ -139,7 +137,7 @@ export function ThemeGeometryTexture({
   return (
     <div
       aria-hidden="true"
-      className={cnGeometry("theme-geometry-texture", className, {
+      className={cn("theme-geometry-texture", className, {
         "theme-geometry-texture-preview": variant === "preview",
       })}
       ref={containerRef}
@@ -147,7 +145,7 @@ export function ThemeGeometryTexture({
     >
       {items.map((item) => (
         <span
-          className={cnGeometry(
+          className={cn(
             "theme-geometry-item",
             `theme-geometry-${item.shape}`,
           )}
@@ -227,37 +225,4 @@ function createGeometryItem(
 
 function randomSidePosition() {
   return randomInt(0, 100);
-}
-
-function pick<T>(values: T[]): T {
-  return values[randomInt(0, values.length - 1)];
-}
-
-function randomFloat(min: number, max: number, digits = 1) {
-  const value = min + Math.random() * (max - min);
-  return Number(value.toFixed(digits));
-}
-
-function randomInt(min: number, max: number) {
-  return Math.floor(min + Math.random() * (max - min + 1));
-}
-
-function cnGeometry(
-  ...values: Array<string | Record<string, boolean> | undefined>
-) {
-  return values
-    .flatMap((value) => {
-      if (!value) {
-        return [];
-      }
-
-      if (typeof value === "string") {
-        return [value];
-      }
-
-      return Object.entries(value)
-        .filter(([, isEnabled]) => isEnabled)
-        .map(([className]) => className);
-    })
-    .join(" ");
 }

@@ -2,6 +2,12 @@
 
 import { App as AntApp, ConfigProvider, theme as antdTheme } from "antd";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  isThemeConfig,
+  themeConfigCacheKey,
+  themeConfigChangeEventName,
+} from "./constants";
+import { getReadableTextColor } from "./theme-utils";
 import type {
   ResolvedThemeMode,
   ThemeConfig,
@@ -21,13 +27,19 @@ type ThemeProviderProps = {
 };
 
 export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
-  const [themeConfig, setThemeConfig] = useState(initialTheme);
+  const [themeConfig, setThemeConfig] = useState(
+    () => getCachedThemeConfig() ?? initialTheme,
+  );
   const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
   const resolvedMode =
     themeConfig.mode === "system" ? systemMode : themeConfig.mode;
   const activePalette = useMemo(
     () => themeConfig[resolvedMode],
     [resolvedMode, themeConfig],
+  );
+  const primaryTextColor = useMemo(
+    () => getReadableTextColor(activePalette.color),
+    [activePalette.color],
   );
   const isDark = resolvedMode === "dark";
 
@@ -45,6 +57,45 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const syncCachedThemeConfig = () => {
+      const cachedConfig = getCachedThemeConfig();
+
+      if (!cachedConfig) {
+        return;
+      }
+
+      setThemeConfig((currentConfig) =>
+        areThemeConfigsEqual(currentConfig, cachedConfig)
+          ? currentConfig
+          : cachedConfig,
+      );
+    };
+    const syncVisibleThemeConfig = () => {
+      if (document.visibilityState === "visible") {
+        syncCachedThemeConfig();
+      }
+    };
+
+    window.addEventListener(themeConfigChangeEventName, syncCachedThemeConfig);
+    window.addEventListener("pageshow", syncCachedThemeConfig);
+    document.addEventListener("visibilitychange", syncVisibleThemeConfig);
+
+    return () => {
+      window.removeEventListener(
+        themeConfigChangeEventName,
+        syncCachedThemeConfig,
+      );
+      window.removeEventListener("pageshow", syncCachedThemeConfig);
+      document.removeEventListener("visibilitychange", syncVisibleThemeConfig);
+    };
+  }, []);
+
+  useEffect(() => {
+    cacheThemeConfig(themeConfig);
+  }, [themeConfig]);
+
+  /** 保存并更新主题配置，参数 nextConfig 为用户提交的新主题。 */
   async function updateTheme(nextConfig: ThemeConfig) {
     const response = await fetch("/api/theme", {
       body: JSON.stringify(nextConfig),
@@ -77,6 +128,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
           colorLinkHover: activePalette.color,
           colorPrimary: activePalette.color,
           colorTextBase: activePalette.text,
+          colorTextLightSolid: primaryTextColor,
         },
       }}
     >
@@ -90,4 +142,44 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
       </AntApp>
     </ConfigProvider>
   );
+}
+
+/** 判断两份主题配置是否一致，参数 currentConfig 与 nextConfig 为待比较的配置。 */
+function areThemeConfigsEqual(
+  currentConfig: ThemeConfig,
+  nextConfig: ThemeConfig,
+) {
+  return JSON.stringify(currentConfig) === JSON.stringify(nextConfig);
+}
+
+/** 读取浏览器缓存中的主题配置。 */
+function getCachedThemeConfig() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const cachedValue = window.sessionStorage.getItem(themeConfigCacheKey);
+
+  if (!cachedValue) {
+    return null;
+  }
+
+  try {
+    const parsedConfig = JSON.parse(cachedValue) as unknown;
+
+    return isThemeConfig(parsedConfig) ? parsedConfig : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 缓存主题配置，参数 config 为当前已经生效的主题配置。 */
+function cacheThemeConfig(config: ThemeConfig) {
+  const serializedConfig = encodeURIComponent(JSON.stringify(config));
+
+  window.sessionStorage.setItem(themeConfigCacheKey, JSON.stringify(config));
+  document.cookie = `${themeConfigCacheKey}=${serializedConfig}; Max-Age=${
+    60 * 60 * 24 * 365
+  }; Path=/; SameSite=Lax`;
+  window.dispatchEvent(new Event(themeConfigChangeEventName));
 }

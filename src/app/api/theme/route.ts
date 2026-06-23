@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   getThemeRowFromConfig,
   isThemeConfig,
+  themeConfigCacheKey,
 } from "@/app/(pages)/theme/constants";
 import { createClient } from "@/utils/supabase/server";
 import { auth } from "../../../../auth";
@@ -42,6 +43,16 @@ export async function POST(request: Request) {
     path: "/",
     sameSite: "lax",
   });
+  response.cookies.set(
+    themeConfigCacheKey,
+    encodeURIComponent(JSON.stringify(payload)),
+    {
+      httpOnly: false,
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+      sameSite: "lax",
+    },
+  );
 
   return response;
 }
