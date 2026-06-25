@@ -124,6 +124,15 @@ ALIYUN_OSS_PUBLIC_BASE_URL=
 缓存时间：600 秒
 ```
 
+## 样式编辑准则
+
+- 布局、间距、尺寸、显隐状态优先使用 Tailwind CSS；Ant Design 组件深度样式、主题变量、复杂选择器、动画和背景特效再放到 Less。
+- Tailwind 任意值优先使用具体工具类写法，避免不必要的任意属性写法。例如颜色边框使用 `border-[color-mix(...)]`，颜色背景使用 `bg-[color-mix(...)]`，文字颜色使用 `text-[rgb(...)]`。
+- Tailwind 任意值中的透明度直接使用 `/`，避免写成下划线包裹斜杠的转义形式。例如渐变背景使用 `bg-[linear-gradient(180deg,transparent,rgb(0_0_0/64%))]`，半透明背景使用 `bg-[rgb(127_127_127/10%)]`。
+- Ant Design 组件的固定宽高、图标颜色、hover/focus 状态统一放在对应 Less 中维护，不在 TSX 里叠加带 important 的尺寸类做临时覆盖。
+- 主题相关颜色优先使用 `var(--home-theme-*)`、`var(--clothes-create-theme-color)` 和 `color-mix()`，避免随手增加不跟随主题的灰色。
+- 修改视觉问题时先确认根因，保持改动范围小，不为了压过样式而连续堆叠覆盖规则。
+
 ## 工程结构说明
 
 当前项目按 Next.js 路由入口、页面功能模块、服务端接口、通用工具和静态资源分层。下面说明当前仓库中主要文件的用途；`.next/`、`node_modules/`、`tsconfig.tsbuildinfo` 等生成文件不纳入维护清单。

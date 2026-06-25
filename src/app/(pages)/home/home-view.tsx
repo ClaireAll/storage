@@ -1,6 +1,7 @@
 "use client";
 
 import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-modal";
+import type { ClothesItem } from "@/app/(pages)/home/clothes/clothes-type";
 import { HomeDashboard } from "@/app/(pages)/home/home-dashboard";
 import { ThemeTexturePublisher } from "@/app/(pages)/theme/shared-theme-texture";
 import { ThemeControl } from "@/app/(pages)/theme/theme-control";
@@ -32,8 +33,32 @@ import {
 } from "./home-profile";
 
 type HomeContentActions = {
-  /** 打开当前分类可用的新增衣服弹窗。 */
+  /** 打开当前分类可用的新增物品弹窗。 */
   openClothesCreateModal: () => void;
+  /** 打开当前分类可用的编辑物品弹窗。 */
+  openClothesEditModal: (item: ClothesItem) => void;
+};
+
+type ItemCategoryConfig = {
+  /** 新增和编辑接口地址。 */
+  apiPath: string;
+  /** 物品名称。 */
+  itemLabel: string;
+  /** OSS 上传目录。 */
+  uploadDirectory: "clothes" | "pants";
+};
+
+const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
+  "/home/clothes": {
+    apiPath: "/api/clothes",
+    itemLabel: "衣服",
+    uploadDirectory: "clothes",
+  },
+  "/home/pants": {
+    apiPath: "/api/pants",
+    itemLabel: "裤子",
+    uploadDirectory: "pants",
+  },
 };
 
 const HomeContentActionsContext = createContext<HomeContentActions | null>(
@@ -76,12 +101,23 @@ export default function HomePage({
   const profileEditor = useHomeProfile(user);
   const [isClothesCreateModalOpen, setIsClothesCreateModalOpen] =
     useState(false);
+  const [editingClothes, setEditingClothes] = useState<ClothesItem | null>(
+    null,
+  );
   const [visibleCategoryHrefs, setVisibleCategoryHrefs] = useState(() =>
     homeCategories.map((category) => category.href),
   );
   const isAllCategoriesVisible =
     visibleCategoryHrefs.length === homeCategories.length;
-  const isClothesPage = activeCategoryHref === "/home/clothes";
+  const activeItemCategory = activeCategoryHref
+    ? itemCategoryConfigs[activeCategoryHref]
+    : undefined;
+  const activeCategory = homeCategories.find(
+    (category) => category.href === activeCategoryHref,
+  );
+  const emptyDescription = activeCategory
+    ? `${activeCategory.label}分类暂未添加内容`
+    : "请选择左侧分类";
 
   /** 切换分类复选按钮，并控制左侧分类列表显示哪些项。 */
   function toggleCategoryVisible(categoryHref: string) {
@@ -101,15 +137,30 @@ export default function HomePage({
     );
   }
 
-  /** 打开衣服新增弹窗，仅衣服分类页可用。 */
+  /** 打开当前分类新增弹窗，仅支持已经开发的物品分类。 */
   function openClothesCreateModal() {
-    if (isClothesPage) {
+    if (activeItemCategory) {
+      setEditingClothes(null);
       setIsClothesCreateModalOpen(true);
     }
   }
 
-  /** 衣服新增成功后刷新当前路由，让服务端读取到最新物品列表。 */
-  function refreshClothesAfterCreated() {
+  /** 打开当前分类编辑弹窗，仅支持已经开发的物品分类。 */
+  function openClothesEditModal(item: ClothesItem) {
+    if (activeItemCategory) {
+      setEditingClothes(item);
+      setIsClothesCreateModalOpen(true);
+    }
+  }
+
+  /** 关闭衣服编辑弹窗并清理编辑对象。 */
+  function closeClothesModal() {
+    setIsClothesCreateModalOpen(false);
+    setEditingClothes(null);
+  }
+
+  /** 物品保存成功后刷新当前路由，让服务端读取到最新物品列表。 */
+  function refreshClothesAfterSaved() {
     router.refresh();
   }
 
@@ -145,7 +196,7 @@ export default function HomePage({
 
           return (
             <HomeContentActionsContext.Provider
-              value={{ openClothesCreateModal }}
+              value={{ openClothesCreateModal, openClothesEditModal }}
             >
               <ThemeShellBackground color={homeShellBackground} />
               <ThemeTexturePublisher
@@ -156,7 +207,7 @@ export default function HomePage({
               />
               <Layout
                 className={cn(
-                  "app-shell app-textured-shell home-shell flex h-dvh min-h-dvh flex-1 flex-col overflow-hidden",
+                  "app-shell app-textured-shell home-shell flex h-dvh min-h-dvh flex-1 flex-col overflow-hidden max-[900px]:!h-auto max-[900px]:min-h-dvh max-[900px]:overflow-visible",
                   isDark ? "bg-neutral-950" : "bg-neutral-100",
                   `theme-${resolvedMode}`,
                   `app-texture-${themeConfig.texture}`,
@@ -177,7 +228,7 @@ export default function HomePage({
                 }
               >
                 <header
-                  className="home-header flex shrink-0 items-center justify-between gap-4 border-b px-8 py-2 max-md:flex-col max-md:items-start max-md:p-5"
+                  className="flex shrink-0 items-center justify-between gap-4 border-b px-8 py-2 max-md:flex-col max-md:items-start max-md:p-5"
                   style={{
                     backgroundColor: homeHeaderBackground,
                     borderBottomColor: homeBorderColor,
@@ -201,7 +252,7 @@ export default function HomePage({
                   <Space wrap>
                     <Button icon={<SearchOutlined />}>搜索</Button>
                     <Button
-                      disabled={!isClothesPage}
+                      disabled={!activeItemCategory}
                       icon={<PlusOutlined />}
                       onClick={openClothesCreateModal}
                       type="primary"
@@ -223,9 +274,9 @@ export default function HomePage({
                   visibleCategoryHrefs={visibleCategoryHrefs}
                 >
                   {children ?? (
-                    <div className="home-content-empty">
+                    <div className="flex min-h-0 flex-1 items-center justify-center">
                       <Empty
-                        description="请选择左侧分类"
+                        description={emptyDescription}
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                       />
                     </div>
@@ -237,10 +288,16 @@ export default function HomePage({
                   palette={activePalette}
                 />
                 <ClothesCreateModal
-                  onClose={() => setIsClothesCreateModalOpen(false)}
-                  onCreated={refreshClothesAfterCreated}
+                  apiPath={activeItemCategory?.apiPath ?? "/api/clothes"}
+                  editingClothes={editingClothes}
+                  itemLabel={activeItemCategory?.itemLabel}
+                  onClose={closeClothesModal}
+                  onSaved={refreshClothesAfterSaved}
                   open={isClothesCreateModalOpen}
                   themeColor={activePalette.color}
+                  uploadDirectory={
+                    activeItemCategory?.uploadDirectory ?? "clothes"
+                  }
                 />
               </Layout>
             </HomeContentActionsContext.Provider>

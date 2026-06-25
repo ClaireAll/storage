@@ -1,8 +1,18 @@
 import { useRef, useState, type PointerEvent } from "react";
+import { pinyin } from "pinyin-pro";
 
 const cropSize = 800;
 const cropPreviewSize = 260;
 const hexColorPattern = /^#[0-9a-fA-F]{6}$/;
+const clothesSeasonSeparatorPattern = /\s+/;
+
+/** 名称搜索匹配结果。 */
+export type ClothesNameSearchMatch = {
+  /** 是否命中名称。 */
+  matched: boolean;
+  /** 名称中被命中的字符下标。 */
+  highlightIndexes: Set<number>;
+};
 
 /** 图片裁剪参数。 */
 export type ImageCropOptions = {
@@ -72,6 +82,152 @@ export function isHexColor(color: string) {
   return hexColorPattern.test(color);
 }
 
+/** 将衣服季节字符串拆成数组，兼容旧的单季节数据。 */
+export function parseClothesSeasons(season: string) {
+  return season
+    .trim()
+    .split(clothesSeasonSeparatorPattern)
+    .filter(Boolean);
+}
+
+/** 将衣服季节数组格式化为数据库存储字符串。 */
+export function formatClothesSeasons(seasons: string[]) {
+  return Array.from(new Set(seasons.map((season) => season.trim()).filter(Boolean)))
+    .join(" ");
+}
+
+/** 规范化搜索关键字，忽略空格和大小写。 */
+function normalizeSearchText(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, "");
+}
+
+/** 将字符串按字符拆分，避免中文字符索引错位。 */
+function splitSearchChars(value: string) {
+  return Array.from(value);
+}
+
+/** 标记普通字符串命中的字符范围。 */
+function markDirectMatchIndexes(source: string, keyword: string) {
+  const highlightIndexes = new Set<number>();
+  const sourceChars = splitSearchChars(source);
+  const keywordChars = splitSearchChars(keyword);
+
+  if (!keywordChars.length) {
+    return highlightIndexes;
+  }
+
+  const sourceText = sourceChars.join("").toLowerCase();
+  const keywordText = keywordChars.join("").toLowerCase();
+  const matchIndex = sourceText.indexOf(keywordText);
+
+  if (matchIndex === -1) {
+    return highlightIndexes;
+  }
+
+  for (let index = matchIndex; index < matchIndex + keywordChars.length; index += 1) {
+    highlightIndexes.add(index);
+  }
+
+  return highlightIndexes;
+}
+
+/** 在拼音字符串中查找命中范围，并映射回原名称字符。 */
+function markPinyinMatchIndexes(
+  pinyinText: string,
+  pinyinCharIndexes: number[],
+  keyword: string,
+) {
+  const highlightIndexes = new Set<number>();
+  const matchIndex = pinyinText.indexOf(keyword);
+
+  if (matchIndex === -1) {
+    return highlightIndexes;
+  }
+
+  for (let index = matchIndex; index < matchIndex + keyword.length; index += 1) {
+    const sourceIndex = pinyinCharIndexes[index];
+
+    if (sourceIndex !== undefined) {
+      highlightIndexes.add(sourceIndex);
+    }
+  }
+
+  return highlightIndexes;
+}
+
+/** 判断衣服名称是否命中搜索关键字，支持中文、全拼和首字母。 */
+export function matchClothesNameSearch(
+  name: string,
+  keyword: string,
+): ClothesNameSearchMatch {
+  const normalizedKeyword = normalizeSearchText(keyword);
+  const directHighlightIndexes = markDirectMatchIndexes(name, keyword.trim());
+
+  if (!normalizedKeyword) {
+    return {
+      highlightIndexes: new Set(),
+      matched: true,
+    };
+  }
+
+  if (directHighlightIndexes.size) {
+    return {
+      highlightIndexes: directHighlightIndexes,
+      matched: true,
+    };
+  }
+
+  const nameChars = splitSearchChars(name);
+  const pinyinTokens = pinyin(name, {
+    toneType: "none",
+    type: "array",
+  }) as string[];
+  const fullPinyinChars: string[] = [];
+  const fullPinyinCharIndexes: number[] = [];
+  const initialChars: string[] = [];
+  const initialCharIndexes: number[] = [];
+
+  pinyinTokens.forEach((token, tokenIndex) => {
+    const normalizedToken = normalizeSearchText(token);
+
+    if (!normalizedToken) {
+      return;
+    }
+
+    initialChars.push(normalizedToken[0]);
+    initialCharIndexes.push(tokenIndex);
+
+    splitSearchChars(normalizedToken).forEach((char) => {
+      fullPinyinChars.push(char);
+      fullPinyinCharIndexes.push(tokenIndex);
+    });
+  });
+
+  const fullPinyinMatchIndexes = markPinyinMatchIndexes(
+    fullPinyinChars.join(""),
+    fullPinyinCharIndexes,
+    normalizedKeyword,
+  );
+
+  if (fullPinyinMatchIndexes.size) {
+    return {
+      highlightIndexes: fullPinyinMatchIndexes,
+      matched: true,
+    };
+  }
+
+  const initialMatchIndexes = markPinyinMatchIndexes(
+    initialChars.join(""),
+    initialCharIndexes,
+    normalizedKeyword,
+  );
+
+  return {
+    highlightIndexes: initialMatchIndexes,
+    matched: initialMatchIndexes.size > 0 || nameChars.join("").toLowerCase().includes(normalizedKeyword),
+  };
+}
+
 /** 从图片对象地址中提取平均颜色。 */
 export function extractAverageColor(imageUrl: string) {
   return new Promise<string>((resolve, reject) => {
@@ -80,48 +236,27 @@ export function extractAverageColor(imageUrl: string) {
     image.onload = () => {
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d", { willReadFrequently: true });
-      const size = 80;
 
       if (!context) {
         reject(new Error("无法读取图片颜色"));
         return;
       }
 
-      canvas.width = size;
-      canvas.height = size;
-      context.drawImage(image, 0, 0, size, size);
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      context.drawImage(image, 0, 0);
 
-      const { data } = context.getImageData(0, 0, size, size);
-      let red = 0;
-      let green = 0;
-      let blue = 0;
-      let count = 0;
+      const centerX = Math.floor(image.naturalWidth / 2);
+      const centerY = Math.floor(image.naturalHeight / 2);
+      const { data } = context.getImageData(centerX, centerY, 1, 1);
+      const alpha = data[3];
 
-      for (let index = 0; index < data.length; index += 4) {
-        const alpha = data[index + 3];
-
-        if (alpha < 128) {
-          continue;
-        }
-
-        red += data[index];
-        green += data[index + 1];
-        blue += data[index + 2];
-        count += 1;
-      }
-
-      if (!count) {
+      if (alpha < 128) {
         reject(new Error("未识别到可用颜色"));
         return;
       }
 
-      resolve(
-        rgbToHex(
-          Math.round(red / count),
-          Math.round(green / count),
-          Math.round(blue / count),
-        ),
-      );
+      resolve(rgbToHex(data[0], data[1], data[2]));
     };
     image.onerror = () => reject(new Error("图片读取失败"));
     image.src = imageUrl;

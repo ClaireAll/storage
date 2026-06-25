@@ -27,7 +27,7 @@ export const heroCopyClassName =
 /** 登录页左侧说明标题的文字颜色样式。 */
 export const heroTitleClassName = "text-white!";
 /** 登录页左侧说明正文的字号和透明度样式。 */
-export const heroTextClassName = "text-base! [color:rgb(255_255_255/82%)]!";
+export const heroTextClassName = "text-base! text-[rgb(255_255_255/82%)]!";
 /** 登录页右侧登录卡片的宽度和阴影样式。 */
 export const loginCardClassName = "w-full max-w-[400px] border-0 shadow-none";
 /** 登录页右侧 Storage 品牌文字的样式。 */

@@ -10,6 +10,8 @@ export enum RequestType {
   GET = "GET",
   /** POST 请求。 */
   POST = "POST",
+  /** PUT 请求。 */
+  PUT = "PUT",
 }
 
 /** 公共请求方法的基础参数。 */
@@ -150,6 +152,20 @@ export function reqPost<T = unknown>(url: Url, opts: CrudReqOpts = {}) {
     params,
     responseType,
     type: RequestType.POST,
+    url: formatUrl(url),
+  });
+}
+
+/** 发送 PUT 请求，参数 url 为请求地址，opts 为请求体、查询参数、请求头和响应类型配置。 */
+export function reqPut<T = unknown>(url: Url, opts: CrudReqOpts = {}) {
+  const { data, headers = {}, params = {}, responseType } = opts;
+
+  return request<T>({
+    data,
+    headers,
+    params,
+    responseType,
+    type: RequestType.PUT,
     url: formatUrl(url),
   });
 }

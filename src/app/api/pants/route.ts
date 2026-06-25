@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 import { createClient } from "@/utils/supabase/server";
 
-/** 新增衣服接口接收的请求体结构。 */
-type ClothesCreatePayload = {
-  /** 衣服名字。 */
+/** 新增裤子接口接收的请求体结构。 */
+type PantsCreatePayload = {
+  /** 裤子名字。 */
   name?: string;
   /** 购买日期，格式为 yyyy-mm-dd。 */
   timeStamp?: string;
@@ -18,10 +18,29 @@ type ClothesCreatePayload = {
   season?: string;
 };
 
-/** 更新衣服接口接收的请求体结构。 */
-type ClothesUpdatePayload = ClothesCreatePayload & {
-  /** 衣服业务主键。 */
+/** 更新裤子接口接收的请求体结构。 */
+type PantsUpdatePayload = PantsCreatePayload & {
+  /** 裤子业务主键。 */
   c_id?: string | number;
+};
+
+type PantsDatabaseItem = {
+  /** 用户 ID。 */
+  id: string;
+  /** 裤子业务主键。 */
+  p_id: string | number;
+  /** 裤子名字。 */
+  name: string;
+  /** 购买日期。 */
+  timeStamp: string;
+  /** 价格。 */
+  price: number;
+  /** 颜色。 */
+  color: string;
+  /** 图片地址。 */
+  pic_url: string;
+  /** 季节。 */
+  season: string;
 };
 
 const seasons = ["春", "夏", "秋", "冬"];
@@ -44,7 +63,15 @@ function isValidSeasonValue(value: string) {
   return values.length > 0 && values.every((season) => seasons.includes(season));
 }
 
-/** 新增当前登录用户的一件衣服。 */
+/** 将 pants 表字段映射成前端复用的通用物品字段。 */
+function mapPantsResponse({ p_id, ...item }: PantsDatabaseItem) {
+  return {
+    ...item,
+    c_id: p_id,
+  };
+}
+
+/** 新增当前登录用户的一条裤子。 */
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -52,7 +79,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as ClothesCreatePayload;
+  const payload = (await request.json()) as PantsCreatePayload;
   const name = payload.name?.trim() ?? "";
   const timeStamp = payload.timeStamp?.trim() ?? "";
   const color = payload.color?.trim() ?? "";
@@ -64,7 +91,7 @@ export async function POST(request: Request) {
       : null;
 
   if (!name) {
-    return NextResponse.json({ message: "请输入衣服名字" }, { status: 400 });
+    return NextResponse.json({ message: "请输入裤子名字" }, { status: 400 });
   }
 
   if (!timeStamp || !isDateString(timeStamp)) {
@@ -76,11 +103,11 @@ export async function POST(request: Request) {
   }
 
   if (!color || !isHexColor(color)) {
-    return NextResponse.json({ message: "请选择衣服颜色" }, { status: 400 });
+    return NextResponse.json({ message: "请选择裤子颜色" }, { status: 400 });
   }
 
   if (!picUrl) {
-    return NextResponse.json({ message: "请上传衣服图片" }, { status: 400 });
+    return NextResponse.json({ message: "请上传裤子图片" }, { status: 400 });
   }
 
   if (!season || !isValidSeasonValue(season)) {
@@ -89,7 +116,7 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("clothes")
+    .from("pants")
     .insert({
       color,
       id: session.user.id,
@@ -99,17 +126,17 @@ export async function POST(request: Request) {
       season,
       timeStamp,
     })
-    .select("id,c_id,name,timeStamp,price,color,pic_url,season")
-    .single();
+    .select("id,p_id,name,timeStamp,price,color,pic_url,season")
+    .single<PantsDatabaseItem>();
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(mapPantsResponse(data));
 }
 
-/** 更新当前登录用户的一件衣服。 */
+/** 更新当前登录用户的一条裤子。 */
 export async function PUT(request: Request) {
   const session = await auth();
 
@@ -117,7 +144,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as ClothesUpdatePayload;
+  const payload = (await request.json()) as PantsUpdatePayload;
   const cId =
     typeof payload.c_id === "number" || typeof payload.c_id === "string"
       ? String(payload.c_id).trim()
@@ -133,11 +160,11 @@ export async function PUT(request: Request) {
       : null;
 
   if (!cId) {
-    return NextResponse.json({ message: "缺少衣服标识" }, { status: 400 });
+    return NextResponse.json({ message: "缺少裤子标识" }, { status: 400 });
   }
 
   if (!name) {
-    return NextResponse.json({ message: "请输入衣服名字" }, { status: 400 });
+    return NextResponse.json({ message: "请输入裤子名字" }, { status: 400 });
   }
 
   if (!timeStamp || !isDateString(timeStamp)) {
@@ -149,11 +176,11 @@ export async function PUT(request: Request) {
   }
 
   if (!color || !isHexColor(color)) {
-    return NextResponse.json({ message: "请选择衣服颜色" }, { status: 400 });
+    return NextResponse.json({ message: "请选择裤子颜色" }, { status: 400 });
   }
 
   if (!picUrl) {
-    return NextResponse.json({ message: "请上传衣服图片" }, { status: 400 });
+    return NextResponse.json({ message: "请上传裤子图片" }, { status: 400 });
   }
 
   if (!season || !isValidSeasonValue(season)) {
@@ -162,7 +189,7 @@ export async function PUT(request: Request) {
 
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("clothes")
+    .from("pants")
     .update({
       color,
       name,
@@ -172,13 +199,13 @@ export async function PUT(request: Request) {
       timeStamp,
     })
     .eq("id", session.user.id)
-    .eq("c_id", cId)
-    .select("id,c_id,name,timeStamp,price,color,pic_url,season")
-    .single();
+    .eq("p_id", cId)
+    .select("id,p_id,name,timeStamp,price,color,pic_url,season")
+    .single<PantsDatabaseItem>();
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(mapPantsResponse(data));
 }

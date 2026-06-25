@@ -60,8 +60,8 @@ export function HomeDashboard({
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
 
   return (
-    <main className="home-dashboard mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-5 px-8 pb-6 pt-6 max-md:p-5">
-      <section className="grid grid-cols-3 gap-4 max-md:grid-cols-1">
+    <main className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
+      <section className="grid shrink-0 grid-cols-3 gap-4 max-md:grid-cols-1">
         {homeStats.map((stat) => {
           const StatIcon = stat.Icon;
           const statValue = stat.label === "物品" ? itemCount : stat.value;
@@ -131,9 +131,9 @@ export function HomeDashboard({
         })}
       </section>
 
-      <section className="home-dashboard-content grid flex-1 grid-cols-[260px_minmax(0,1fr)] gap-6 max-md:grid-cols-1">
+      <section className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)] gap-6 max-[900px]:min-h-[520px] max-md:grid-cols-1">
         <aside
-          className="home-dashboard-sidebar home-soft-shadow h-full rounded-lg border p-4"
+          className="home-soft-shadow h-full min-h-0 overflow-hidden rounded-lg border p-4"
           style={surfaceStyle}
         >
           <Typography.Title level={5}>分类</Typography.Title>
@@ -146,9 +146,9 @@ export function HomeDashboard({
         </aside>
 
         <Card
-          className="home-content-panel-card home-soft-shadow flex h-full min-h-0"
+          className="home-soft-shadow flex h-full min-h-0 overflow-hidden"
           classNames={{
-            body: "flex h-full min-h-0 w-full",
+            body: "flex h-full min-h-0 w-full p-[18px]",
           }}
           style={surfaceStyle}
         >

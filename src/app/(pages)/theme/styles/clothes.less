@@ -116,17 +116,16 @@
   color: var(--clothes-create-theme-color) !important;
 }
 
-.clothes-gallery-toolbar {
+.clothes-create-season-checkboxes.ant-checkbox-group {
   display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  width: 200px;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  gap: 10px;
 }
 
-.clothes-gallery-search {
-  max-width: 360px;
+.clothes-create-season-checkboxes .ant-checkbox-wrapper {
+  margin-inline-start: 0 !important;
 }
 
 .clothes-gallery-search .ant-input-prefix,
@@ -136,11 +135,7 @@
 
 .clothes-gallery-search.ant-input-affix-wrapper {
   background: var(--home-theme-bg);
-  border-color: color-mix(
-    in srgb,
-    var(--home-theme-color) 32%,
-    transparent
-  );
+  border-color: color-mix(in srgb, var(--home-theme-color) 32%, transparent);
 }
 
 .clothes-gallery-search.ant-input-affix-wrapper:hover,
@@ -148,35 +143,284 @@
   border-color: var(--home-theme-color) !important;
 }
 
-.clothes-gallery-view-switch {
-  flex-shrink: 0;
+.clothes-gallery-filter-panel {
+  background: color-mix(in srgb, var(--home-theme-bg) 90%, #ffffff 10%);
+  border-color: color-mix(in srgb, var(--home-theme-color) 20%, transparent);
 }
 
-.clothes-gallery-view-option {
+.clothes-gallery-filter-label,
+.clothes-gallery-price-separator,
+.clothes-gallery-season-filter .ant-checkbox-wrapper {
+  color: var(--home-theme-text);
+}
+
+.clothes-gallery-filter-toggle.ant-btn {
+  background: color-mix(in srgb, var(--home-theme-bg) 96%, #ffffff 4%);
+  border-color: color-mix(in srgb, var(--home-theme-color) 28%, transparent);
+  color: var(--home-theme-text);
+}
+
+.clothes-gallery-filter-toggle.ant-btn:hover,
+.clothes-gallery-filter-toggle.ant-btn.is-active {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-color) 12%,
+    var(--home-theme-bg)
+  ) !important;
+  border-color: var(--home-theme-color) !important;
+  color: var(--home-theme-color) !important;
+}
+
+.clothes-gallery-filter-toggle .anticon,
+.clothes-gallery-filter-toggle .clothes-gallery-filter-count {
+  color: inherit;
+}
+
+.clothes-gallery-filter-details {
+  border-top: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 16%, transparent);
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(240px, 280px) 200px;
+  gap: 8px 10px;
+  padding-top: 10px;
+}
+
+.clothes-gallery-season-row,
+.clothes-gallery-price-row {
+  display: flex;
+  min-width: 0;
+  height: 32px;
+  align-items: center;
+}
+
+.clothes-gallery-season-row {
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.clothes-gallery-season-filter.ant-checkbox-group {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+.clothes-gallery-season-filter .ant-checkbox-wrapper {
+  margin-inline-start: 0 !important;
+  white-space: nowrap;
+}
+
+.clothes-gallery-price-row {
+  gap: 7px;
+  grid-column: 3;
+}
+
+.clothes-gallery-time-filter.ant-picker,
+.clothes-gallery-sort-select.ant-select {
+  width: 100%;
+  height: 32px;
+}
+
+.clothes-gallery-price-input.ant-input-number {
+  width: 70px;
+  height: 32px;
+}
+
+.clothes-gallery-filter-label {
+  flex: 0 0 auto;
+}
+
+.clothes-gallery-reset-button.ant-btn {
+  grid-column: 3;
+  justify-self: end;
+  height: 32px;
+  padding-inline: 8px;
+}
+
+.clothes-gallery-sort-select.ant-select {
+  grid-column: 1;
+  width: 260px;
+  max-width: 100%;
+  --theme-page-bg: var(--home-theme-bg);
+  --theme-page-color: color-mix(
+    in srgb,
+    var(--home-theme-text) 36%,
+    transparent
+  );
+  --theme-page-text: var(--home-theme-text);
+  --theme-texture-control-bg: var(--home-theme-bg);
+}
+
+.clothes-gallery-sort-popup {
+  --theme-page-bg: var(--home-theme-bg);
+  --theme-page-color: color-mix(
+    in srgb,
+    var(--home-theme-text) 36%,
+    transparent
+  );
+  --theme-page-text: var(--home-theme-text);
+  --theme-texture-control-bg: var(--home-theme-bg);
+}
+
+@media (max-width: 900px) {
+  .clothes-gallery-filter-details {
+    grid-template-columns: 1fr;
+  }
+
+  .clothes-gallery-time-filter.ant-picker,
+  .clothes-gallery-sort-select.ant-select {
+    max-width: 360px;
+  }
+
+  .clothes-gallery-price-row,
+  .clothes-gallery-reset-button.ant-btn {
+    grid-column: auto;
+    justify-self: start;
+  }
+}
+
+.clothes-gallery-card-edit-button.ant-btn-primary {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10;
   display: inline-flex;
+  width: 32px !important;
+  height: 32px;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  padding: 0;
+  border-radius: 50%;
+  color: rgb(255 255 255 / 92%) !important;
+  line-height: 1;
+  background: color-mix(
+    in srgb,
+    var(--home-theme-color) 72%,
+    transparent
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 72%,
+    transparent
+  ) !important;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgb(0 0 0 / 22%);
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
 }
 
-.clothes-gallery-filters {
+.clothes-gallery-card:hover .clothes-gallery-card-edit-button {
+  opacity: 0.86;
+}
+
+.clothes-gallery-card-edit-button .anticon {
+  display: inline-flex;
+  align-items: center;
+  color: rgb(255 255 255 / 92%);
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.clothes-gallery-card-edit-button .anticon svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.clothes-gallery-card-edit-button.ant-btn-primary:hover,
+.clothes-gallery-card-edit-button.ant-btn-primary:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-color) 82%,
+    transparent
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 82%,
+    transparent
+  ) !important;
+  opacity: 0.96;
+}
+
+.clothes-gallery-detail-list {
+  color: var(--home-theme-text);
   display: grid;
-  flex-shrink: 0;
-  grid-template-columns: minmax(240px, 1fr) minmax(220px, 0.8fr) 120px;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 2px;
+  align-content: start;
 }
 
-.clothes-gallery-time-filter,
-.clothes-gallery-season-filter,
-.clothes-gallery-price-filter {
+.clothes-gallery-detail-list-item {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--home-theme-text) 12%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--home-theme-bg) 92%, #ffffff 8%);
+}
+
+.clothes-gallery-detail-row {
+  display: grid;
   width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px;
+  line-height: 18px;
 }
 
-.clothes-gallery-price-filters {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.clothes-gallery-detail-name-cell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
   gap: 8px;
+}
+
+.clothes-gallery-detail-color {
+  width: 10px;
+  height: 10px;
+  border: 1px solid color-mix(in srgb, var(--home-theme-text) 18%, transparent);
+  border-radius: 50%;
+}
+
+.clothes-gallery-detail-name {
+  color: var(--home-theme-text);
+  overflow: hidden;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clothes-gallery-detail-meta {
+  color: color-mix(in srgb, var(--home-theme-text) 62%, transparent);
+  overflow: hidden;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clothes-gallery-name-highlight {
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--home-theme-color) 36%, transparent);
+  color: rgb(255 255 255 / 94%);
+}
+
+.clothes-gallery-filter-count {
+  color: color-mix(in srgb, var(--home-theme-text) 58%, transparent);
+  font-size: 12px;
+}
+
+.clothes-gallery-reset-button:not(:disabled) {
+  color: var(--home-theme-color);
+}
+
+.clothes-gallery-reset-button:not(:disabled):hover {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-color) 12%,
+    transparent
+  ) !important;
+  color: var(--home-theme-color) !important;
 }
 
 .clothes-gallery-filters
@@ -190,114 +434,31 @@
   color: var(--home-theme-text) !important;
 }
 
+.clothes-gallery-filters .ant-select-arrow,
+.clothes-gallery-filters .ant-select-selection-item,
+.clothes-gallery-filters .ant-select-selection-placeholder {
+  color: var(--home-theme-text) !important;
+}
+
 .clothes-gallery-filters
   :is(.ant-picker:hover, .ant-select-selector:hover, .ant-input-number:hover),
 .clothes-gallery-filters
-  :is(.ant-picker-focused, .ant-select-focused .ant-select-selector, .ant-input-number-focused) {
+  :is(
+    .ant-picker-focused,
+    .ant-select-focused .ant-select-selector,
+    .ant-input-number-focused
+  ) {
   border-color: var(--home-theme-color) !important;
 }
 
-.clothes-gallery-content {
-  flex: 1;
-  min-height: 0;
+.clothes-gallery-filters .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--home-theme-color);
+  border-color: var(--home-theme-color);
 }
 
-.clothes-gallery-card-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.clothes-gallery-card {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  min-height: 0;
-  overflow: hidden;
-  border: 1px solid
-    color-mix(in srgb, var(--home-theme-text) 14%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--home-theme-bg) 92%, #ffffff 8%);
-}
-
-.clothes-gallery-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.clothes-gallery-card-name {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: flex-end;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 10px;
-  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 64%));
-}
-
-.clothes-gallery-card-name .ant-typography {
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.clothes-gallery-detail-list {
-  display: grid;
-  grid-template-rows: repeat(8, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.clothes-gallery-detail-row {
-  display: grid;
-  grid-template-columns: 12px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-height: 0;
-  border: 1px solid
-    color-mix(in srgb, var(--home-theme-text) 12%, transparent);
-  border-radius: 8px;
-  padding: 0 12px;
-}
-
-.clothes-gallery-detail-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.clothes-gallery-detail-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.clothes-gallery-empty {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
-}
-
-.clothes-gallery-empty-action {
-  border: 0;
-  background: transparent;
-  color: var(--home-theme-color);
-  cursor: pointer;
-}
-
-.clothes-gallery-pagination {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: flex-end;
-  padding-top: 12px;
+.clothes-gallery-filters .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.clothes-gallery-filters .ant-checkbox:hover .ant-checkbox-inner {
+  border-color: var(--home-theme-color) !important;
 }
 
 .clothes-gallery-pagination .ant-pagination-item-active {
@@ -306,25 +467,4 @@
 
 .clothes-gallery-pagination .ant-pagination-item-active a {
   color: var(--home-theme-color);
-}
-
-@media (max-width: 900px) {
-  .clothes-gallery-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .clothes-gallery-filters {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .clothes-gallery-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .clothes-gallery-search {
-    max-width: none;
-  }
 }

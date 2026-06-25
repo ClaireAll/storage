@@ -36,7 +36,6 @@ import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { ThemeProvider } from "./theme-provider";
 import { ThemeShellBackground } from "./theme-shell-background";
 import {
-  getReadableTextColor,
   getThemeShellBackground,
   withColorAlpha,
 } from "./theme-utils";
@@ -131,7 +130,6 @@ function ThemeSettingsContent({
   const previewMode =
     draftTheme.mode === "system" ? resolvedMode : draftTheme.mode;
   const previewPalette = draftTheme[previewMode];
-  const appliedButtonText = getReadableTextColor(appliedPalette.color);
   const previewAccentText = previewPalette.bg;
   const appliedShellBackground = getThemeShellBackground(
     appliedPalette,
@@ -212,20 +210,17 @@ function ThemeSettingsContent({
             "--theme-preview-color": previewPalette.color,
             "--theme-preview-text": previewPalette.text,
             "--theme-page-bg": appliedPalette.bg,
-            "--theme-page-button-text": appliedButtonText,
+            "--theme-page-button-text": "rgb(255 255 255 / 92%)",
             "--theme-page-color": appliedPalette.color,
             "--theme-page-text": appliedPalette.text,
-            "--theme-page-text-muted": withColorAlpha(
-              appliedPalette.text,
-              0.7,
-            ),
+            "--theme-page-text-muted": withColorAlpha(appliedPalette.text, 0.7),
             "--app-shell-bg": appliedShellBackground,
             "--app-texture-color": appliedPalette.color,
             "--app-texture-text": appliedPalette.text,
           } as React.CSSProperties
         }
       >
-        <header className="theme-settings-header">
+        <header className="theme-settings-header grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
           <div>
             <Typography.Title className="m-0! theme-settings-title" level={4}>
               主题设置
@@ -234,7 +229,7 @@ function ThemeSettingsContent({
               使用浅色、深色，或匹配系统设置
             </Typography.Text>
           </div>
-          <div className="theme-settings-header-actions">
+          <div className="inline-flex items-center justify-end gap-2 max-md:flex-col max-md:items-stretch">
             <Button
               aria-label="返回首页"
               className="theme-settings-icon-button"
@@ -253,9 +248,9 @@ function ThemeSettingsContent({
           </div>
         </header>
 
-        <main className="theme-settings-main flex-1">
-          <section className="theme-settings-toolbar-panel">
-            <div className="theme-settings-toolbar">
+        <main className="mx-auto grid w-full max-w-[1180px] flex-1 grid-cols-2 items-stretch gap-[18px] p-6 max-md:grid-cols-1 max-md:p-4">
+          <section className="theme-settings-toolbar-panel col-span-full">
+            <div className="theme-settings-toolbar flex items-center justify-between gap-4 px-3 pb-2.5 pt-3 max-md:flex-col max-md:items-stretch">
               <div>
                 <Typography.Title
                   className="m-0! theme-settings-title"
@@ -267,13 +262,13 @@ function ThemeSettingsContent({
                   使用浅色、深色，或匹配系统设置
                 </Typography.Text>
               </div>
-              <div className="theme-settings-actions">
+              <div className="flex items-center gap-2 max-md:flex-col max-md:items-stretch">
                 <Segmented<ThemeMode>
                   className="theme-mode-segmented"
                   onChange={changeMode}
                   options={themeModeOptions.map((option) => ({
                     label: (
-                      <span className="theme-mode-option">
+                      <span className="inline-flex items-center gap-1.5">
                         {option.icon}
                         {option.label}
                       </span>
@@ -302,17 +297,17 @@ function ThemeSettingsContent({
             value={draftTheme.dark}
           />
 
-          <section className="theme-live-preview">
-            <div className="theme-choice-header theme-live-preview-header">
+          <section className="theme-live-preview grid h-[330px] grid-cols-1 grid-rows-[auto_1fr] p-0">
+            <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-[9px] max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
               <Typography.Title className="m-0! theme-choice-title" level={5}>
                 预览
               </Typography.Title>
-              <Typography.Text className="theme-choice-current">
+              <Typography.Text className="theme-choice-current justify-self-end max-md:justify-self-start">
                 {previewMode === "dark" ? "深色" : "浅色"}
               </Typography.Text>
             </div>
             <div
-              className="theme-live-preview-body"
+              className="theme-live-preview-body relative flex flex-col justify-between overflow-hidden p-3"
               style={
                 {
                   "--app-texture-color": previewPalette.color,
@@ -342,9 +337,9 @@ function ThemeSettingsContent({
                 isActive={draftTheme.texture === "meteor"}
                 variant="preview"
               />
-              <div className="theme-live-preview-brand">
+              <div className="mb-1 flex items-center gap-3">
                 <span
-                  className="theme-live-preview-chip"
+                  className="block h-8 w-8 rounded-full"
                   style={{ backgroundColor: previewPalette.color }}
                 />
                 <Typography.Title
@@ -356,14 +351,14 @@ function ThemeSettingsContent({
                 </Typography.Title>
               </div>
               <div
-                className="theme-live-preview-search"
+                className="rounded-lg border bg-[rgb(127_127_127/10%)] px-3 py-[9px] opacity-[0.78]"
                 style={{
                   borderColor: withColorAlpha(previewPalette.text, 0.18),
                 }}
               >
                 输入框 / 搜索状态
               </div>
-              <div className="theme-live-preview-controls">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   className="theme-live-preview-button"
                   style={{
@@ -376,7 +371,7 @@ function ThemeSettingsContent({
                   主按钮
                 </Button>
                 <button
-                  className="theme-live-preview-ghost-button"
+                  className="h-8 rounded-md border bg-transparent px-3"
                   style={{
                     borderColor: withColorAlpha(previewPalette.text, 0.2),
                     color: previewPalette.text,
@@ -392,10 +387,10 @@ function ThemeSettingsContent({
                   }}
                 />
               </div>
-              <div className="theme-live-preview-tags">
+              <div className="flex flex-wrap gap-2">
                 {["标签", "选中", "禁用"].map((label, index) => (
                   <span
-                    className="theme-live-preview-tag"
+                    className="rounded-full px-2.5 py-[5px] text-xs"
                     key={label}
                     style={{
                       backgroundColor:
@@ -411,12 +406,15 @@ function ThemeSettingsContent({
                 ))}
               </div>
               <div
-                className="theme-live-preview-list-row"
+                className="flex items-center gap-2.5 rounded-lg border bg-[rgb(127_127_127/10%)] p-2.5"
                 style={{
                   borderColor: withColorAlpha(previewPalette.text, 0.14),
                 }}
               >
-                <span style={{ backgroundColor: previewPalette.color }} />
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: previewPalette.color }}
+                />
                 <strong>列表行 / 卡片边框</strong>
               </div>
             </div>
@@ -451,17 +449,17 @@ function ThemePanel({
   }
 
   return (
-    <article className="theme-choice-panel">
-      <div className="theme-choice-header">
+    <article className="theme-choice-panel grid h-[330px] grid-rows-[auto_minmax(0,1fr)] rounded-2xl">
+      <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-[9px] max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
         <Typography.Title className="m-0! theme-choice-title" level={5}>
           {title}
         </Typography.Title>
-        <Typography.Text className="theme-choice-current">
+        <Typography.Text className="theme-choice-current justify-self-end max-md:justify-self-start">
           {selectedTheme?.name ?? "自定义"}
         </Typography.Text>
       </div>
 
-      <div className="theme-option-grid">
+      <div className="grid content-between grid-cols-2 gap-2 px-3 pb-2 pt-3 max-md:grid-cols-1">
         {options.map((option) => {
           const isSelected =
             option.bg === value.bg &&
@@ -470,9 +468,12 @@ function ThemePanel({
 
           return (
             <button
-              className={cn("theme-option-card", {
-                "theme-option-card-selected": isSelected,
-              })}
+              className={cn(
+                "theme-option-card grid min-h-9 cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-[10px] border px-2 py-1.5 text-left",
+                {
+                  "theme-option-card-selected": isSelected,
+                },
+              )}
               key={option.name}
               onClick={() => selectTheme(option.name)}
               style={{
@@ -483,11 +484,22 @@ function ThemePanel({
               type="button"
             >
               <ThemeIcon palette={option} />
-              <span className="theme-option-name">{option.name}</span>
-              <span className="theme-option-swatches">
-                <i style={{ backgroundColor: option.color }} />
-                <i style={{ backgroundColor: option.bg }} />
-                <i style={{ backgroundColor: option.text }} />
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                {option.name}
+              </span>
+              <span className="inline-flex gap-1">
+                <i
+                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/28%)]"
+                  style={{ backgroundColor: option.color }}
+                />
+                <i
+                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/28%)]"
+                  style={{ backgroundColor: option.bg }}
+                />
+                <i
+                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/28%)]"
+                  style={{ backgroundColor: option.text }}
+                />
               </span>
             </button>
           );
@@ -524,16 +536,16 @@ function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
   }
 
   return (
-    <article className="theme-choice-panel theme-custom-panel">
-      <div className="theme-choice-header">
+    <article className="theme-choice-panel grid h-[330px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-2xl">
+      <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-[9px] max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
         <Typography.Title className="m-0! theme-choice-title" level={5}>
           自定义配置
         </Typography.Title>
-        <Typography.Text className="theme-choice-current">
+        <Typography.Text className="theme-choice-current justify-self-end max-md:justify-self-start">
           修改后自动作为自定义主题
         </Typography.Text>
       </div>
-      <div className="theme-custom-grid">
+      <div className="grid grid-cols-2 gap-2.5 px-3 pb-2 pt-3 max-md:grid-cols-1">
         <CustomPaletteEditor
           onChange={(field, nextValue) =>
             changePalette("light", field, nextValue)
@@ -549,12 +561,12 @@ function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
           value={value.dark}
         />
       </div>
-      <div className="theme-texture-toolbar">
+      <div className="theme-texture-toolbar flex items-center justify-between gap-3 px-3 pb-2.5 pt-2 max-md:flex-col max-md:items-stretch">
         <Typography.Text className="theme-custom-title">
           背景动画
         </Typography.Text>
         <Select<ThemeConfig["texture"]>
-          className="theme-texture-select"
+          className="theme-texture-select min-w-[210px]"
           onChange={changeTexture}
           options={THEME_TEXTURES.map((option) => ({
             label: option.label,
@@ -590,7 +602,7 @@ function CustomPaletteEditor({
   value: ThemePalette;
 }) {
   return (
-    <div className="theme-custom-palette">
+    <div className="theme-custom-palette grid gap-[7px] rounded-[10px] px-2.5 py-[9px]">
       <Typography.Text className="theme-custom-title">{title}</Typography.Text>
       <CustomColorInput
         label="主题色"
@@ -625,9 +637,9 @@ function CustomColorInput({
   value: string;
 }) {
   return (
-    <label className="theme-custom-row">
-      <span>{label}</span>
-      <span className="theme-custom-inputs">
+    <label className="theme-custom-row grid grid-cols-[52px_minmax(0,1fr)] items-center gap-2">
+      <span className="whitespace-nowrap">{label}</span>
+      <span className="theme-custom-inputs flex h-8 items-stretch gap-2">
         <Input
           onChange={(event) => onChange(event.target.value)}
           value={value}
@@ -638,7 +650,6 @@ function CustomColorInput({
           disabledAlpha={false}
           format="rgb"
           onChange={(_, css) => onChange(css)}
-          showText
           value={value}
         />
       </span>
@@ -650,7 +661,7 @@ function CustomColorInput({
 function ThemeIcon({ palette }: { /** 调色板。 */ palette: ThemePalette }) {
   return (
     <span
-      className="theme-option-icon"
+      className="inline-flex h-6 w-7 items-center justify-center rounded-[7px] text-xs font-bold"
       style={{
         backgroundColor: palette.bg,
         color: palette.text,

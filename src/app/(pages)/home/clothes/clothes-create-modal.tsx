@@ -1,17 +1,17 @@
 "use client";
 
 import { uploadImageToOss } from "@/utils/oss";
-import { reqPost } from "@/utils/request";
+import { reqPost, reqPut } from "@/utils/request";
 import { UploadOutlined } from "@ant-design/icons";
 import {
   App,
   Button,
+  Checkbox,
   DatePicker,
   Form,
   Input,
   InputNumber,
   Modal,
-  Segmented,
   Slider,
   Tooltip,
   Typography,
@@ -21,21 +21,32 @@ import { useEffect, useRef, useState } from "react";
 import {
   createCroppedImageFile,
   extractAverageColor,
+  formatClothesSeasons,
   isHexColor,
+  parseClothesSeasons,
   useDraggableModal,
   useImageCrop,
 } from "./clothes-utils";
+import type { ClothesItem } from "./clothes-type";
 
 /** 添加衣服弹窗接收的属性。 */
 type ClothesCreateModalProps = {
+  /** 新增和编辑接口地址。 */
+  apiPath: string;
+  /** 正在编辑的衣服；为空时表示新增。 */
+  editingClothes?: ClothesItem | null;
+  /** 物品名称，用于表单文案。 */
+  itemLabel?: string;
   /** 弹窗是否打开。 */
   open: boolean;
   /** 当前主页主题色，用于弹窗内选中态。 */
   themeColor: string;
+  /** OSS 上传目录。 */
+  uploadDirectory: "clothes" | "pants";
   /** 关闭弹窗。 */
   onClose: () => void;
   /** 保存成功后的回调。 */
-  onCreated?: () => void;
+  onSaved?: () => void;
 };
 
 /** 添加衣服表单字段。 */
@@ -47,7 +58,7 @@ type ClothesCreateFormValues = {
   /** 价格。 */
   price: number;
   /** 季节。 */
-  season: string;
+  season: string[];
 };
 
 const seasons = ["春", "夏", "秋", "冬"];
@@ -56,10 +67,14 @@ const fallbackColor = "#8b8b8b";
 
 /** 添加衣服弹窗。 */
 export function ClothesCreateModal({
+  apiPath,
+  editingClothes,
+  itemLabel = "衣服",
   onClose,
-  onCreated,
+  onSaved,
   open,
   themeColor,
+  uploadDirectory,
 }: ClothesCreateModalProps) {
   const { message } = App.useApp();
   const [form] = Form.useForm<ClothesCreateFormValues>();
@@ -94,6 +109,7 @@ export function ClothesCreateModal({
     startDrag: startDragModal,
     stopDrag: stopDragModal,
   } = useDraggableModal();
+  const isEditing = Boolean(editingClothes);
 
   /** 释放本地图片预览地址。 */
   function revokePreviewObjectUrl() {
@@ -112,13 +128,13 @@ export function ClothesCreateModal({
   }
 
   /** 重置弹窗中的临时表单状态。 */
-  function resetDraft() {
+  function resetDraft(nextEditingClothes: ClothesItem | null = null) {
     revokePreviewObjectUrl();
     revokeSourceObjectUrl();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    setColor("");
+    setColor(nextEditingClothes?.color ?? "");
     resetCrop();
     setCropSourceUrl("");
     setImageError("");
@@ -126,10 +142,14 @@ export function ClothesCreateModal({
     setIsUploadPasteReady(false);
     setSourceFileName("");
     form.setFieldsValue({
-      name: "",
-      price: 0,
-      season: seasons[0],
-      timeStamp: dayjs(),
+      name: nextEditingClothes?.name ?? "",
+      price: nextEditingClothes?.price ?? 0,
+      season: nextEditingClothes?.season
+        ? parseClothesSeasons(nextEditingClothes.season)
+        : [seasons[0]],
+      timeStamp: nextEditingClothes?.timeStamp
+        ? dayjs(nextEditingClothes.timeStamp)
+        : dayjs(),
     });
   }
 
@@ -250,12 +270,15 @@ export function ClothesCreateModal({
     fileInputRef.current?.click();
   }
 
-  /** 提交新增衣服表单。 */
+  /** 提交衣服表单，新增时创建记录，编辑时更新当前记录。 */
   async function submitClothes(values: ClothesCreateFormValues) {
     const currentCropSourceUrl = cropSourceUrl;
+    const currentEditingClothes = editingClothes ?? null;
+    const shouldUploadNewImage =
+      Boolean(currentCropSourceUrl) && Boolean(sourceObjectUrlRef.current);
 
-    if (!currentCropSourceUrl || !sourceObjectUrlRef.current) {
-      setImageError("请上传衣服图片");
+    if (!shouldUploadNewImage && !currentEditingClothes?.pic_url) {
+      setImageError(`请上传${itemLabel}图片`);
       return;
     }
 
@@ -263,53 +286,69 @@ export function ClothesCreateModal({
     setImageError("");
 
     try {
-      const croppedFile = await createCroppedImageFile(
-        {
+      let clothesColor = color;
+      let picUrl = currentEditingClothes?.pic_url ?? "";
+      let croppedFile: File | null = null;
+
+      if (shouldUploadNewImage && currentCropSourceUrl) {
+        croppedFile = await createCroppedImageFile({
           cropOffsetX,
           cropOffsetY,
           cropScale,
           imageUrl: currentCropSourceUrl,
-          sourceFileName: sourceFileName || "clothes.jpg",
-        },
-      );
-      const croppedObjectUrl = URL.createObjectURL(croppedFile);
-      let clothesColor = color;
+          sourceFileName: sourceFileName || `${uploadDirectory}.jpg`,
+        });
+        const croppedObjectUrl = URL.createObjectURL(croppedFile);
 
-      revokePreviewObjectUrl();
-      previewObjectUrlRef.current = croppedObjectUrl;
+        revokePreviewObjectUrl();
+        previewObjectUrlRef.current = croppedObjectUrl;
 
-      if (!isHexColor(clothesColor)) {
-        clothesColor = await extractAverageColor(croppedObjectUrl);
-        setColor(clothesColor);
+        if (!isHexColor(clothesColor)) {
+          clothesColor = await extractAverageColor(croppedObjectUrl);
+          setColor(clothesColor);
+        }
       }
 
       if (!isHexColor(clothesColor)) {
-        setImageError("请选择衣服颜色");
+        setImageError(`请选择${itemLabel}颜色`);
         return;
       }
 
       closeModal();
 
-      const picUrl = await uploadImageToOss(croppedFile, {
-        directory: "clothes",
-      });
+      if (croppedFile) {
+        picUrl = await uploadImageToOss(croppedFile, {
+          directory: uploadDirectory,
+        });
+      }
 
-      await reqPost("/api/clothes", {
-        data: {
-          color: clothesColor,
-          name: values.name.trim(),
-          pic_url: picUrl,
-          price: Number(values.price.toFixed(2)),
-          season: values.season,
-          timeStamp: values.timeStamp.format("YYYY-MM-DD"),
-        },
-      });
+      const clothesPayload = {
+        color: clothesColor,
+        name: values.name.trim(),
+        pic_url: picUrl,
+        price: Number(values.price.toFixed(2)),
+        season: formatClothesSeasons(values.season),
+        timeStamp: values.timeStamp.format("YYYY-MM-DD"),
+      };
 
-      onCreated?.();
+      if (currentEditingClothes) {
+        await reqPut(apiPath, {
+          data: {
+            ...clothesPayload,
+            c_id: currentEditingClothes.c_id,
+          },
+        });
+      } else {
+        await reqPost(apiPath, {
+          data: clothesPayload,
+        });
+      }
+
+      onSaved?.();
       message.success("保存成功");
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "保存衣服信息失败";
+        error instanceof Error ? error.message : `保存${itemLabel}信息失败`;
 
       setImageError(errorMessage);
       message.error(errorMessage);
@@ -323,7 +362,7 @@ export function ClothesCreateModal({
       afterOpenChange={(nextOpen) => {
         if (nextOpen) {
           resetModalPosition();
-          resetDraft();
+          resetDraft(editingClothes ?? null);
         }
       }}
       centered
@@ -336,7 +375,8 @@ export function ClothesCreateModal({
           style={
             {
               "--clothes-create-theme-color": themeColor,
-              transform: `translate(${modalPosition.x}px, ${modalPosition.y}px)`,
+              marginLeft: modalPosition.x,
+              marginTop: modalPosition.y,
             } as React.CSSProperties
           }
         >
@@ -353,7 +393,7 @@ export function ClothesCreateModal({
           onPointerMove={dragModal}
           onPointerUp={stopDragModal}
         >
-          添加衣服
+          {isEditing ? `编辑${itemLabel}` : `添加${itemLabel}`}
         </div>
       }
       width={608}
@@ -387,7 +427,7 @@ export function ClothesCreateModal({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    alt="衣服裁剪预览"
+                    alt={`${itemLabel}裁剪预览`}
                     className="pointer-events-none absolute left-1/2 top-1/2 max-h-none max-w-none select-none"
                     onLoad={(event) => {
                       const image = event.currentTarget;
@@ -403,6 +443,18 @@ export function ClothesCreateModal({
                   />
                   <span className="pointer-events-none absolute inset-0 border-2 border-white/80 shadow-[inset_0_0_0_9999px_rgb(0_0_0/12%)]" />
                 </div>
+              ) : editingClothes?.pic_url ? (
+                <span className="relative size-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    alt={editingClothes.name}
+                    className="size-full object-cover"
+                    src={editingClothes.pic_url}
+                  />
+                  <span className="absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1.5 text-xs text-white">
+                    双击 / 拖拽 / 粘贴更换
+                  </span>
+                </span>
               ) : (
                 <span className="flex flex-col items-center gap-2">
                   <UploadOutlined className="text-2xl" />
@@ -436,13 +488,13 @@ export function ClothesCreateModal({
             <Form.Item
               label="名字"
               name="name"
-              rules={[{ message: "请输入衣服名字", required: true }]}
+              rules={[{ message: `请输入${itemLabel}名字`, required: true }]}
             >
               <Input
                 autoComplete="new-password"
                 className={formControlWidthClassName}
                 name="clothes-create-item-title"
-                placeholder="例如：白色短袖"
+                placeholder={`例如：${itemLabel === "裤子" ? "黑色长裤" : "白色短袖"}`}
               />
             </Form.Item>
 
@@ -474,7 +526,7 @@ export function ClothesCreateModal({
             <Form.Item label="颜色">
               <div className="flex items-center gap-3">
                 <input
-                  aria-label="选择衣服颜色"
+                  aria-label={`选择${itemLabel}颜色`}
                   className="clothes-create-color-picker size-8 shrink-0 cursor-pointer rounded border p-0"
                   onChange={(event) => setColor(event.target.value)}
                   type="color"
@@ -494,11 +546,16 @@ export function ClothesCreateModal({
             <Form.Item
               label="季节"
               name="season"
-              rules={[{ message: "请选择季节", required: true }]}
+              rules={[
+                {
+                  message: "请选择季节",
+                  required: true,
+                  type: "array",
+                },
+              ]}
             >
-              <Segmented
-                block
-                className={formControlWidthClassName}
+              <Checkbox.Group
+                className="clothes-create-season-checkboxes"
                 options={seasons}
               />
             </Form.Item>

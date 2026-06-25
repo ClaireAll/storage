@@ -7,7 +7,6 @@ import {
   themeConfigCacheKey,
   themeConfigChangeEventName,
 } from "./constants";
-import { getReadableTextColor } from "./theme-utils";
 import type {
   ResolvedThemeMode,
   ThemeConfig,
@@ -36,10 +35,6 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
   const activePalette = useMemo(
     () => themeConfig[resolvedMode],
     [resolvedMode, themeConfig],
-  );
-  const primaryTextColor = useMemo(
-    () => getReadableTextColor(activePalette.color),
-    [activePalette.color],
   );
   const isDark = resolvedMode === "dark";
 
@@ -128,7 +123,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
           colorLinkHover: activePalette.color,
           colorPrimary: activePalette.color,
           colorTextBase: activePalette.text,
-          colorTextLightSolid: primaryTextColor,
+          colorTextLightSolid: "rgb(255 255 255 / 92%)",
         },
       }}
     >

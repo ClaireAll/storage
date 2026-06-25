@@ -50,15 +50,6 @@
   color: var(--home-theme-text) !important;
 }
 
-.home-dashboard {
-  min-height: 0;
-  overflow: hidden;
-}
-
-.home-dashboard > section:first-child {
-  flex-shrink: 0;
-}
-
 .home-soft-shadow {
   box-shadow:
     0 16px 42px rgb(15 23 42 / 7%),
@@ -69,43 +60,4 @@
   box-shadow:
     0 18px 48px rgb(0 0 0 / 24%),
     0 2px 12px rgb(0 0 0 / 16%);
-}
-
-.home-dashboard-content,
-.home-dashboard-sidebar,
-.home-content-panel-card {
-  min-height: 0;
-}
-
-.home-dashboard-sidebar,
-.home-content-panel-card {
-  overflow: hidden;
-}
-
-.home-content-panel-card .ant-card-body {
-  padding: 18px;
-}
-
-.home-content-empty {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 900px) {
-  .home-shell {
-    height: auto !important;
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .home-dashboard {
-    overflow: visible;
-  }
-
-  .home-dashboard-content {
-    min-height: 520px;
-  }
 }
