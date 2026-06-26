@@ -53,6 +53,7 @@ export const DARK_THEMES: ThemeOption[] = [
 ];
 
 export const defaultThemeConfig: ThemeConfig = {
+  aniTheme: null,
   light: LIGHT_THEMES[0],
   dark: DARK_THEMES[0],
   mode: "system",
@@ -136,6 +137,10 @@ export function isThemeConfig(value: unknown): value is ThemeConfig {
   return (
     typeof config.mode === "string" &&
     isThemeMode(config.mode) &&
+    (config.aniTheme === undefined ||
+      config.aniTheme === null ||
+      (typeof config.aniTheme === "string" &&
+        isThemeColor(config.aniTheme))) &&
     typeof config.texture === "string" &&
     isThemeTexture(config.texture) &&
     isThemePalette(config.light) &&
@@ -190,6 +195,8 @@ export function getThemeConfigFromRow(
   const rowTexture = normalizeThemeTexture(row?.texture);
 
   return {
+    aniTheme:
+      row?.ani_theme && isThemeColor(row.ani_theme) ? row.ani_theme : null,
     mode: mode ?? themeMeta.mode,
     texture: rowTexture ?? themeMeta.texture,
     light: {
@@ -212,6 +219,7 @@ export function getThemeRowFromConfig(
 ): ThemeDatabaseRow {
   return {
     id: userId,
+    ani_theme: config.aniTheme ?? null,
     theme: config.mode,
     texture: config.texture,
     dark_theme_bg: config.dark.bg,

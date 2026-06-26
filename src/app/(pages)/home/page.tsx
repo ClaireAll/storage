@@ -67,7 +67,7 @@ export async function renderHomePage(options: RenderHomePageOptions = {}) {
     supabase
       .from("theme")
       .select(
-        "id,theme,texture,light_theme_color,light_theme_bg,light_theme_text,dark_theme_color,dark_theme_bg,dark_theme_text",
+        "id,theme,texture,ani_theme,light_theme_color,light_theme_bg,light_theme_text,dark_theme_color,dark_theme_bg,dark_theme_text",
       )
       .eq("id", session.user.id)
       .maybeSingle<ThemeDatabaseRow>(),

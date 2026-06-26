@@ -26,6 +26,7 @@ import {
   findThemeOption,
   LIGHT_THEMES,
   THEME_TEXTURES,
+  themeConfigChangeEventName,
 } from "./constants";
 import {
   ThemeFallingLights,
@@ -71,6 +72,7 @@ type ThemePanelProps = {
 
 /** 自定义主题配置区域接收的属性。 */
 type CustomThemePanelProps = {
+  animationFallbackColor: string;
   /** 当前主题配置草稿。 */
   value: ThemeConfig;
   /** 自定义配置变化回调，参数 nextConfig 为最新主题配置。 */
@@ -131,10 +133,12 @@ function ThemeSettingsContent({
     draftTheme.mode === "system" ? resolvedMode : draftTheme.mode;
   const previewPalette = draftTheme[previewMode];
   const previewAccentText = previewPalette.bg;
+  const previewAnimationColor = draftTheme.aniTheme ?? previewPalette.color;
   const appliedShellBackground = getThemeShellBackground(
     appliedPalette,
     resolvedMode,
   );
+  const appliedAnimationColor = initialTheme.aniTheme ?? appliedPalette.color;
 
   useEffect(() => {
     router.prefetch("/home");
@@ -142,16 +146,19 @@ function ThemeSettingsContent({
 
   /** 返回首页，来自首页进入主题页时优先复用浏览器历史，避免重新拉取动态首页。 */
   function returnHome() {
-    const shouldReuseHomeHistory =
-      window.sessionStorage.getItem(themeReturnMarkerKey) === "true";
+    const returnPath = window.sessionStorage.getItem(themeReturnMarkerKey);
+    const safeReturnPath = returnPath?.startsWith("/home")
+      ? returnPath
+      : "/home";
+    const syncReturnedHomeTheme = () => {
+      window.dispatchEvent(new Event(themeConfigChangeEventName));
+      router.refresh();
+    };
 
-    if (shouldReuseHomeHistory) {
-      window.sessionStorage.removeItem(themeReturnMarkerKey);
-      router.back();
-      return;
-    }
-
-    router.replace("/home");
+    window.sessionStorage.removeItem(themeReturnMarkerKey);
+    router.replace(safeReturnPath);
+    window.setTimeout(syncReturnedHomeTheme, 0);
+    window.setTimeout(syncReturnedHomeTheme, 80);
   }
 
   /** 切换显示模式，参数 mode 为浅色、深色或系统。 */
@@ -193,7 +200,7 @@ function ThemeSettingsContent({
       <ThemeShellBackground color={appliedShellBackground} />
       <ThemeTexturePublisher
         background={appliedShellBackground}
-        color={appliedPalette.color}
+        color={appliedAnimationColor}
         text={appliedPalette.text}
         texture={appliedTexture}
       />
@@ -215,7 +222,7 @@ function ThemeSettingsContent({
             "--theme-page-text": appliedPalette.text,
             "--theme-page-text-muted": withColorAlpha(appliedPalette.text, 0.7),
             "--app-shell-bg": appliedShellBackground,
-            "--app-texture-color": appliedPalette.color,
+            "--app-texture-color": appliedAnimationColor,
             "--app-texture-text": appliedPalette.text,
           } as React.CSSProperties
         }
@@ -288,7 +295,11 @@ function ThemeSettingsContent({
             title="浅色主题"
             value={draftTheme.light}
           />
-          <CustomThemePanel onChange={setDraftTheme} value={draftTheme} />
+          <CustomThemePanel
+            animationFallbackColor={previewPalette.color}
+            onChange={setDraftTheme}
+            value={draftTheme}
+          />
           <ThemePanel
             mode="dark"
             onChange={selectTheme}
@@ -310,7 +321,7 @@ function ThemeSettingsContent({
               className="theme-live-preview-body relative flex flex-col justify-between overflow-hidden p-3"
               style={
                 {
-                  "--app-texture-color": previewPalette.color,
+                  "--app-texture-color": previewAnimationColor,
                   "--app-texture-text": previewPalette.text,
                   backgroundColor: previewPalette.bg,
                   color: previewPalette.text,
@@ -320,7 +331,7 @@ function ThemeSettingsContent({
               <ThemeGeometryTexture
                 style={
                   {
-                    "--app-texture-color": previewPalette.color,
+                    "--app-texture-color": previewAnimationColor,
                     "--app-texture-text": previewPalette.text,
                   } as React.CSSProperties
                 }
@@ -510,7 +521,11 @@ function ThemePanel({
 }
 
 /** 自定义主题配置区域，参数 value 为当前主题草稿。 */
-function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
+function CustomThemePanel({
+  animationFallbackColor,
+  onChange,
+  value,
+}: CustomThemePanelProps) {
   /** 修改单个调色板字段，参数 mode 为明暗模式，field 为颜色字段，nextValue 为颜色值。 */
   function changePalette(
     mode: "light" | "dark",
@@ -532,6 +547,13 @@ function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
     onChange({
       ...value,
       texture,
+    });
+  }
+
+  function changeAnimationTheme(nextColor: string | null) {
+    onChange({
+      ...value,
+      aniTheme: nextColor,
     });
   }
 
@@ -561,10 +583,31 @@ function CustomThemePanel({ onChange, value }: CustomThemePanelProps) {
           value={value.dark}
         />
       </div>
-      <div className="theme-texture-toolbar flex items-center justify-between gap-3 px-3 pb-2.5 pt-2 max-md:flex-col max-md:items-stretch">
+      <div className="theme-texture-toolbar grid grid-cols-[auto_minmax(0,1fr)_minmax(180px,210px)] items-center gap-3 px-3 pb-2.5 pt-2 max-md:grid-cols-1">
         <Typography.Text className="theme-custom-title">
           背景动画
         </Typography.Text>
+        <div className="flex min-w-0 items-center gap-2">
+          <Typography.Text className="theme-custom-title shrink-0">
+            动画色
+          </Typography.Text>
+          <ColorPicker
+            aria-label="自定义动画主题色"
+            className="theme-custom-picker"
+            disabledAlpha={false}
+            format="rgb"
+            onChange={(_, css) => changeAnimationTheme(css)}
+            value={value.aniTheme ?? animationFallbackColor}
+          />
+          <Button
+            disabled={!value.aniTheme}
+            onClick={() => changeAnimationTheme(null)}
+            size="small"
+            type="text"
+          >
+            跟随
+          </Button>
+        </div>
         <Select<ThemeConfig["texture"]>
           className="theme-texture-select min-w-[210px]"
           onChange={changeTexture}

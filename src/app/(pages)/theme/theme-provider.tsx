@@ -1,7 +1,15 @@
 "use client";
 
 import { App as AntApp, ConfigProvider, theme as antdTheme } from "antd";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   isThemeConfig,
   themeConfigCacheKey,
@@ -26,10 +34,10 @@ type ThemeProviderProps = {
 };
 
 export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
-  const [themeConfig, setThemeConfig] = useState(
-    () => getCachedThemeConfig() ?? initialTheme,
-  );
+  const pathname = usePathname();
+  const [themeConfig, setThemeConfig] = useState(initialTheme);
   const [systemMode, setSystemMode] = useState<ResolvedThemeMode>("light");
+  const hasMountedRef = useRef(false);
   const resolvedMode =
     themeConfig.mode === "system" ? systemMode : themeConfig.mode;
   const activePalette = useMemo(
@@ -37,6 +45,19 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
     [resolvedMode, themeConfig],
   );
   const isDark = resolvedMode === "dark";
+  const syncCachedThemeConfig = useCallback(() => {
+    const cachedConfig = getCachedThemeConfig();
+
+    if (!cachedConfig) {
+      return;
+    }
+
+    setThemeConfig((currentConfig) =>
+      areThemeConfigsEqual(currentConfig, cachedConfig)
+        ? currentConfig
+        : cachedConfig,
+    );
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -53,40 +74,46 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
   }, []);
 
   useEffect(() => {
-    const syncCachedThemeConfig = () => {
-      const cachedConfig = getCachedThemeConfig();
-
-      if (!cachedConfig) {
-        return;
-      }
-
-      setThemeConfig((currentConfig) =>
-        areThemeConfigsEqual(currentConfig, cachedConfig)
-          ? currentConfig
-          : cachedConfig,
-      );
-    };
     const syncVisibleThemeConfig = () => {
       if (document.visibilityState === "visible") {
         syncCachedThemeConfig();
       }
     };
 
+    const frameId = window.requestAnimationFrame(syncCachedThemeConfig);
     window.addEventListener(themeConfigChangeEventName, syncCachedThemeConfig);
+    window.addEventListener("focus", syncCachedThemeConfig);
     window.addEventListener("pageshow", syncCachedThemeConfig);
+    window.addEventListener("popstate", syncCachedThemeConfig);
     document.addEventListener("visibilitychange", syncVisibleThemeConfig);
 
     return () => {
+      window.cancelAnimationFrame(frameId);
       window.removeEventListener(
         themeConfigChangeEventName,
         syncCachedThemeConfig,
       );
+      window.removeEventListener("focus", syncCachedThemeConfig);
       window.removeEventListener("pageshow", syncCachedThemeConfig);
+      window.removeEventListener("popstate", syncCachedThemeConfig);
       document.removeEventListener("visibilitychange", syncVisibleThemeConfig);
     };
-  }, []);
+  }, [syncCachedThemeConfig]);
 
   useEffect(() => {
+    const frameId = window.requestAnimationFrame(syncCachedThemeConfig);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [pathname, syncCachedThemeConfig]);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
     cacheThemeConfig(themeConfig);
   }, [themeConfig]);
 
@@ -108,7 +135,15 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
       throw new Error(result?.message ?? "主题保存失败");
     }
 
-    setThemeConfig(nextConfig);
+    const savedConfig = (await response.json().catch(() => nextConfig)) as
+      | ThemeConfig
+      | unknown;
+    const nextThemeConfig = isThemeConfig(savedConfig)
+      ? savedConfig
+      : nextConfig;
+
+    cacheThemeConfig(nextThemeConfig);
+    setThemeConfig(nextThemeConfig);
   }
 
   return (

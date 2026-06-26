@@ -27,6 +27,7 @@ export type ThemeOption = ThemePalette & {
 export type ThemeConfig = {
   /** 用户选择的主题显示模式。 */
   mode: ThemeMode;
+  aniTheme?: string | null;
   /** 浅色模式调色板。 */
   light: ThemePalette;
   /** 深色模式调色板。 */
@@ -43,6 +44,7 @@ export type ThemeDatabaseRow = {
   theme: string | null;
   /** 背景纹路，对应数据库 texture 字段。 */
   texture: string | null;
+  ani_theme: string | null;
   /** 浅色主题主题色。 */
   light_theme_color: string | null;
   /** 浅色主题背景色。 */

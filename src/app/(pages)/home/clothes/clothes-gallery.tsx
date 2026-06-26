@@ -457,7 +457,7 @@ export function ClothesGallery({
           >
             {!hasFilter ? (
               <button
-                className="cursor-pointer border-0 bg-transparent text-[var(--home-theme-color)]"
+                className="cursor-pointer border-0 bg-transparent text-(--home-theme-color)"
                 onClick={openClothesCreateModal}
                 type="button"
               >
@@ -505,7 +505,10 @@ function ClothesImageCard({
         src={item.pic_url}
       />
       <div className="absolute inset-x-0 bottom-0 flex min-h-11 max-w-full items-end bg-[linear-gradient(180deg,transparent,rgb(0_0_0/64%))] p-2.5">
-        <Typography.Text className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-[color-mix(in_srgb,var(--home-theme-color)_42%,transparent)] px-2 py-1 text-[rgb(255_255_255/92%)]">
+        <Typography.Text
+          className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-[color-mix(in_srgb,var(--home-theme-color)_42%,transparent)] px-2 py-1"
+          style={{ color: "rgb(255 255 255 / 92%)" }}
+        >
           {renderHighlightedClothesName(item.name, highlightIndexes)}
         </Typography.Text>
       </div>

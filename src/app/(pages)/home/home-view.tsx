@@ -173,6 +173,8 @@ export default function HomePage({
             activePalette,
             resolvedMode,
           );
+          const homeAnimationColor =
+            themeConfig.aniTheme ?? activePalette.color;
           const homeHeaderBackground = mixHexColor(
             activePalette.bg,
             "#ffffff",
@@ -201,7 +203,7 @@ export default function HomePage({
               <ThemeShellBackground color={homeShellBackground} />
               <ThemeTexturePublisher
                 background={homeShellBackground}
-                color={activePalette.color}
+                color={homeAnimationColor}
                 text={activePalette.text}
                 texture={themeConfig.texture}
               />
@@ -215,7 +217,7 @@ export default function HomePage({
                 style={
                   {
                     "--app-shell-bg": homeShellBackground,
-                    "--app-texture-color": activePalette.color,
+                    "--app-texture-color": homeAnimationColor,
                     "--app-texture-text": activePalette.text,
                     "--home-menu-hover-bg": homeMenuHoverBackground,
                     "--home-menu-selected-bg": homeMenuSelectedBackground,

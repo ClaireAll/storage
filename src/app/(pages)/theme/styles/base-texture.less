@@ -363,6 +363,34 @@ html:has(.app-shell.theme-dark) {
   width: var(--falling-line-head-width);
 }
 
+.theme-meteor-spark {
+  animation: theme-meteor-spark-twinkle var(--meteor-spark-duration) ease-in-out
+    var(--meteor-spark-delay) 1 both;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--app-texture-color, var(--theme-preview-color)) 28%, white) 0 18%,
+    color-mix(in srgb, var(--app-texture-color, var(--theme-preview-color)) 82%, white) 20% 48%,
+    color-mix(in srgb, var(--app-texture-color, var(--theme-preview-color)) 54%, transparent) 50% 70%,
+    transparent 72%
+  );
+  border-radius: 999px;
+  box-shadow:
+    0 0 8px color-mix(in srgb, var(--app-texture-color, var(--theme-preview-color)) 72%, transparent),
+    0 0 18px color-mix(in srgb, var(--app-texture-color, var(--theme-preview-color)) 42%, transparent);
+  height: var(--meteor-spark-size);
+  left: var(--meteor-spark-left);
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: var(--meteor-spark-top);
+  width: var(--meteor-spark-size);
+  z-index: 1;
+}
+
+.theme-meteor-lines[data-variant="preview"] .theme-meteor-spark {
+  filter: blur(0.1px);
+}
+
 .theme-shared-geometry-texture {
   position: absolute;
 }
@@ -780,11 +808,35 @@ html:has(.app-shell.theme-dark) {
   }
 }
 
+@keyframes theme-meteor-spark-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.68);
+  }
+  18% {
+    opacity: calc(var(--meteor-spark-alpha) * 0.82);
+  }
+  48% {
+    opacity: var(--meteor-spark-alpha);
+    transform: translate3d(
+        var(--meteor-spark-drift-x),
+        var(--meteor-spark-drift-y),
+        0
+      )
+      scale(1.08);
+  }
+  72% {
+    opacity: calc(var(--meteor-spark-alpha) * 0.54);
+  }
+}
+
 /* 动画降级：尊重系统减少动态效果设置。 */
 @media (prefers-reduced-motion: reduce) {
   .app-textured-shell::before,
   .app-textured-shell::after,
   .theme-meteor-line,
+  .theme-meteor-spark,
   .theme-geometry-item {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
