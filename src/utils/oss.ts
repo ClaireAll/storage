@@ -22,7 +22,7 @@ function validateImageFile(file: File) {
 }
 
 /** 图片上传到 OSS 时可指定的业务目录。 */
-type OssUploadDirectory = "avatars" | "clothes" | "pants";
+type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries";
 
 /** 将图片直传到阿里云 OSS，参数 file 为用户选择的本地图片文件。 */
 export async function uploadImageToOss(

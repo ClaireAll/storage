@@ -42,10 +42,18 @@ type HomeContentActions = {
 type ItemCategoryConfig = {
   /** 新增和编辑接口地址。 */
   apiPath: string;
+  /** 是否展示颜色字段。 */
+  hasColor?: boolean;
+  /** 是否展示季节字段。 */
+  hasSeason?: boolean;
+  /** 是否展示数量字段。 */
+  hasCount?: boolean;
   /** 物品名称。 */
   itemLabel: string;
+  /** 名称输入示例。 */
+  namePlaceholder?: string;
   /** OSS 上传目录。 */
-  uploadDirectory: "clothes" | "pants";
+  uploadDirectory: "clothes" | "pants" | "toiletries";
 };
 
 const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
@@ -58,6 +66,15 @@ const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
     apiPath: "/api/pants",
     itemLabel: "裤子",
     uploadDirectory: "pants",
+  },
+  "/home/toiletries": {
+    apiPath: "/api/toiletries",
+    hasColor: false,
+    hasCount: true,
+    hasSeason: false,
+    itemLabel: "洗漱用品",
+    namePlaceholder: "牙膏",
+    uploadDirectory: "toiletries",
   },
 };
 
@@ -292,7 +309,11 @@ export default function HomePage({
                 <ClothesCreateModal
                   apiPath={activeItemCategory?.apiPath ?? "/api/clothes"}
                   editingClothes={editingClothes}
+                  hasColor={activeItemCategory?.hasColor}
+                  hasCount={activeItemCategory?.hasCount}
+                  hasSeason={activeItemCategory?.hasSeason}
                   itemLabel={activeItemCategory?.itemLabel}
+                  namePlaceholder={activeItemCategory?.namePlaceholder}
                   onClose={closeClothesModal}
                   onSaved={refreshClothesAfterSaved}
                   open={isClothesCreateModalOpen}

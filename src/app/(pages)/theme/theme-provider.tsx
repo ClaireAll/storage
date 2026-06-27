@@ -1,6 +1,9 @@
 "use client";
 
 import { App as AntApp, ConfigProvider, theme as antdTheme } from "antd";
+import zhCN from "antd/locale/zh_CN";
+import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
 import { usePathname } from "next/navigation";
 import {
   useCallback,
@@ -20,6 +23,8 @@ import type {
   ThemeConfig,
   ThemePalette,
 } from "./types";
+
+dayjs.locale("zh-cn");
 
 type ThemeContext = {
   activePalette: ThemePalette;
@@ -148,6 +153,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
 
   return (
     <ConfigProvider
+      locale={zhCN}
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {

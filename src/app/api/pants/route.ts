@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
+import { deleteOwnOssObject } from "@/utils/oss-server";
 import { createClient } from "@/utils/supabase/server";
 
 /** 新增裤子接口接收的请求体结构。 */
@@ -21,6 +22,10 @@ type PantsCreatePayload = {
 /** 更新裤子接口接收的请求体结构。 */
 type PantsUpdatePayload = PantsCreatePayload & {
   /** 裤子业务主键。 */
+  c_id?: string | number;
+};
+
+type PantsDeletePayload = {
   c_id?: string | number;
 };
 
@@ -208,4 +213,62 @@ export async function PUT(request: Request) {
   }
 
   return NextResponse.json(mapPantsResponse(data));
+}
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "请先登录" }, { status: 401 });
+  }
+
+  const payload = (await request.json()) as PantsDeletePayload;
+  const cId =
+    typeof payload.c_id === "number" || typeof payload.c_id === "string"
+      ? String(payload.c_id).trim()
+      : "";
+
+  if (!cId) {
+    return NextResponse.json({ message: "缺少裤子标识" }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const { data: currentPants, error: currentPantsError } = await supabase
+    .from("pants")
+    .select("pic_url")
+    .eq("id", session.user.id)
+    .eq("p_id", cId)
+    .maybeSingle<{ pic_url: string }>();
+
+  if (currentPantsError) {
+    return NextResponse.json(
+      { message: currentPantsError.message },
+      { status: 500 },
+    );
+  }
+
+  if (!currentPants) {
+    return NextResponse.json({ message: "裤子不存在" }, { status: 404 });
+  }
+
+  try {
+    await deleteOwnOssObject(currentPants.pic_url, session.user.id, ["pants"]);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "删除图片失败" },
+      { status: 500 },
+    );
+  }
+
+  const { error } = await supabase
+    .from("pants")
+    .delete()
+    .eq("id", session.user.id)
+    .eq("p_id", cId);
+
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

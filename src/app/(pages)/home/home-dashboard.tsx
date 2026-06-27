@@ -51,7 +51,12 @@ export function HomeDashboard({
           className: cn("hover:scale-[1.1]", {
             "scale-[1.1] font-bold": activeCategoryHref === category.href,
           }),
-          icon: <CategoryIcon name={category.iconClassName} />,
+          icon: (
+            <CategoryIcon
+              Icon={category.Icon}
+              name={category.iconClassName}
+            />
+          ),
           key: category.href,
           label: <Link href={category.href}>{category.label}</Link>,
         })),
@@ -103,6 +108,7 @@ export function HomeDashboard({
                           aria-pressed={isCategoryActive}
                           icon={
                             <CategoryIcon
+                              Icon={category.Icon}
                               hasPadding={false}
                               name={category.iconClassName}
                             />

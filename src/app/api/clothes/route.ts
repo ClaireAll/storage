@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
+import { deleteOwnOssObject } from "@/utils/oss-server";
 import { createClient } from "@/utils/supabase/server";
 
 /** 新增衣服接口接收的请求体结构。 */
@@ -21,6 +22,10 @@ type ClothesCreatePayload = {
 /** 更新衣服接口接收的请求体结构。 */
 type ClothesUpdatePayload = ClothesCreatePayload & {
   /** 衣服业务主键。 */
+  c_id?: string | number;
+};
+
+type ClothesDeletePayload = {
   c_id?: string | number;
 };
 
@@ -181,4 +186,64 @@ export async function PUT(request: Request) {
   }
 
   return NextResponse.json(data);
+}
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: "请先登录" }, { status: 401 });
+  }
+
+  const payload = (await request.json()) as ClothesDeletePayload;
+  const cId =
+    typeof payload.c_id === "number" || typeof payload.c_id === "string"
+      ? String(payload.c_id).trim()
+      : "";
+
+  if (!cId) {
+    return NextResponse.json({ message: "缺少衣服标识" }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const { data: currentClothes, error: currentClothesError } = await supabase
+    .from("clothes")
+    .select("pic_url")
+    .eq("id", session.user.id)
+    .eq("c_id", cId)
+    .maybeSingle<{ pic_url: string }>();
+
+  if (currentClothesError) {
+    return NextResponse.json(
+      { message: currentClothesError.message },
+      { status: 500 },
+    );
+  }
+
+  if (!currentClothes) {
+    return NextResponse.json({ message: "衣服不存在" }, { status: 404 });
+  }
+
+  try {
+    await deleteOwnOssObject(currentClothes.pic_url, session.user.id, [
+      "clothes",
+    ]);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "删除图片失败" },
+      { status: 500 },
+    );
+  }
+
+  const { error } = await supabase
+    .from("clothes")
+    .delete()
+    .eq("id", session.user.id)
+    .eq("c_id", cId);
+
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

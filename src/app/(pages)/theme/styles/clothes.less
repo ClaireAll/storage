@@ -261,6 +261,18 @@
   --theme-texture-control-bg: var(--home-theme-bg);
 }
 
+.clothes-gallery-card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 12px;
+}
+
+.clothes-gallery-card {
+  flex: 0 0 calc((100% - 36px) / 4);
+  aspect-ratio: 1 / 1;
+}
+
 @media (max-width: 900px) {
   .clothes-gallery-filter-details {
     grid-template-columns: 1fr;
@@ -275,6 +287,10 @@
   .clothes-gallery-reset-button.ant-btn {
     grid-column: auto;
     justify-self: start;
+  }
+
+  .clothes-gallery-card {
+    flex-basis: calc((100% - 12px) / 2);
   }
 }
 
@@ -313,6 +329,24 @@
 
 .clothes-gallery-card:hover .clothes-gallery-card-edit-button {
   opacity: 0.86;
+}
+
+.clothes-gallery-card-count-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 9;
+  max-width: calc(100% - 20px);
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--home-theme-color) 62%, transparent);
+  color: rgb(255 255 255 / 94%);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  padding: 2px 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .clothes-gallery-card-edit-button .anticon {
@@ -467,4 +501,14 @@
 
 .clothes-gallery-pagination .ant-pagination-item-active a {
   color: var(--home-theme-color);
+}
+
+.clothes-gallery-page-size-label {
+  color: color-mix(in srgb, var(--home-theme-text) 72%, transparent);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.clothes-gallery-page-size-input.ant-input-number {
+  width: 56px;
 }

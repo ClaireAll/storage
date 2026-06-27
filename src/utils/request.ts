@@ -12,6 +12,7 @@ export enum RequestType {
   POST = "POST",
   /** PUT 请求。 */
   PUT = "PUT",
+  DELETE = "DELETE",
 }
 
 /** 公共请求方法的基础参数。 */
@@ -166,6 +167,19 @@ export function reqPut<T = unknown>(url: Url, opts: CrudReqOpts = {}) {
     params,
     responseType,
     type: RequestType.PUT,
+    url: formatUrl(url),
+  });
+}
+
+export function reqDelete<T = unknown>(url: Url, opts: CrudReqOpts = {}) {
+  const { data, headers = {}, params = {}, responseType } = opts;
+
+  return request<T>({
+    data,
+    headers,
+    params,
+    responseType,
+    type: RequestType.DELETE,
     url: formatUrl(url),
   });
 }

@@ -1,9 +1,11 @@
 import {
   EnvironmentOutlined,
   InboxOutlined,
+  SkinOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
 import type { ComponentType } from "react";
+import type { ElementType } from "react";
 
 /** 首页分类配置。 */
 export type HomeCategory = {
@@ -11,8 +13,10 @@ export type HomeCategory = {
   label: string;
   /** 分类页面路径。 */
   href: string;
+  /** Ant Design 图标组件。 */
+  Icon?: ElementType;
   /** iconfont 图标类名。 */
-  iconClassName: string;
+  iconClassName?: string;
 };
 
 /** 首页统计卡片配置。 */
@@ -35,6 +39,11 @@ export const homeCategories: HomeCategory[] = [
     href: "/home/pants",
     iconClassName: "icon-pants",
     label: "裤子",
+  },
+  {
+    href: "/home/toiletries",
+    Icon: SkinOutlined,
+    label: "洗漱用品",
   },
 ];
 
