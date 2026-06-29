@@ -1,5 +1,7 @@
 "use client";
 
+import { DARK_THEMES, LIGHT_THEMES } from "@/app/(pages)/theme/constants";
+import { reqPost } from "@/utils/request";
 import { LockOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons";
 import {
   Alert,
@@ -16,7 +18,6 @@ import { SessionProvider, signIn } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { reqPost } from "@/utils/request";
 import {
   dateNumberClassName,
   datePanelClassName,
@@ -26,7 +27,6 @@ import {
   getDateLabelClassName,
   getFormPanelClassName,
   getLoginPageClassName,
-  getThemeButtonClassName,
   getYearClassName,
   heroBrandClassName,
   heroCopyClassName,
@@ -37,7 +37,6 @@ import {
   heroTitleClassName,
   loginBrandClassName,
   loginCardClassName,
-  themeIconClassName,
 } from "./styles";
 
 /** 登录页当前展示的表单模式。 */
@@ -103,13 +102,12 @@ function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [systemThemeMode, setSystemThemeMode] =
     useState<LoginThemeMode>("light");
-  const [selectedThemeMode, setSelectedThemeMode] =
-    useState<LoginThemeMode | null>(null);
-  const themeMode = selectedThemeMode ?? systemThemeMode;
+  const themeMode = systemThemeMode;
   const [displayDate, setDisplayDate] =
     useState<DisplayDate>(initialDisplayDate);
   const isRegister = mode === "register";
   const isDark = themeMode === "dark";
+  const activePalette = isDark ? DARK_THEMES[0] : LIGHT_THEMES[0];
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -175,7 +173,10 @@ function LoginForm() {
           : antdTheme.defaultAlgorithm,
         token: {
           borderRadius: 8,
-          colorPrimary: "#22b96f",
+          colorBgBase: activePalette.bg,
+          colorPrimary: activePalette.color,
+          colorTextBase: activePalette.text,
+          colorTextLightSolid: "rgb(255 255 255 / 92%)",
         },
       }}
     >
@@ -183,21 +184,14 @@ function LoginForm() {
         className={getLoginPageClassName(isDark)}
         style={
           {
-            "--app-shell-bg": isDark ? "#101413" : "#eef0ed",
-            "--app-texture-color": "#22b96f",
-            "--app-texture-text": isDark ? "#f5f5f5" : "#26332d",
+            "--app-shell-bg": activePalette.bg,
+            "--app-texture-color": activePalette.color,
+            "--app-texture-text": activePalette.text,
+            backgroundColor: activePalette.bg,
+            color: activePalette.text,
           } as React.CSSProperties
         }
       >
-        <button
-          aria-label={isDark ? "切换为浅色主题" : "切换为深色主题"}
-          className={getThemeButtonClassName(isDark)}
-          onClick={() => setSelectedThemeMode(isDark ? "light" : "dark")}
-          type="button"
-        >
-          <i className={themeIconClassName} />
-        </button>
-
         <section className={heroSectionClassName}>
           <Image
             alt="登录页背景"
@@ -229,7 +223,7 @@ function LoginForm() {
             </div>
             <div className={heroCopyClassName}>
               <Typography.Title className={heroTitleClassName} level={2}>
-                管理你的每一件物品
+                管理你的每一件文章推荐
               </Typography.Title>
               <Typography.Paragraph className={heroTextClassName}>
                 记录位置、分类和图片，让个人库存清晰可查。
@@ -238,9 +232,26 @@ function LoginForm() {
           </div>
         </section>
 
-        <section className={getFormPanelClassName(isDark)}>
-          <Card className={loginCardClassName}>
-            <Typography.Text className={loginBrandClassName}>
+        <section
+          className={getFormPanelClassName(isDark)}
+          style={{
+            backgroundColor: activePalette.bg,
+            color: activePalette.text,
+          }}
+        >
+          <Card
+            className={loginCardClassName}
+            styles={{
+              body: {
+                backgroundColor: activePalette.bg,
+                color: activePalette.text,
+              },
+            }}
+          >
+            <Typography.Text
+              className={loginBrandClassName}
+              style={{ color: activePalette.color }}
+            >
               Storage
             </Typography.Text>
             <Typography.Title level={2}>
@@ -268,7 +279,7 @@ function LoginForm() {
             {errorMessage ? (
               <Alert
                 className="mb-4"
-                message={errorMessage}
+                title={errorMessage}
                 showIcon
                 type="error"
               />

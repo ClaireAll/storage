@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
+import {
+  createItem,
+  deleteItem,
+  getItemPicture,
+  updateItem,
+} from "@/app/utils/database";
 import { deleteOwnOssObject } from "@/utils/oss-server";
 import { createClient } from "@/utils/supabase/server";
 
@@ -93,19 +99,19 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("clothes")
-    .insert({
+  const { data, error } = await createItem(
+    supabase,
+    "clothes",
+    session.user.id,
+    {
       color,
-      id: session.user.id,
       name,
       pic_url: picUrl,
       price,
       season,
       timeStamp,
-    })
-    .select("id,c_id,name,timeStamp,price,color,pic_url,season")
-    .single();
+    },
+  );
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -166,20 +172,20 @@ export async function PUT(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("clothes")
-    .update({
+  const { data, error } = await updateItem(
+    supabase,
+    "clothes",
+    session.user.id,
+    cId,
+    {
       color,
       name,
       pic_url: picUrl,
       price,
       season,
       timeStamp,
-    })
-    .eq("id", session.user.id)
-    .eq("c_id", cId)
-    .select("id,c_id,name,timeStamp,price,color,pic_url,season")
-    .single();
+    },
+  );
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -206,12 +212,8 @@ export async function DELETE(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data: currentClothes, error: currentClothesError } = await supabase
-    .from("clothes")
-    .select("pic_url")
-    .eq("id", session.user.id)
-    .eq("c_id", cId)
-    .maybeSingle<{ pic_url: string }>();
+  const { data: currentClothes, error: currentClothesError } =
+    await getItemPicture(supabase, "clothes", session.user.id, cId);
 
   if (currentClothesError) {
     return NextResponse.json(
@@ -235,11 +237,12 @@ export async function DELETE(request: Request) {
     );
   }
 
-  const { error } = await supabase
-    .from("clothes")
-    .delete()
-    .eq("id", session.user.id)
-    .eq("c_id", cId);
+  const { error } = await deleteItem(
+    supabase,
+    "clothes",
+    session.user.id,
+    cId,
+  );
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });

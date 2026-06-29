@@ -5,10 +5,8 @@ import {
   isThemeMode,
   themeConfigCacheKey,
 } from "@/app/(pages)/theme/constants";
-import type {
-  ThemeConfig,
-  ThemeDatabaseRow,
-} from "@/app/(pages)/theme/types";
+import type { ThemeConfig } from "@/app/(pages)/theme/types";
+import { getThemeRow } from "@/app/utils/database";
 import { createClient } from "@/utils/supabase/server";
 import { auth } from "../../../../auth";
 import { cookies } from "next/headers";
@@ -64,13 +62,7 @@ async function getDatabaseThemeConfig(
   mode: ThemeConfig["mode"] | undefined,
 ) {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("theme")
-    .select(
-      "id,theme,texture,ani_theme,light_theme_color,light_theme_bg,light_theme_text,dark_theme_color,dark_theme_bg,dark_theme_text",
-    )
-    .eq("id", userId)
-    .maybeSingle<ThemeDatabaseRow>();
+  const { data } = await getThemeRow(supabase, userId);
 
   return getThemeConfigFromRow(data, mode);
 }

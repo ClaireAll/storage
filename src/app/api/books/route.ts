@@ -9,82 +9,71 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
-type ToiletriesCreatePayload = {
-  count?: number;
+type BookCreatePayload = {
+  category?: number;
   name?: string;
   pic_url?: string;
   price?: number;
-  timeStamp?: string;
 };
 
-type ToiletriesUpdatePayload = ToiletriesCreatePayload & {
+type BookUpdatePayload = BookCreatePayload & {
+  b_id?: string | number;
   c_id?: string | number;
-  t_id?: string | number;
 };
 
-type ToiletriesDeletePayload = {
+type BookDeletePayload = {
+  b_id?: string | number;
   c_id?: string | number;
-  t_id?: string | number;
 };
 
-function isDateString(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
+const supportedBookCategories = [1, 2];
 
-function getToiletriesId(
-  payload: ToiletriesUpdatePayload | ToiletriesDeletePayload,
-) {
-  return typeof payload.t_id === "number" || typeof payload.t_id === "string"
-    ? String(payload.t_id).trim()
+function getBookId(payload: BookUpdatePayload | BookDeletePayload) {
+  return typeof payload.b_id === "number" || typeof payload.b_id === "string"
+    ? String(payload.b_id).trim()
     : typeof payload.c_id === "number" || typeof payload.c_id === "string"
       ? String(payload.c_id).trim()
       : "";
 }
 
-function parseToiletriesValues(payload: ToiletriesCreatePayload) {
+function parseBookValues(payload: BookCreatePayload) {
   const price =
     typeof payload.price === "number" && Number.isFinite(payload.price)
       ? Number(payload.price.toFixed(2))
       : null;
-  const count =
-    typeof payload.count === "number" && Number.isFinite(payload.count)
-      ? Math.floor(payload.count)
+  const category =
+    typeof payload.category === "number" && Number.isInteger(payload.category)
+      ? payload.category
       : null;
 
   return {
-    count,
+    category,
     name: payload.name?.trim() ?? "",
     picUrl: payload.pic_url?.trim() ?? "",
     price,
-    timeStamp: payload.timeStamp?.trim() ?? "",
   };
 }
 
-function validateToiletriesValues({
-  count,
+function validateBookValues({
+  category,
   name,
   picUrl,
   price,
-  timeStamp,
-}: ReturnType<typeof parseToiletriesValues>) {
+}: ReturnType<typeof parseBookValues>) {
   if (!name) {
-    return "请输入日用品名字";
-  }
-
-  if (!timeStamp || !isDateString(timeStamp)) {
-    return "请选择购买日期";
+    return "请输入图书名称";
   }
 
   if (price === null || price < 0) {
     return "请输入有效价格";
   }
 
-  if (count === null || count < 1) {
-    return "请输入有效数量";
+  if (category === null || !supportedBookCategories.includes(category)) {
+    return "请选择图书分类";
   }
 
   if (!picUrl) {
-    return "请上传日用品图片";
+    return "请上传图书图片";
   }
 
   return "";
@@ -97,28 +86,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const values = parseToiletriesValues(
-    (await request.json()) as ToiletriesCreatePayload,
-  );
-  const validationMessage = validateToiletriesValues(values);
+  const values = parseBookValues((await request.json()) as BookCreatePayload);
+  const validationMessage = validateBookValues(values);
 
   if (validationMessage) {
     return NextResponse.json({ message: validationMessage }, { status: 400 });
   }
 
   const supabase = await createClient();
-  const { data, error } = await createItem(
-    supabase,
-    "toiletries",
-    session.user.id,
-    {
-      count: values.count ?? 1,
-      name: values.name,
-      pic_url: values.picUrl,
-      price: values.price ?? 0,
-      timeStamp: values.timeStamp,
-    },
-  );
+  const { data, error } = await createItem(supabase, "books", session.user.id, {
+    category: values.category ?? supportedBookCategories[0],
+    name: values.name,
+    pic_url: values.picUrl,
+    price: values.price ?? 0,
+  });
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -134,13 +115,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as ToiletriesUpdatePayload;
-  const toiletriesId = getToiletriesId(payload);
-  const values = parseToiletriesValues(payload);
-  const validationMessage = validateToiletriesValues(values);
+  const payload = (await request.json()) as BookUpdatePayload;
+  const bookId = getBookId(payload);
+  const values = parseBookValues(payload);
+  const validationMessage = validateBookValues(values);
 
-  if (!toiletriesId) {
-    return NextResponse.json({ message: "缺少日用品标识" }, { status: 400 });
+  if (!bookId) {
+    return NextResponse.json({ message: "缺少图书标识" }, { status: 400 });
   }
 
   if (validationMessage) {
@@ -150,15 +131,14 @@ export async function PUT(request: Request) {
   const supabase = await createClient();
   const { data, error } = await updateItem(
     supabase,
-    "toiletries",
+    "books",
     session.user.id,
-    toiletriesId,
+    bookId,
     {
-      count: values.count ?? 1,
+      category: values.category ?? supportedBookCategories[0],
       name: values.name,
       pic_url: values.picUrl,
       price: values.price ?? 0,
-      timeStamp: values.timeStamp,
     },
   );
 
@@ -176,32 +156,30 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as ToiletriesDeletePayload;
-  const toiletriesId = getToiletriesId(payload);
+  const payload = (await request.json()) as BookDeletePayload;
+  const bookId = getBookId(payload);
 
-  if (!toiletriesId) {
-    return NextResponse.json({ message: "缺少日用品标识" }, { status: 400 });
+  if (!bookId) {
+    return NextResponse.json({ message: "缺少图书标识" }, { status: 400 });
   }
 
   const supabase = await createClient();
-  const { data: currentToiletries, error: currentToiletriesError } =
-    await getItemPicture(supabase, "toiletries", session.user.id, toiletriesId);
+  const { data: currentBook, error: currentBookError } =
+    await getItemPicture(supabase, "books", session.user.id, bookId);
 
-  if (currentToiletriesError) {
+  if (currentBookError) {
     return NextResponse.json(
-      { message: currentToiletriesError.message },
+      { message: currentBookError.message },
       { status: 500 },
     );
   }
 
-  if (!currentToiletries) {
-    return NextResponse.json({ message: "日用品不存在" }, { status: 404 });
+  if (!currentBook) {
+    return NextResponse.json({ message: "图书不存在" }, { status: 404 });
   }
 
   try {
-    await deleteOwnOssObject(currentToiletries.pic_url, session.user.id, [
-      "toiletries",
-    ]);
+    await deleteOwnOssObject(currentBook.pic_url, session.user.id, ["books"]);
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "删除图片失败" },
@@ -211,9 +189,9 @@ export async function DELETE(request: Request) {
 
   const { error } = await deleteItem(
     supabase,
-    "toiletries",
+    "books",
     session.user.id,
-    toiletriesId,
+    bookId,
   );
 
   if (error) {

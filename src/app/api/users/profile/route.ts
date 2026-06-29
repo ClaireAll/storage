@@ -1,6 +1,7 @@
 import { createHmac } from "crypto";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { getUserAuthProfile, updateUserProfile } from "@/app/utils/database";
 import { auth } from "../../../../../auth";
 import { createClient } from "@/utils/supabase/server";
 
@@ -187,11 +188,8 @@ export async function POST(request: Request) {
     name,
   };
 
-  const { data: currentProfile, error: currentProfileError } = await supabase
-    .from("users")
-    .select("avatar,password")
-    .eq("id", session.user.id)
-    .maybeSingle<{ avatar: string | null; password: string }>();
+  const { data: currentProfile, error: currentProfileError } =
+    await getUserAuthProfile(supabase, session.user.id);
 
   if (currentProfileError) {
     return NextResponse.json(
@@ -217,12 +215,11 @@ export async function POST(request: Request) {
     nextValues.password = await bcrypt.hash(password, 10);
   }
 
-  const { data, error } = await supabase
-    .from("users")
-    .update(nextValues)
-    .eq("id", session.user.id)
-    .select("name,phone,avatar")
-    .single();
+  const { data, error } = await updateUserProfile(
+    supabase,
+    session.user.id,
+    nextValues,
+  );
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });

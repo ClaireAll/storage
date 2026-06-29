@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-modal";
 import type { ClothesItem } from "@/app/(pages)/home/clothes/clothes-type";
@@ -13,7 +13,7 @@ import {
 } from "@/app/(pages)/theme/theme-utils";
 import type { ThemeConfig } from "@/app/(pages)/theme/types";
 import { cn } from "@/lib/utils";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import { Button, Empty, Layout, Space } from "antd";
 import { SessionProvider } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -28,61 +28,27 @@ import { homeCategories } from "./constant";
 import {
   HomeProfileButton,
   HomeProfileModal,
-  type HomeUser,
   useHomeProfile,
+  type HomeUser,
 } from "./home-profile";
+import {
+  getItemCategoryConfig,
+  itemCategoryConfigs,
+} from "./item-edit-config";
 
 type HomeContentActions = {
-  /** 打开当前分类可用的新增物品弹窗。 */
+  /** 鎵撳紑褰撳墠鍒嗙被鍙敤鐨勬柊澧炴枃绔犳帹鑽愬脊绐椼€?*/
   openClothesCreateModal: () => void;
-  /** 打开当前分类可用的编辑物品弹窗。 */
+  /** 鎵撳紑褰撳墠鍒嗙被鍙敤鐨勭紪杈戞枃绔犳帹鑽愬脊绐椼€?*/
   openClothesEditModal: (item: ClothesItem) => void;
 };
 
-type ItemCategoryConfig = {
-  /** 新增和编辑接口地址。 */
-  apiPath: string;
-  /** 是否展示颜色字段。 */
-  hasColor?: boolean;
-  /** 是否展示季节字段。 */
-  hasSeason?: boolean;
-  /** 是否展示数量字段。 */
-  hasCount?: boolean;
-  /** 物品名称。 */
-  itemLabel: string;
-  /** 名称输入示例。 */
-  namePlaceholder?: string;
-  /** OSS 上传目录。 */
-  uploadDirectory: "clothes" | "pants" | "toiletries";
-};
-
-const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
-  "/home/clothes": {
-    apiPath: "/api/clothes",
-    itemLabel: "衣服",
-    uploadDirectory: "clothes",
-  },
-  "/home/pants": {
-    apiPath: "/api/pants",
-    itemLabel: "裤子",
-    uploadDirectory: "pants",
-  },
-  "/home/toiletries": {
-    apiPath: "/api/toiletries",
-    hasColor: false,
-    hasCount: true,
-    hasSeason: false,
-    itemLabel: "洗漱用品",
-    namePlaceholder: "牙膏",
-    uploadDirectory: "toiletries",
-  },
-};
 
 const HomeContentActionsContext = createContext<HomeContentActions | null>(
   null,
 );
 
-/** 分类内容区使用的主页动作。 */
+/** 鍒嗙被鍐呭鍖轰娇鐢ㄧ殑涓婚〉鍔ㄤ綔銆?*/
 export function useHomeContentActions() {
   const actions = useContext(HomeContentActionsContext);
 
@@ -93,17 +59,17 @@ export function useHomeContentActions() {
   return actions;
 }
 
-/** 首页组件接收的属性。 */
+/** 棣栭〉缁勪欢鎺ユ敹鐨勫睘鎬с€?*/
 type HomePageProps = {
-  /** 页面首次渲染使用的主题配置。 */
+  /** 椤甸潰棣栨娓叉煋浣跨敤鐨勪富棰橀厤缃€?*/
   initialTheme: ThemeConfig;
-  /** 当前登录用户信息，用于展示头像和个人资料弹窗。 */
+  /** 褰撳墠鐧诲綍鐢ㄦ埛淇℃伅锛岀敤浜庡睍绀哄ご鍍忓拰涓汉璧勬枡寮圭獥銆?*/
   user: HomeUser;
-  /** 当前路由选中的分类路径，用于控制右侧内容区展示。 */
+  /** 褰撳墠璺敱閫変腑鐨勫垎绫昏矾寰勶紝鐢ㄤ簬鎺у埗鍙充晶鍐呭鍖哄睍绀恒€?*/
   activeCategoryHref?: string;
-  /** 当前分类物品数量。 */
+  /** 褰撳墠鍒嗙被鏂囩珷鎺ㄨ崘鏁伴噺銆?*/
   itemCount?: number;
-  /** 当前分类页面提供的内容区域。 */
+  /** 褰撳墠鍒嗙被椤甸潰鎻愪緵鐨勫唴瀹瑰尯鍩熴€?*/
   children?: ReactNode;
 };
 
@@ -121,22 +87,32 @@ export default function HomePage({
   const [editingClothes, setEditingClothes] = useState<ClothesItem | null>(
     null,
   );
+  const [selectedItemCategoryHref, setSelectedItemCategoryHref] =
+    useState<string>();
+  const [shouldShowItemCategorySelect, setShouldShowItemCategorySelect] =
+    useState(false);
   const [visibleCategoryHrefs, setVisibleCategoryHrefs] = useState(() =>
     homeCategories.map((category) => category.href),
   );
   const isAllCategoriesVisible =
     visibleCategoryHrefs.length === homeCategories.length;
-  const activeItemCategory = activeCategoryHref
-    ? itemCategoryConfigs[activeCategoryHref]
-    : undefined;
+  const activeItemCategory = getItemCategoryConfig(activeCategoryHref);
+  const selectedItemCategory =
+    getItemCategoryConfig(selectedItemCategoryHref) ?? activeItemCategory;
+  const itemCategoryOptions = homeCategories
+    .filter((category) => itemCategoryConfigs[category.href])
+    .map((category) => ({
+      label: category.label,
+      value: category.href,
+    }));
   const activeCategory = homeCategories.find(
     (category) => category.href === activeCategoryHref,
   );
   const emptyDescription = activeCategory
-    ? `${activeCategory.label}分类暂未添加内容`
-    : "请选择左侧分类";
+    ? `${activeCategory.label}鍒嗙被鏆傛湭娣诲姞鍐呭`
+    : "璇烽€夋嫨宸︿晶鍒嗙被";
 
-  /** 切换分类复选按钮，并控制左侧分类列表显示哪些项。 */
+  /** 鍒囨崲鍒嗙被澶嶉€夋寜閽紝骞舵帶鍒跺乏渚у垎绫诲垪琛ㄦ樉绀哄摢浜涢」銆?*/
   function toggleCategoryVisible(categoryHref: string) {
     setVisibleCategoryHrefs((currentHrefs) =>
       currentHrefs.includes(categoryHref)
@@ -145,7 +121,7 @@ export default function HomePage({
     );
   }
 
-  /** 切换全部分类复选按钮，全选时再次点击会清空左侧分类列表。 */
+  /** 鍒囨崲鍏ㄩ儴鍒嗙被澶嶉€夋寜閽紝鍏ㄩ€夋椂鍐嶆鐐瑰嚮浼氭竻绌哄乏渚у垎绫诲垪琛ㄣ€?*/
   function toggleAllCategoriesVisible() {
     setVisibleCategoryHrefs((currentHrefs) =>
       currentHrefs.length === homeCategories.length
@@ -154,29 +130,42 @@ export default function HomePage({
     );
   }
 
-  /** 打开当前分类新增弹窗，仅支持已经开发的物品分类。 */
+  /** 鎵撳紑褰撳墠鍒嗙被鏂板寮圭獥锛屼粎鏀寔宸茬粡寮€鍙戠殑鏂囩珷鎺ㄨ崘鍒嗙被銆?*/
   function openClothesCreateModal() {
     if (activeItemCategory) {
+      setSelectedItemCategoryHref(activeCategoryHref);
+      setShouldShowItemCategorySelect(false);
       setEditingClothes(null);
       setIsClothesCreateModalOpen(true);
     }
   }
 
-  /** 打开当前分类编辑弹窗，仅支持已经开发的物品分类。 */
+  function openQuickItemCreateModal() {
+    setSelectedItemCategoryHref(itemCategoryOptions[0]?.value);
+    setShouldShowItemCategorySelect(true);
+    setEditingClothes(null);
+    setIsClothesCreateModalOpen(true);
+  }
+
+  /** 鎵撳紑褰撳墠鍒嗙被缂栬緫寮圭獥锛屼粎鏀寔宸茬粡寮€鍙戠殑鏂囩珷鎺ㄨ崘鍒嗙被銆?*/
   function openClothesEditModal(item: ClothesItem) {
     if (activeItemCategory) {
+      setSelectedItemCategoryHref(activeCategoryHref);
+      setShouldShowItemCategorySelect(false);
       setEditingClothes(item);
       setIsClothesCreateModalOpen(true);
     }
   }
 
-  /** 关闭衣服编辑弹窗并清理编辑对象。 */
+  /** 鍏抽棴琛ｆ湇缂栬緫寮圭獥骞舵竻鐞嗙紪杈戝璞°€?*/
   function closeClothesModal() {
     setIsClothesCreateModalOpen(false);
     setEditingClothes(null);
+    setSelectedItemCategoryHref(undefined);
+    setShouldShowItemCategorySelect(false);
   }
 
-  /** 物品保存成功后刷新当前路由，让服务端读取到最新物品列表。 */
+  /** 鏂囩珷鎺ㄨ崘淇濆瓨鎴愬姛鍚庡埛鏂板綋鍓嶈矾鐢憋紝璁╂湇鍔＄璇诲彇鍒版渶鏂版枃绔犳帹鑽愬垪琛ㄣ€?*/
   function refreshClothesAfterSaved() {
     router.refresh();
   }
@@ -265,19 +254,11 @@ export default function HomePage({
                         color: activePalette.color,
                       }}
                     >
-                      {profileEditor.profile.name ?? "用户"}
+                      {profileEditor.profile.name ?? "鐢ㄦ埛"}
                     </span>
                   </div>
                   <Space wrap>
-                    <Button icon={<SearchOutlined />}>搜索</Button>
-                    <Button
-                      disabled={!activeItemCategory}
-                      icon={<PlusOutlined />}
-                      onClick={openClothesCreateModal}
-                      type="primary"
-                    >
-                      添加物品
-                    </Button>
+                    <Button icon={<SearchOutlined />}>鎼滅储</Button>
                     <ThemeControl />
                   </Space>
                 </header>
@@ -286,6 +267,7 @@ export default function HomePage({
                   activeCategoryHref={activeCategoryHref}
                   isAllCategoriesVisible={isAllCategoriesVisible}
                   itemCount={itemCount}
+                  onOpenQuickItemCreate={openQuickItemCreateModal}
                   onToggleAllCategoriesVisible={toggleAllCategoriesVisible}
                   onToggleCategoryVisible={toggleCategoryVisible}
                   surfaceBackground={activePalette.bg}
@@ -307,19 +289,25 @@ export default function HomePage({
                   palette={activePalette}
                 />
                 <ClothesCreateModal
-                  apiPath={activeItemCategory?.apiPath ?? "/api/clothes"}
+                  apiPath={selectedItemCategory?.apiPath ?? "/api/clothes"}
+                  categoryOptions={itemCategoryOptions}
                   editingClothes={editingClothes}
-                  hasColor={activeItemCategory?.hasColor}
-                  hasCount={activeItemCategory?.hasCount}
-                  hasSeason={activeItemCategory?.hasSeason}
-                  itemLabel={activeItemCategory?.itemLabel}
-                  namePlaceholder={activeItemCategory?.namePlaceholder}
+                  hasBookCategory={selectedItemCategory?.hasBookCategory}
+                  hasColor={selectedItemCategory?.hasColor}
+                  hasCount={selectedItemCategory?.hasCount}
+                  hasDate={selectedItemCategory?.hasDate}
+                  hasSeason={selectedItemCategory?.hasSeason}
+                  itemLabel={selectedItemCategory?.itemLabel}
+                  namePlaceholder={selectedItemCategory?.namePlaceholder}
+                  onCategoryHrefChange={setSelectedItemCategoryHref}
                   onClose={closeClothesModal}
                   onSaved={refreshClothesAfterSaved}
                   open={isClothesCreateModalOpen}
+                  selectedCategoryHref={selectedItemCategoryHref}
+                  showCategorySelect={shouldShowItemCategorySelect}
                   themeColor={activePalette.color}
                   uploadDirectory={
-                    activeItemCategory?.uploadDirectory ?? "clothes"
+                    selectedItemCategory?.uploadDirectory ?? "clothes"
                   }
                 />
               </Layout>

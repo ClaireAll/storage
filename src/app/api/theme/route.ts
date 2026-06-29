@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
-  getThemeRowFromConfig,
   isThemeConfig,
   themeConfigCacheKey,
 } from "@/app/(pages)/theme/constants";
+import { upsertTheme } from "@/app/utils/database";
 import { createClient } from "@/utils/supabase/server";
 import { auth } from "../../../../auth";
 
@@ -25,11 +25,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("theme")
-    .upsert(getThemeRowFromConfig(session.user.id, payload), {
-      onConflict: "id",
-    });
+  const { error } = await upsertTheme(supabase, session.user.id, payload);
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });

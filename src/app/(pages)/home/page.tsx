@@ -1,38 +1,32 @@
-import HomePage from "./home-view";
 import {
   getThemeConfigFromRow,
   isThemeMode,
 } from "@/app/(pages)/theme/constants";
-import type { ThemeDatabaseRow } from "@/app/(pages)/theme/types";
+import {
+  getHomeProfile,
+  getThemeRow,
+  type DatabaseClient,
+} from "@/app/utils/database";
 import { createClient } from "@/utils/supabase/server";
-import { auth } from "../../../../auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { auth } from "../../../../auth";
+import HomePage from "./home-view";
 
 export const dynamic = "force-dynamic";
-
-/** 首页使用的用户资料结构。 */
-type HomeProfile = {
-  /** 用户头像地址，没有时显示默认头像。 */
-  avatar?: string | null;
-  /** 用户名称。 */
-  name?: string | null;
-  /** 用户手机号。 */
-  phone?: string | null;
-};
 
 type HomeContentLoaderContext = {
   /** 当前登录用户 ID。 */
   userId: string;
   /** 当前请求使用的 Supabase 服务端客户端。 */
-  supabase: Awaited<ReturnType<typeof createClient>>;
+  supabase: DatabaseClient;
 };
 
 type HomeContentResult = {
-  /** 当前分类物品数量。 */
+  /** 当前分类文章推荐数量。 */
   itemCount?: number;
-  /** 当前分类页提供的内容区域。 */
+  /** 当前分类页面提供的内容区域。 */
   content?: ReactNode;
 };
 
@@ -59,18 +53,8 @@ export async function renderHomePage(options: RenderHomePageOptions = {}) {
     ? loadContent({ supabase, userId: session.user.id })
     : Promise.resolve({});
   const [profileResult, themeResult, contentResult] = await Promise.all([
-    supabase
-      .from("users")
-      .select("name,phone,avatar")
-      .eq("id", session.user.id)
-      .maybeSingle<HomeProfile>(),
-    supabase
-      .from("theme")
-      .select(
-        "id,theme,texture,ani_theme,light_theme_color,light_theme_bg,light_theme_text,dark_theme_color,dark_theme_bg,dark_theme_text",
-      )
-      .eq("id", session.user.id)
-      .maybeSingle<ThemeDatabaseRow>(),
+    getHomeProfile(supabase, session.user.id),
+    getThemeRow(supabase, session.user.id),
     contentPromise,
   ]);
   const cookieStore = await cookies();

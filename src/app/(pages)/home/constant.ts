@@ -1,31 +1,20 @@
 import {
   EnvironmentOutlined,
   InboxOutlined,
-  SkinOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
-import type { ComponentType } from "react";
-import type { ElementType } from "react";
+import type { ComponentType, ElementType } from "react";
 
-/** 首页分类配置。 */
 export type HomeCategory = {
-  /** 分类名称。 */
   label: string;
-  /** 分类页面路径。 */
   href: string;
-  /** Ant Design 图标组件。 */
   Icon?: ElementType;
-  /** iconfont 图标类名。 */
   iconClassName?: string;
 };
 
-/** 首页统计卡片配置。 */
 export type HomeStat = {
-  /** 统计名称。 */
   label: string;
-  /** 统计数值。 */
   value: number;
-  /** 统计图标组件。 */
   Icon: ComponentType;
 };
 
@@ -42,13 +31,18 @@ export const homeCategories: HomeCategory[] = [
   },
   {
     href: "/home/toiletries",
-    Icon: SkinOutlined,
-    label: "洗漱用品",
+    iconClassName: "icon-toiletries",
+    label: "日用品",
+  },
+  {
+    href: "/home/books",
+    iconClassName: "icon-book",
+    label: "图书",
   },
 ];
 
 export const homeStats: HomeStat[] = [
-  { Icon: InboxOutlined, label: "物品", value: 0 },
-  { Icon: TagsOutlined, label: "分类", value: homeCategories.length },
+  { Icon: InboxOutlined, label: "文章推荐", value: 0 },
   { Icon: EnvironmentOutlined, label: "位置", value: 0 },
+  { Icon: TagsOutlined, label: "快捷功能", value: homeCategories.length },
 ];

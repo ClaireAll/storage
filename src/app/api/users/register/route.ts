@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { createUser, getUserByPhone } from "@/app/utils/database";
 import { createClient } from "@/utils/supabase/server";
 
 /** 注册接口接收的请求体结构。 */
@@ -29,11 +30,10 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
-  const { data: existingUser, error: lookupError } = await supabase
-    .from("users")
-    .select("id")
-    .eq("phone", phone)
-    .maybeSingle();
+  const { data: existingUser, error: lookupError } = await getUserByPhone(
+    supabase,
+    phone,
+  );
 
   if (lookupError) {
     return NextResponse.json(
@@ -54,15 +54,11 @@ export async function POST(request: Request) {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const { data, error } = await supabase
-    .from("users")
-    .insert({
-      name,
-      password: hashedPassword,
-      phone,
-    })
-    .select("id,name,phone")
-    .single();
+  const { data, error } = await createUser(supabase, {
+    name,
+    password: hashedPassword,
+    phone,
+  });
 
   if (error) {
     return NextResponse.json(

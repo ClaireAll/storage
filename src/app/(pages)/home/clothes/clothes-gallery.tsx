@@ -37,13 +37,15 @@ type ClothesSortRule =
 
 /** 衣服陈列组件接收的属性。 */
 type ClothesGalleryProps = {
-  /** 衣服物品列表。 */
+  /** 衣服文章推荐列表。 */
   clothes: ClothesItem[];
+  hasBookCategory?: boolean;
   /** 是否展示颜色标记。 */
   hasColor?: boolean;
+  hasDate?: boolean;
   /** 是否展示季节筛选和季节信息。 */
   hasSeason?: boolean;
-  /** 当前物品名称，用于界面文案。 */
+  /** 当前文章推荐名称，用于界面文案。 */
   itemLabel?: string;
   /** 是否展示数量。 */
   showCount?: boolean;
@@ -53,7 +55,12 @@ const { RangePicker } = DatePicker;
 const defaultPageSize = 8;
 const maxPageSize = 100;
 const defaultSortRule: ClothesSortRule = "purchase-desc";
+const defaultNoDateSortRule: ClothesSortRule = "price-desc";
 const seasons = ["春", "夏", "秋", "冬"];
+const bookCategoryLabels: Record<number, string> = {
+  1: "实体书",
+  2: "电子书",
+};
 const seasonOptions = seasons.map((season) => ({
   label: season,
   value: season,
@@ -79,6 +86,38 @@ function getSeasonSortIndex(seasonValue: string) {
   return validSeasonIndexes.length
     ? Math.min(...validSeasonIndexes)
     : seasons.length;
+}
+
+function getBookCategoryLabel(category?: number) {
+  return category ? (bookCategoryLabels[category] ?? `分类 ${category}`) : "";
+}
+
+function isPurchaseSortRule(sortRule: ClothesSortRule) {
+  return sortRule === "purchase-asc" || sortRule === "purchase-desc";
+}
+
+function isSeasonSortRule(sortRule: ClothesSortRule) {
+  return sortRule === "season-asc" || sortRule === "season-desc";
+}
+
+function getEffectiveSortRule({
+  hasDate,
+  hasSeason,
+  sortRule,
+}: {
+  hasDate: boolean;
+  hasSeason: boolean;
+  sortRule: ClothesSortRule;
+}) {
+  if (!hasDate && isPurchaseSortRule(sortRule)) {
+    return defaultNoDateSortRule;
+  }
+
+  if (!hasSeason && isSeasonSortRule(sortRule)) {
+    return hasDate ? defaultSortRule : defaultNoDateSortRule;
+  }
+
+  return sortRule;
 }
 
 /** 渲染带搜索命中高亮的衣服名称。 */
@@ -109,7 +148,9 @@ const viewModeOptions: Array<{
 /** 衣服页陈列面板，负责搜索、筛选、分页和视图切换。 */
 export function ClothesGallery({
   clothes,
+  hasBookCategory = false,
   hasColor = true,
+  hasDate = true,
   hasSeason = true,
   itemLabel = "衣服",
   showCount = false,
@@ -137,20 +178,29 @@ export function ClothesGallery({
   const [viewMode, setViewMode] = useState<ClothesViewMode>("card");
   const isKeywordComposingRef = useRef(false);
   const normalizedKeyword = keyword.trim().toLowerCase();
-  const effectiveSortRule =
-    !hasSeason && (sortRule === "season-asc" || sortRule === "season-desc")
-      ? defaultSortRule
-      : sortRule;
-  const availableSortOptions = hasSeason
-    ? sortOptions
-    : sortOptions.filter(
-        (option) =>
-          option.value !== "season-asc" && option.value !== "season-desc",
-      );
+  const effectiveSortRule = getEffectiveSortRule({
+    hasDate,
+    hasSeason,
+    sortRule,
+  });
+  const defaultEffectiveSortRule = hasDate
+    ? defaultSortRule
+    : defaultNoDateSortRule;
+  const availableSortOptions = sortOptions.filter((option) => {
+    if (!hasDate && isPurchaseSortRule(option.value)) {
+      return false;
+    }
+
+    if (!hasSeason && isSeasonSortRule(option.value)) {
+      return false;
+    }
+
+    return true;
+  });
   const filteredClothes = useMemo(
     () =>
       clothes.filter((item) => {
-        const purchaseDate = dayjs(item.timeStamp);
+        const purchaseDate = hasDate ? dayjs(item.timeStamp) : null;
         const [startDate, endDate] = timeRange;
         const [minPrice, maxPrice] = priceRange;
         const nameSearchMatch = matchClothesNameSearch(
@@ -161,7 +211,8 @@ export function ClothesGallery({
           nameSearchMatch.matched ||
           [
             hasSeason ? item.season : "",
-            item.timeStamp,
+            hasDate ? item.timeStamp : "",
+            hasBookCategory ? getBookCategoryLabel(item.category) : "",
             showCount && item.count !== undefined ? String(item.count) : "",
           ]
             .filter((field): field is string => Boolean(field))
@@ -174,13 +225,14 @@ export function ClothesGallery({
             ? itemSeasons.some((season) => selectedSeason.includes(season))
             : true
           : true;
-        const matchesTime =
-          (!startDate ||
-            purchaseDate.isSame(startDate, "day") ||
-            purchaseDate.isAfter(startDate, "day")) &&
-          (!endDate ||
-            purchaseDate.isSame(endDate, "day") ||
-            purchaseDate.isBefore(endDate, "day"));
+        const matchesTime = hasDate
+          ? (!startDate ||
+              purchaseDate?.isSame(startDate, "day") ||
+              purchaseDate?.isAfter(startDate, "day")) &&
+            (!endDate ||
+              purchaseDate?.isSame(endDate, "day") ||
+              purchaseDate?.isBefore(endDate, "day"))
+          : true;
         const matchesPrice =
           (minPrice === null || item.price >= minPrice) &&
           (maxPrice === null || item.price <= maxPrice);
@@ -189,6 +241,8 @@ export function ClothesGallery({
       }),
     [
       clothes,
+      hasBookCategory,
+      hasDate,
       hasSeason,
       normalizedKeyword,
       priceRange,
@@ -241,15 +295,15 @@ export function ClothesGallery({
       selectedSeason.length > 0 &&
       selectedSeason.length < seasons.length) ||
     priceRange.some((value) => value !== null) ||
-    timeRange.some(Boolean) ||
-    effectiveSortRule !== defaultSortRule;
+    (hasDate && timeRange.some(Boolean)) ||
+    effectiveSortRule !== defaultEffectiveSortRule;
   const hasFilter = Boolean(normalizedKeyword) || hasAdvancedFilter;
   const canResetFilters = hasFilter;
   const isFilterButtonActive = filtersExpanded || hasFilter;
   const shouldShowFilterDetails = filtersExpanded;
   const emptyDescription = hasFilter
     ? `没有匹配的${itemLabel}`
-    : `还没有${itemLabel}物品`;
+    : `还没有${itemLabel}文章推荐`;
 
   /** 搜索衣服名称，参数 nextKeyword 为输入框最新值。 */
   function searchClothes(nextKeyword: string) {
@@ -429,14 +483,16 @@ export function ClothesGallery({
                 />
               </div>
             ) : null}
-            <RangePicker
-              allowClear
-              allowEmpty
-              className="clothes-gallery-time-filter"
-              onChange={filterTimeRange}
-              placeholder={["购买开始", "购买结束"]}
-              value={timeRange}
-            />
+            {hasDate ? (
+              <RangePicker
+                allowClear
+                allowEmpty
+                className="clothes-gallery-time-filter"
+                onChange={filterTimeRange}
+                placeholder={["购买开始", "购买结束"]}
+                value={timeRange}
+              />
+            ) : null}
             <div className="clothes-gallery-price-row">
               <Typography.Text className="clothes-gallery-filter-label">
                 价格
@@ -536,9 +592,16 @@ export function ClothesGallery({
                 <Typography.Text className="clothes-gallery-detail-meta">
                   ¥{item.price.toFixed(2)}
                 </Typography.Text>
-                <Typography.Text className="clothes-gallery-detail-meta">
-                  购买时间：{dayjs(item.timeStamp).format("YYYY-MM-DD")}
-                </Typography.Text>
+                {hasDate ? (
+                  <Typography.Text className="clothes-gallery-detail-meta">
+                    购买时间：{dayjs(item.timeStamp).format("YYYY-MM-DD")}
+                  </Typography.Text>
+                ) : null}
+                {hasBookCategory ? (
+                  <Typography.Text className="clothes-gallery-detail-meta">
+                    分类：{getBookCategoryLabel(item.category) || "未分类"}
+                  </Typography.Text>
+                ) : null}
                 {showCount ? (
                   <Typography.Text className="clothes-gallery-detail-meta">
                     数量：{item.count ?? 1}
@@ -609,9 +672,9 @@ function ClothesImageCard({
 }: {
   /** 衣服名称中被搜索命中的字符下标。 */
   highlightIndexes: Set<number>;
-  /** 衣服物品。 */
+  /** 衣服文章推荐。 */
   item: ClothesItem;
-  /** 编辑衣服物品。 */
+  /** 编辑衣服文章推荐。 */
   onEdit: (item: ClothesItem) => void;
   /** 是否展示数量。 */
   showCount: boolean;

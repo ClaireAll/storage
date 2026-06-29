@@ -1,8 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/** 右上角明暗主题切换按钮使用的阿里图标样式。 */
-export const themeIconClassName =
-  "iconfont icon-theme-exchange text-[16px] leading-none";
 /** 登录页左侧图片展示区域的外层容器样式。 */
 export const heroSectionClassName =
   "relative min-h-[100dvh] overflow-hidden max-md:min-h-80";
@@ -41,15 +38,6 @@ const loginPageBaseClassName =
 const loginPageDarkClassName = "bg-[#101413]";
 /** 登录页整体浅色主题背景样式。 */
 const loginPageLightClassName = "bg-[#eef0ed]";
-/** 右上角主题切换按钮的基础布局样式。 */
-const themeButtonBaseClassName =
-  "absolute right-7 top-6 z-[4] flex size-[28px] items-center justify-center rounded-full border shadow-[0_12px_30px_rgb(0_0_0/12%)] max-md:right-5 max-md:top-5";
-/** 右上角主题切换按钮在深色主题下的样式。 */
-const themeButtonDarkClassName =
-  "border-[rgb(255_255_255/20%)] bg-[rgb(20_20_20/86%)] text-[#f7d778]";
-/** 右上角主题切换按钮在浅色主题下的样式。 */
-const themeButtonLightClassName =
-  "border-[rgb(0_0_0/10%)] bg-[rgb(255_255_255/60%)] text-[#1b6f7f]";
 /** 登录页左侧年份文字的基础样式。 */
 const yearClassName =
   "mb-[18px] block text-3xl font-extrabold [text-shadow:0_2px_18px_rgb(0_0_0/28%)] max-md:text-2xl";
@@ -90,14 +78,6 @@ export function getLoginPageClassName(isDark: boolean) {
   return cn(
     loginPageBaseClassName,
     isDark ? loginPageDarkClassName : loginPageLightClassName,
-  );
-}
-
-/** 根据当前明暗主题生成右上角主题按钮的 className，参数 isDark 表示是否为深色主题。 */
-export function getThemeButtonClassName(isDark: boolean) {
-  return cn(
-    themeButtonBaseClassName,
-    isDark ? themeButtonDarkClassName : themeButtonLightClassName,
   );
 }
 

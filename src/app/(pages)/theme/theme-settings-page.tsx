@@ -36,10 +36,7 @@ import { themeReturnMarkerKey } from "./theme-control";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { ThemeProvider } from "./theme-provider";
 import { ThemeShellBackground } from "./theme-shell-background";
-import {
-  getThemeShellBackground,
-  withColorAlpha,
-} from "./theme-utils";
+import { getThemeShellBackground, withColorAlpha } from "./theme-utils";
 import type {
   ThemeConfig,
   ThemeMode,
@@ -495,20 +492,23 @@ function ThemePanel({
               type="button"
             >
               <ThemeIcon palette={option} />
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+              <span
+                className="overflow-hidden text-ellipsis whitespace-nowrap"
+                style={{ color: option.text }}
+              >
                 {option.name}
               </span>
               <span className="inline-flex gap-1">
                 <i
-                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/28%)]"
+                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/40%)]!"
                   style={{ backgroundColor: option.color }}
                 />
                 <i
-                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/28%)]"
+                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/40%)]!"
                   style={{ backgroundColor: option.bg }}
                 />
                 <i
-                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/28%)]"
+                  className="block h-3 w-3 rounded-full border border-[rgb(127_127_127/40%)]!"
                   style={{ backgroundColor: option.text }}
                 />
               </span>
