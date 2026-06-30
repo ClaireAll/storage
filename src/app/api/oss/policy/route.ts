@@ -38,7 +38,8 @@ function getOssConfig() {
 }
 
 /** OSS 允许前端上传的业务目录。 */
-type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books";
+type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books" | "hobby";
+type OssUploadKind = "image" | "file";
 
 /** 根据当前用户、业务目录和文件名生成图片在 OSS 中的对象 Key。 */
 function createImageObjectKey(
@@ -53,17 +54,38 @@ function createImageObjectKey(
   return `${directory}/${userId}/${Date.now()}-${randomUUID()}.${extension || "png"}`;
 }
 
+function sanitizeOssFileName(fileName: string) {
+  return fileName
+    .trim()
+    .replace(/[\\/:*?"<>|#%{}^~[\]`]/g, "_")
+    .replace(/\s+/g, " ")
+    .replace(/^\.+/, "")
+    .slice(0, 120);
+}
+
+function createFileObjectKey(
+  userId: string,
+  fileName: string,
+  directory: OssUploadDirectory,
+) {
+  const safeFileName = sanitizeOssFileName(fileName) || "未命名文件";
+
+  return `${directory}/${userId}/${safeFileName}`;
+}
+
 /** 生成 OSS PostObject 策略字符串，参数 objectKey 为本次允许上传的对象 Key。 */
-function createPolicy(objectKey: string) {
+function createPolicy(objectKey: string, kind: OssUploadKind) {
   const expiration = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const contentTypePrefix = kind === "image" ? "image/" : "";
+  const maxFileSize = kind === "image" ? 5 * 1024 * 1024 : 50 * 1024 * 1024;
 
   return Buffer.from(
     JSON.stringify({
       conditions: [
         ["eq", "$key", objectKey],
-        ["starts-with", "$Content-Type", "image/"],
+        ["starts-with", "$Content-Type", contentTypePrefix],
         ["eq", "$x-oss-object-acl", "public-read"],
-        ["content-length-range", 1, 5 * 1024 * 1024],
+        ["content-length-range", 1, maxFileSize],
       ],
       expiration,
     }),
@@ -83,9 +105,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const { directory = "avatars", fileName } = (await request.json()) as {
+  const { directory = "avatars", fileName, kind = "image" } = (await request.json()) as {
     directory?: OssUploadDirectory;
     fileName?: string;
+    kind?: OssUploadKind;
   };
 
   if (!fileName) {
@@ -97,19 +120,31 @@ export async function POST(request: Request) {
     directory !== "clothes" &&
     directory !== "pants" &&
     directory !== "toiletries" &&
-    directory !== "books"
+    directory !== "books" &&
+    directory !== "hobby"
   ) {
     return NextResponse.json({ message: "上传目录无效" }, { status: 400 });
   }
 
+  if (kind !== "image" && kind !== "file") {
+    return NextResponse.json({ message: "上传类型无效" }, { status: 400 });
+  }
+
+  if (kind === "file" && directory !== "books") {
+    return NextResponse.json({ message: "文件只能上传到图书目录" }, { status: 400 });
+  }
+
   try {
     const ossConfig = getOssConfig();
-    const key = createImageObjectKey(session.user.id, fileName, directory);
-    const policy = createPolicy(key);
+    const key =
+      kind === "file"
+        ? createFileObjectKey(session.user.id, fileName, directory)
+        : createImageObjectKey(session.user.id, fileName, directory);
+    const policy = createPolicy(key, kind);
     const signature = signPolicy(policy, ossConfig.accessKeySecret);
     const result: OssPolicyResponse = {
       fields: {
-        "Content-Type": "image/",
+        "Content-Type": kind === "image" ? "image/" : "application/octet-stream",
         OSSAccessKeyId: ossConfig.accessKeyId,
         Signature: signature,
         key,
@@ -119,7 +154,7 @@ export async function POST(request: Request) {
       },
       host: ossConfig.host,
       key,
-      url: `${ossConfig.publicBaseUrl}/${key}`,
+      url: `${ossConfig.publicBaseUrl}/${encodeURI(key)}`,
     };
 
     return NextResponse.json(result);

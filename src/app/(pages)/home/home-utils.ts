@@ -39,6 +39,20 @@ type OpenMeteoGeocoding = {
   results?: OpenMeteoLocationResult[];
 };
 
+type ReverseGeocodeResult = {
+  city?: string;
+  countryName?: string;
+  locality?: string;
+  localityInfo?: {
+    administrative?: Array<{
+      description?: string;
+      isoName?: string;
+      name?: string;
+    }>;
+  };
+  principalSubdivision?: string;
+};
+
 export const weatherAreaOptions = getCascaderData();
 
 const chinaCountryNames = new Set(["中国", "中华人民共和国"]);
@@ -73,6 +87,13 @@ function getWeatherDescription(code?: number) {
 
 function formatTemperature(value?: number) {
   return typeof value === "number" ? Math.round(value) : 0;
+}
+
+function formatCurrentWeatherLocationLabel({
+  latitude,
+  longitude,
+}: Pick<GeolocationCoordinates, "latitude" | "longitude">) {
+  return `纬度 ${latitude.toFixed(4)}，经度 ${longitude.toFixed(4)}`;
 }
 
 function normalizeDivisionName(value?: string) {
@@ -222,6 +243,53 @@ export async function resolveWeatherLocationByAreaPath(areaPath: string[]) {
   }
 
   throw new Error("location resolve failed");
+}
+
+export async function resolveCurrentWeatherLocation(
+  coords: Pick<GeolocationCoordinates, "latitude" | "longitude">,
+) {
+  const fallbackLabel = formatCurrentWeatherLocationLabel(coords);
+  const params = new URLSearchParams({
+    latitude: String(coords.latitude),
+    localityLanguage: "zh",
+    longitude: String(coords.longitude),
+  });
+
+  try {
+    const response = await fetchWithRetry(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?${params}`,
+      { cache: "no-store" },
+    );
+    const data = (await response.json()) as ReverseGeocodeResult;
+    const administrativeNames =
+      data.localityInfo?.administrative
+        ?.map((item) => item.name ?? item.description ?? item.isoName)
+        .filter((item): item is string => Boolean(item?.trim())) ?? [];
+    const labelParts = [
+      data.locality,
+      data.city,
+      ...administrativeNames.slice(-2),
+      data.principalSubdivision,
+      data.countryName,
+    ].filter((item): item is string => Boolean(item?.trim()));
+    const label = Array.from(new Set(labelParts)).slice(0, 3).join(" · ");
+
+    return {
+      id: "current-location",
+      label: label || fallbackLabel,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      name: label || fallbackLabel,
+    } satisfies WeatherLocation;
+  } catch {
+    return {
+      id: "current-location",
+      label: fallbackLabel,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      name: fallbackLabel,
+    } satisfies WeatherLocation;
+  }
 }
 
 export async function fetchTodayWeather(

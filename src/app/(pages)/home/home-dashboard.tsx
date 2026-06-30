@@ -20,6 +20,7 @@ import {
 import { homeCategories, homeStats } from "./constant";
 import {
   fetchTodayWeather,
+  resolveCurrentWeatherLocation,
   resolveWeatherLocationByAreaPath,
   weatherAreaOptions,
   type TodayWeather,
@@ -34,6 +35,25 @@ type WeatherState =
 type KnowledgeItem = {
   link: string;
   title: string;
+};
+
+const initialWeather: WeatherState = {
+  description: "获取中",
+  status: "loading",
+};
+
+const homeDashboardCache: {
+  hasInitializedKnowledge: boolean;
+  hasInitializedWeather: boolean;
+  knowledgeItems: KnowledgeItem[];
+  weather: WeatherState;
+  weatherAreaPath: string[];
+} = {
+  hasInitializedKnowledge: false,
+  hasInitializedWeather: false,
+  knowledgeItems: [],
+  weather: initialWeather,
+  weatherAreaPath: [],
 };
 
 type HomeDashboardProps = {
@@ -52,18 +72,20 @@ type HomeDashboardProps = {
 export function HomeDashboard({
   activeCategoryHref,
   children,
-  itemCount,
   onOpenQuickItemCreate,
   surfaceBackground,
   surfaceBorderColor,
   visibleCategoryHrefs,
 }: HomeDashboardProps) {
-  const [weather, setWeather] = useState<WeatherState>({
-    description: "获取中",
-    status: "loading",
-  });
-  const [weatherAreaPath, setWeatherAreaPath] = useState<string[]>([]);
-  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
+  const [weather, setWeather] = useState<WeatherState>(
+    () => homeDashboardCache.weather,
+  );
+  const [weatherAreaPath, setWeatherAreaPath] = useState<string[]>(
+    () => homeDashboardCache.weatherAreaPath,
+  );
+  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>(
+    () => homeDashboardCache.knowledgeItems,
+  );
   const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false);
   const surfaceStyle = {
     backgroundColor: surfaceBackground,
@@ -78,7 +100,11 @@ export function HomeDashboard({
             "scale-[1.1] font-bold": activeCategoryHref === category.href,
           }),
           icon: (
-            <CategoryIcon Icon={category.Icon} name={category.iconClassName} />
+            <CategoryIcon
+              Icon={category.Icon}
+              name={category.iconClassName}
+              mode="symbol"
+            />
           ),
           key: category.href,
           label: <Link href={category.href}>{category.label}</Link>,
@@ -88,8 +114,11 @@ export function HomeDashboard({
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
   const weatherCascaderOptions = useMemo(
     () =>
-      weatherAreaPath[0] === "当前位置"
-        ? [{ label: "当前位置", value: "当前位置" }, ...weatherAreaOptions]
+      weatherAreaPath.length === 1 && weatherAreaPath[0]
+        ? [
+            { label: weatherAreaPath[0], value: weatherAreaPath[0] },
+            ...weatherAreaOptions,
+          ]
         : weatherAreaOptions,
     [weatherAreaPath],
   );
@@ -105,9 +134,14 @@ export function HomeDashboard({
       }
 
       const result = (await response.json()) as { items?: KnowledgeItem[] };
+      const nextItems = (result.items ?? []).slice(0, 4);
 
-      setKnowledgeItems((result.items ?? []).slice(0, 4));
+      homeDashboardCache.knowledgeItems = nextItems;
+      homeDashboardCache.hasInitializedKnowledge = true;
+      setKnowledgeItems(nextItems);
     } catch {
+      homeDashboardCache.knowledgeItems = [];
+      homeDashboardCache.hasInitializedKnowledge = true;
       setKnowledgeItems([]);
     } finally {
       setIsKnowledgeLoading(false);
@@ -116,17 +150,28 @@ export function HomeDashboard({
 
   const updateWeatherByLocation = useCallback(
     async (location: WeatherLocation) => {
-      setWeather({ description: "获取中", status: "loading" });
+      homeDashboardCache.weather = initialWeather;
+      setWeather(initialWeather);
 
       try {
         const todayWeather = await fetchTodayWeather(location);
-
-        setWeather({
+        const nextWeather = {
           ...todayWeather,
           status: "ready",
-        });
+        } satisfies WeatherState;
+
+        homeDashboardCache.weather = nextWeather;
+        homeDashboardCache.hasInitializedWeather = true;
+        setWeather(nextWeather);
       } catch {
-        setWeather({ description: "天气获取失败", status: "error" });
+        const nextWeather = {
+          description: "天气获取失败",
+          status: "error",
+        } satisfies WeatherState;
+
+        homeDashboardCache.weather = nextWeather;
+        homeDashboardCache.hasInitializedWeather = true;
+        setWeather(nextWeather);
       }
     },
     [],
@@ -135,25 +180,46 @@ export function HomeDashboard({
   async function handleAreaChange(value: (string | number)[]) {
     const areaPath = value.map(String);
 
+    homeDashboardCache.weatherAreaPath = areaPath;
     setWeatherAreaPath(areaPath);
-    setWeather({ description: "获取中", status: "loading" });
+    homeDashboardCache.weather = initialWeather;
+    setWeather(initialWeather);
 
     try {
       await updateWeatherByLocation(
         await resolveWeatherLocationByAreaPath(areaPath),
       );
     } catch {
-      setWeather({ description: "天气获取失败", status: "error" });
+      const nextWeather = {
+        description: "天气获取失败",
+        status: "error",
+      } satisfies WeatherState;
+
+      homeDashboardCache.weather = nextWeather;
+      homeDashboardCache.hasInitializedWeather = true;
+      setWeather(nextWeather);
     }
   }
 
   useEffect(() => {
     let isUnmounted = false;
 
+    if (homeDashboardCache.hasInitializedWeather) {
+      return;
+    }
+
     if (!navigator.geolocation) {
       const timerId = window.setTimeout(() => {
+        const nextWeather = {
+          description: "请选择位置",
+          status: "error",
+        } satisfies WeatherState;
+
+        homeDashboardCache.weatherAreaPath = [];
+        homeDashboardCache.weather = nextWeather;
+        homeDashboardCache.hasInitializedWeather = true;
         setWeatherAreaPath([]);
-        setWeather({ description: "请选择位置", status: "error" });
+        setWeather(nextWeather);
       });
 
       return () => {
@@ -167,19 +233,26 @@ export function HomeDashboard({
           return;
         }
 
-        setWeatherAreaPath(["当前位置"]);
-        await updateWeatherByLocation({
-          id: "current-location",
-          label: "当前位置",
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          name: "当前位置",
-        });
+        const location = await resolveCurrentWeatherLocation(coords);
+        const locationLabel = location.label;
+        const nextAreaPath = [locationLabel];
+
+        homeDashboardCache.weatherAreaPath = nextAreaPath;
+        setWeatherAreaPath(nextAreaPath);
+        await updateWeatherByLocation(location);
       },
       () => {
         if (!isUnmounted) {
+          const nextWeather = {
+            description: "请选择位置",
+            status: "error",
+          } satisfies WeatherState;
+
+          homeDashboardCache.weatherAreaPath = [];
+          homeDashboardCache.weather = nextWeather;
+          homeDashboardCache.hasInitializedWeather = true;
           setWeatherAreaPath([]);
-          setWeather({ description: "请选择位置", status: "error" });
+          setWeather(nextWeather);
         }
       },
       {
@@ -194,6 +267,10 @@ export function HomeDashboard({
   }, [updateWeatherByLocation]);
 
   useEffect(() => {
+    if (homeDashboardCache.hasInitializedKnowledge) {
+      return;
+    }
+
     const timerId = window.setTimeout(() => {
       void refreshKnowledgeItems();
     });
@@ -212,23 +289,16 @@ export function HomeDashboard({
           return (
             <Card
               className="home-soft-shadow"
-              classNames={
-                stat.label === "文章推荐"
-                  ? { body: "flex h-full min-h-0 flex-col" }
-                  : undefined
-              }
+              classNames={{ body: "flex h-full min-h-0 flex-col p-4!" }}
               key={stat.label}
               style={surfaceStyle}
             >
               {stat.label === "文章推荐" ? (
-                <div className="flex h-full min-h-[140px] flex-col">
+                <div className="flex h-full min-h-[130px] flex-col gap-3">
                   <div className="flex items-center justify-between gap-3">
                     <Typography.Text type="secondary">
                       <BulbOutlined />
                       <span className="ml-1">文章推荐</span>
-                      <span className="ml-2 text-xs opacity-70">
-                        {itemCount} 条
-                      </span>
                     </Typography.Text>
                     <Button
                       icon={<ReloadOutlined />}
@@ -240,7 +310,7 @@ export function HomeDashboard({
                       换一批
                     </Button>
                   </div>
-                  <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2">
+                  <div className="flex min-h-0 flex-col gap-2">
                     {knowledgeItems.length > 0 ? (
                       knowledgeItems.map((item) => (
                         <a
@@ -342,7 +412,7 @@ export function HomeDashboard({
         <Card
           className="home-soft-shadow flex h-full min-h-0 overflow-hidden"
           classNames={{
-            body: "flex h-full min-h-0 w-full p-[18px]",
+            body: "flex h-full min-h-0 w-full p-4!",
           }}
           style={surfaceStyle}
         >

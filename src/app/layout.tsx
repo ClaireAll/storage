@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import type { Metadata } from "next";
+import Script from "next/script";
 import { SharedThemeTexture } from "./(pages)/theme/shared-theme-texture";
 import "./(pages)/theme/theme.less";
 import "./globals.css";
@@ -16,7 +17,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
+      <head>
+        {/* eslint-disable-next-line @next/next/no-css-tags */}
+        <link href="/iconfont/iconfont.css" rel="stylesheet" />
+      </head>
       <body>
+        <Script src="/iconfont/iconfont.js" strategy="beforeInteractive" />
         <SharedThemeTexture />
         <AntdRegistry>{children}</AntdRegistry>
       </body>

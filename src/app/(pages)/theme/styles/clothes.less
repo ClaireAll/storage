@@ -1,13 +1,19 @@
 ﻿.theme-dark .clothes-create-upload {
   background: rgb(255 255 255 / 6%);
-  border-color: rgb(255 255 255 / 18%);
   color: rgb(255 255 255 / 62%);
 }
 
 .theme-light .clothes-create-upload {
   background: rgb(0 0 0 / 5%);
-  border-color: rgb(0 0 0 / 14%);
   color: rgb(0 0 0 / 45%);
+}
+
+.clothes-create-upload {
+  border-color: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 30%,
+    transparent
+  );
 }
 
 .clothes-create-upload.is-drag-over,
@@ -327,6 +333,10 @@
     border-color 0.18s ease;
 }
 
+.clothes-gallery-card-download-button.ant-btn-primary {
+  right: 50px;
+}
+
 .clothes-gallery-card:hover .clothes-gallery-card-edit-button {
   opacity: 0.86;
 }
@@ -397,7 +407,7 @@
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 32px;
   align-items: center;
   gap: 8px;
   line-height: 18px;
@@ -431,6 +441,23 @@
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.clothes-gallery-detail-action-cell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.clothes-gallery-detail-download-button.ant-btn {
+  width: 24px;
+  height: 24px;
+  color: var(--home-theme-color);
+}
+
+.clothes-gallery-detail-download-button.ant-btn:hover,
+.clothes-gallery-detail-download-button.ant-btn:focus-visible {
+  color: var(--home-theme-color);
+  background: color-mix(in srgb, var(--home-theme-color) 12%, transparent);
 }
 
 .clothes-gallery-name-highlight {

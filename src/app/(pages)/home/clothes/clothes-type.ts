@@ -7,15 +7,17 @@ export type ClothesItem = {
   /** 购买日期，格式为 yyyy-mm-dd。 */
   timeStamp?: string;
   /** 价格。 */
-  price: number;
+  price?: number;
   /** 主色，格式为 #rrggbb。 */
   color?: string;
   /** 文章推荐图片地址。 */
-  pic_url: string;
+  pic_url?: string;
   /** 所属季节。 */
   season?: string;
   /** 文章推荐数量。 */
   count?: number;
   /** 自定义分类值。 */
   category?: number;
+  /** 图书下载文件地址。 */
+  download_url?: string;
 };

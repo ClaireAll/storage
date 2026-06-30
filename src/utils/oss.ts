@@ -21,20 +21,25 @@ function validateImageFile(file: File) {
   }
 }
 
+function validateUploadFile(file: File) {
+  if (file.size > 50 * 1024 * 1024) {
+    throw new Error("文件大小不能超过 50MB");
+  }
+}
+
 /** 图片上传到 OSS 时可指定的业务目录。 */
-type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books";
+type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books" | "hobby";
+type OssUploadKind = "image" | "file";
 
-/** 将图片直传到阿里云 OSS，参数 file 为用户选择的本地图片文件。 */
-export async function uploadImageToOss(
+async function uploadToOss(
   file: File,
-  opts: { directory?: OssUploadDirectory } = {},
+  opts: { directory?: OssUploadDirectory; kind?: OssUploadKind } = {},
 ) {
-  validateImageFile(file);
-
   const policy = await reqPost<OssPolicyResponse>("/api/oss/policy", {
     data: {
       directory: opts.directory ?? "avatars",
       fileName: file.name,
+      kind: opts.kind ?? "image",
     },
   });
   const formData = new FormData();
@@ -51,8 +56,27 @@ export async function uploadImageToOss(
   });
 
   if (!response.ok) {
-    throw new Error("图片上传 OSS 失败");
+    throw new Error("文件上传 OSS 失败");
   }
 
   return policy.url;
+}
+
+/** 将图片直传到阿里云 OSS，参数 file 为用户选择的本地图片文件。 */
+export async function uploadImageToOss(
+  file: File,
+  opts: { directory?: OssUploadDirectory } = {},
+) {
+  validateImageFile(file);
+
+  return uploadToOss(file, { ...opts, kind: "image" });
+}
+
+export async function uploadFileToOss(
+  file: File,
+  opts: { directory?: OssUploadDirectory } = {},
+) {
+  validateUploadFile(file);
+
+  return uploadToOss(file, { ...opts, kind: "file" });
 }

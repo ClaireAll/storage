@@ -18,21 +18,24 @@ export type UserAuthProfileRow = {
 
 export type UserProfileWriteValues = Record<string, string | null>;
 
-export type ItemCategory = "clothes" | "pants" | "toiletries" | "books";
+export type ItemCategory = "clothes" | "pants" | "toiletries" | "books" | "hobby";
 
 export type ItemWriteValues = {
+  b_id?: string | number;
+  h_id?: string | number;
   category?: number;
   color?: string;
   count?: number;
+  download_url?: string;
   name: string;
-  pic_url: string;
-  price: number;
+  pic_url?: string;
+  price?: number;
   season?: string;
   timeStamp?: string;
 };
 
 type ItemCategoryConfig = {
-  idColumn: "c_id" | "p_id" | "t_id" | "b_id";
+  idColumn: "c_id" | "p_id" | "t_id" | "b_id" | "h_id";
   selectFields: string;
   table: ItemCategory;
   hasTimeStamp?: boolean;
@@ -60,8 +63,13 @@ const itemCategoryConfigs: Record<ItemCategory, ItemCategoryConfig> = {
   books: {
     hasTimeStamp: false,
     idColumn: "b_id",
-    selectFields: "b_id,name,price,pic_url,category",
+    selectFields: "b_id,name,price,pic_url,category,download_url",
     table: "books",
+  },
+  hobby: {
+    idColumn: "h_id",
+    selectFields: "h_id,name,timeStamp,price,pic_url,category",
+    table: "hobby",
   },
 };
 
@@ -151,6 +159,22 @@ export async function getItemPicture(
     .eq("id", userId)
     .eq(config.idColumn, itemId)
     .maybeSingle<{ pic_url: string }>();
+}
+
+export async function getItemAssets(
+  supabase: DatabaseClient,
+  category: ItemCategory,
+  userId: string,
+  itemId: string,
+) {
+  const config = itemCategoryConfigs[category];
+
+  return supabase
+    .from(config.table)
+    .select("pic_url,download_url")
+    .eq("id", userId)
+    .eq(config.idColumn, itemId)
+    .maybeSingle<{ download_url?: string | null; pic_url?: string | null }>();
 }
 
 export async function deleteItem(

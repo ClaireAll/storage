@@ -39,6 +39,11 @@ export const homeCategories: HomeCategory[] = [
     iconClassName: "icon-book",
     label: "图书",
   },
+  {
+    href: "/home/hobby",
+    iconClassName: "icon-hobby",
+    label: "爱好",
+  },
 ];
 
 export const homeStats: HomeStat[] = [

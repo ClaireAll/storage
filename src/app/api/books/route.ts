@@ -1,7 +1,8 @@
+import { randomUUID } from "crypto";
 import {
   createItem,
   deleteItem,
-  getItemPicture,
+  getItemAssets,
   updateItem,
 } from "@/app/utils/database";
 import { deleteOwnOssObject } from "@/utils/oss-server";
@@ -11,6 +12,7 @@ import { auth } from "../../../../auth";
 
 type BookCreatePayload = {
   category?: number;
+  download_url?: string;
   name?: string;
   pic_url?: string;
   price?: number;
@@ -48,6 +50,7 @@ function parseBookValues(payload: BookCreatePayload) {
 
   return {
     category,
+    downloadUrl: payload.download_url?.trim() ?? "",
     name: payload.name?.trim() ?? "",
     picUrl: payload.pic_url?.trim() ?? "",
     price,
@@ -57,7 +60,6 @@ function parseBookValues(payload: BookCreatePayload) {
 function validateBookValues({
   category,
   name,
-  picUrl,
   price,
 }: ReturnType<typeof parseBookValues>) {
   if (!name) {
@@ -70,10 +72,6 @@ function validateBookValues({
 
   if (category === null || !supportedBookCategories.includes(category)) {
     return "请选择图书分类";
-  }
-
-  if (!picUrl) {
-    return "请上传图书图片";
   }
 
   return "";
@@ -95,7 +93,9 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
   const { data, error } = await createItem(supabase, "books", session.user.id, {
+    b_id: randomUUID(),
     category: values.category ?? supportedBookCategories[0],
+    download_url: values.downloadUrl,
     name: values.name,
     pic_url: values.picUrl,
     price: values.price ?? 0,
@@ -129,6 +129,20 @@ export async function PUT(request: Request) {
   }
 
   const supabase = await createClient();
+  const { data: currentBook, error: currentBookError } =
+    await getItemAssets(supabase, "books", session.user.id, bookId);
+
+  if (currentBookError) {
+    return NextResponse.json(
+      { message: currentBookError.message },
+      { status: 500 },
+    );
+  }
+
+  if (!currentBook) {
+    return NextResponse.json({ message: "图书不存在" }, { status: 404 });
+  }
+
   const { data, error } = await updateItem(
     supabase,
     "books",
@@ -136,6 +150,7 @@ export async function PUT(request: Request) {
     bookId,
     {
       category: values.category ?? supportedBookCategories[0],
+      download_url: values.downloadUrl,
       name: values.name,
       pic_url: values.picUrl,
       price: values.price ?? 0,
@@ -144,6 +159,26 @@ export async function PUT(request: Request) {
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  if (
+    currentBook.download_url &&
+    values.downloadUrl &&
+    currentBook.download_url !== values.downloadUrl
+  ) {
+    try {
+      await deleteOwnOssObject(currentBook.download_url, session.user.id, [
+        "books",
+      ]);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          message:
+            error instanceof Error ? error.message : "删除原下载文件失败",
+        },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json(data);
@@ -165,7 +200,7 @@ export async function DELETE(request: Request) {
 
   const supabase = await createClient();
   const { data: currentBook, error: currentBookError } =
-    await getItemPicture(supabase, "books", session.user.id, bookId);
+    await getItemAssets(supabase, "books", session.user.id, bookId);
 
   if (currentBookError) {
     return NextResponse.json(
@@ -179,7 +214,14 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    await deleteOwnOssObject(currentBook.pic_url, session.user.id, ["books"]);
+    if (currentBook.pic_url) {
+      await deleteOwnOssObject(currentBook.pic_url, session.user.id, ["books"]);
+    }
+    if (currentBook.download_url) {
+      await deleteOwnOssObject(currentBook.download_url, session.user.id, [
+        "books",
+      ]);
+    }
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "删除图片失败" },

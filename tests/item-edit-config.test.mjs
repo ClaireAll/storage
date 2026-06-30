@@ -26,5 +26,6 @@ test("books config uses the books API and book-specific fields", () => {
   assert.match(source, /"\/home\/books"[\s\S]*hasSeason:\s*false/);
   assert.match(source, /"\/home\/books"[\s\S]*hasDate:\s*false/);
   assert.match(source, /"\/home\/books"[\s\S]*hasBookCategory:\s*true/);
+  assert.match(source, /"\/home\/books"[\s\S]*hasBookFile:\s*true/);
   assert.match(source, /"\/home\/books"[\s\S]*itemLabel:\s*"\u56fe\u4e66"/);
 });

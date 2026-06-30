@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   AppstoreOutlined,
   BarsOutlined,
+  DownloadOutlined,
   EditOutlined,
   FilterOutlined,
   SearchOutlined,
@@ -43,8 +44,10 @@ type ClothesGalleryProps = {
   /** 是否展示颜色标记。 */
   hasColor?: boolean;
   hasDate?: boolean;
+  hasPrice?: boolean;
   /** 是否展示季节筛选和季节信息。 */
   hasSeason?: boolean;
+  itemCategoryLabels?: Record<number, string>;
   /** 当前文章推荐名称，用于界面文案。 */
   itemLabel?: string;
   /** 是否展示数量。 */
@@ -57,10 +60,6 @@ const maxPageSize = 100;
 const defaultSortRule: ClothesSortRule = "purchase-desc";
 const defaultNoDateSortRule: ClothesSortRule = "price-desc";
 const seasons = ["春", "夏", "秋", "冬"];
-const bookCategoryLabels: Record<number, string> = {
-  1: "实体书",
-  2: "电子书",
-};
 const seasonOptions = seasons.map((season) => ({
   label: season,
   value: season,
@@ -88,8 +87,11 @@ function getSeasonSortIndex(seasonValue: string) {
     : seasons.length;
 }
 
-function getBookCategoryLabel(category?: number) {
-  return category ? (bookCategoryLabels[category] ?? `分类 ${category}`) : "";
+function getItemCategoryLabel(
+  categoryLabels: Record<number, string> | undefined,
+  category?: number,
+) {
+  return category ? (categoryLabels?.[category] ?? `分类 ${category}`) : "";
 }
 
 function isPurchaseSortRule(sortRule: ClothesSortRule) {
@@ -102,19 +104,25 @@ function isSeasonSortRule(sortRule: ClothesSortRule) {
 
 function getEffectiveSortRule({
   hasDate,
+  hasPrice,
   hasSeason,
   sortRule,
 }: {
   hasDate: boolean;
+  hasPrice: boolean;
   hasSeason: boolean;
   sortRule: ClothesSortRule;
 }) {
   if (!hasDate && isPurchaseSortRule(sortRule)) {
-    return defaultNoDateSortRule;
+    return hasPrice ? defaultNoDateSortRule : "season-asc";
+  }
+
+  if (!hasPrice && sortRule.startsWith("price-")) {
+    return hasDate ? defaultSortRule : "season-asc";
   }
 
   if (!hasSeason && isSeasonSortRule(sortRule)) {
-    return hasDate ? defaultSortRule : defaultNoDateSortRule;
+    return hasDate ? defaultSortRule : hasPrice ? defaultNoDateSortRule : sortRule;
   }
 
   return sortRule;
@@ -151,7 +159,9 @@ export function ClothesGallery({
   hasBookCategory = false,
   hasColor = true,
   hasDate = true,
+  hasPrice = true,
   hasSeason = true,
+  itemCategoryLabels,
   itemLabel = "衣服",
   showCount = false,
 }: ClothesGalleryProps) {
@@ -180,14 +190,21 @@ export function ClothesGallery({
   const normalizedKeyword = keyword.trim().toLowerCase();
   const effectiveSortRule = getEffectiveSortRule({
     hasDate,
+    hasPrice,
     hasSeason,
     sortRule,
   });
   const defaultEffectiveSortRule = hasDate
     ? defaultSortRule
-    : defaultNoDateSortRule;
+    : hasPrice
+      ? defaultNoDateSortRule
+      : "purchase-desc";
   const availableSortOptions = sortOptions.filter((option) => {
     if (!hasDate && isPurchaseSortRule(option.value)) {
+      return false;
+    }
+
+    if (!hasPrice && option.value.startsWith("price-")) {
       return false;
     }
 
@@ -212,7 +229,9 @@ export function ClothesGallery({
           [
             hasSeason ? item.season : "",
             hasDate ? item.timeStamp : "",
-            hasBookCategory ? getBookCategoryLabel(item.category) : "",
+            hasBookCategory || itemCategoryLabels
+              ? getItemCategoryLabel(itemCategoryLabels, item.category)
+              : "",
             showCount && item.count !== undefined ? String(item.count) : "",
           ]
             .filter((field): field is string => Boolean(field))
@@ -233,9 +252,11 @@ export function ClothesGallery({
               purchaseDate?.isSame(endDate, "day") ||
               purchaseDate?.isBefore(endDate, "day"))
           : true;
+        const itemPrice = item.price ?? 0;
         const matchesPrice =
-          (minPrice === null || item.price >= minPrice) &&
-          (maxPrice === null || item.price <= maxPrice);
+          !hasPrice ||
+          ((minPrice === null || itemPrice >= minPrice) &&
+            (maxPrice === null || itemPrice <= maxPrice));
 
         return matchesKeyword && matchesSeason && matchesTime && matchesPrice;
       }),
@@ -243,7 +264,9 @@ export function ClothesGallery({
       clothes,
       hasBookCategory,
       hasDate,
+      hasPrice,
       hasSeason,
+      itemCategoryLabels,
       normalizedKeyword,
       priceRange,
       selectedSeason,
@@ -261,9 +284,9 @@ export function ClothesGallery({
               dayjs(secondItem.timeStamp).valueOf()
             );
           case "price-desc":
-            return secondItem.price - firstItem.price;
+            return (secondItem.price ?? 0) - (firstItem.price ?? 0);
           case "price-asc":
-            return firstItem.price - secondItem.price;
+            return (firstItem.price ?? 0) - (secondItem.price ?? 0);
           case "season-asc":
             return (
               getSeasonSortIndex(firstItem.season ?? "") -
@@ -294,7 +317,7 @@ export function ClothesGallery({
     (hasSeason &&
       selectedSeason.length > 0 &&
       selectedSeason.length < seasons.length) ||
-    priceRange.some((value) => value !== null) ||
+    (hasPrice && priceRange.some((value) => value !== null)) ||
     (hasDate && timeRange.some(Boolean)) ||
     effectiveSortRule !== defaultEffectiveSortRule;
   const hasFilter = Boolean(normalizedKeyword) || hasAdvancedFilter;
@@ -493,30 +516,32 @@ export function ClothesGallery({
                 value={timeRange}
               />
             ) : null}
-            <div className="clothes-gallery-price-row">
-              <Typography.Text className="clothes-gallery-filter-label">
-                价格
-              </Typography.Text>
-              <InputNumber
-                className="clothes-gallery-price-input"
-                controls={false}
-                min={0}
-                onChange={filterMinPrice}
-                placeholder="最低价格"
-                precision={2}
-                value={priceRange[0]}
-              />
-              <span className="clothes-gallery-price-separator">-</span>
-              <InputNumber
-                className="clothes-gallery-price-input"
-                controls={false}
-                min={0}
-                onChange={filterMaxPrice}
-                placeholder="最高价格"
-                precision={2}
-                value={priceRange[1]}
-              />
-            </div>
+            {hasPrice ? (
+              <div className="clothes-gallery-price-row">
+                <Typography.Text className="clothes-gallery-filter-label">
+                  价格
+                </Typography.Text>
+                <InputNumber
+                  className="clothes-gallery-price-input"
+                  controls={false}
+                  min={0}
+                  onChange={filterMinPrice}
+                  placeholder="最低价格"
+                  precision={2}
+                  value={priceRange[0]}
+                />
+                <span className="clothes-gallery-price-separator">-</span>
+                <InputNumber
+                  className="clothes-gallery-price-input"
+                  controls={false}
+                  min={0}
+                  onChange={filterMaxPrice}
+                  placeholder="最高价格"
+                  precision={2}
+                  value={priceRange[1]}
+                />
+              </div>
+            ) : null}
             <Select<ClothesSortRule>
               className="clothes-gallery-sort-select theme-texture-select"
               getPopupContainer={(triggerNode) =>
@@ -589,17 +614,21 @@ export function ClothesGallery({
                     )}
                   </Typography.Text>
                 </div>
-                <Typography.Text className="clothes-gallery-detail-meta">
-                  ¥{item.price.toFixed(2)}
-                </Typography.Text>
+                {hasPrice ? (
+                  <Typography.Text className="clothes-gallery-detail-meta">
+                    ¥{(item.price ?? 0).toFixed(2)}
+                  </Typography.Text>
+                ) : null}
                 {hasDate ? (
                   <Typography.Text className="clothes-gallery-detail-meta">
                     购买时间：{dayjs(item.timeStamp).format("YYYY-MM-DD")}
                   </Typography.Text>
                 ) : null}
-                {hasBookCategory ? (
+                {hasBookCategory || itemCategoryLabels ? (
                   <Typography.Text className="clothes-gallery-detail-meta">
-                    分类：{getBookCategoryLabel(item.category) || "未分类"}
+                    分类：
+                    {getItemCategoryLabel(itemCategoryLabels, item.category) ||
+                      "未分类"}
                   </Typography.Text>
                 ) : null}
                 {showCount ? (
@@ -612,6 +641,21 @@ export function ClothesGallery({
                     适合季节：{parseClothesSeasons(item.season ?? "").join(" ")}
                   </Typography.Text>
                 ) : null}
+                <span className="clothes-gallery-detail-action-cell">
+                  {item.download_url ? (
+                    <Button
+                      aria-label={`下载 ${item.name}`}
+                      className="clothes-gallery-detail-download-button"
+                      href={item.download_url}
+                      icon={<DownloadOutlined />}
+                      rel="noreferrer"
+                      shape="circle"
+                      size="small"
+                      target="_blank"
+                      type="text"
+                    />
+                  ) : null}
+                </span>
               </div>
             </article>
           ))}
@@ -679,26 +723,60 @@ function ClothesImageCard({
   /** 是否展示数量。 */
   showCount: boolean;
 }) {
+  const hasImage = Boolean(item.pic_url);
+
   return (
-    <article className="clothes-gallery-card group relative overflow-hidden rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_14%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_92%,#ffffff_8%)]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt={item.name}
-        className="absolute inset-0 block h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.2]"
-        src={item.pic_url}
-      />
-      <div className="absolute inset-x-0 bottom-0 flex min-h-11 max-w-full items-end bg-[linear-gradient(180deg,transparent,rgb(0_0_0/64%))] p-2.5">
-        <Typography.Text
-          className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-[color-mix(in_srgb,var(--home-theme-color)_42%,transparent)] px-2 py-1"
-          style={{ color: "rgb(255 255 255 / 92%)" }}
-        >
-          {renderHighlightedClothesName(item.name, highlightIndexes)}
-        </Typography.Text>
-      </div>
+    <article
+      className="clothes-gallery-card group relative overflow-hidden rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_92%,#ffffff_8%)]"
+      style={{
+        borderColor:
+          "color-mix(in srgb, var(--home-theme-color) 30%, transparent)",
+      }}
+    >
+      {hasImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt={item.name}
+            className="absolute inset-0 block h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.2]"
+            src={item.pic_url}
+          />
+          <div className="absolute inset-x-0 bottom-0 flex min-h-11 max-w-full items-end bg-[linear-gradient(180deg,transparent,rgb(0_0_0/64%))] p-2.5">
+            <Typography.Text
+              className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-[color-mix(in_srgb,var(--home-theme-color)_42%,transparent)] px-2 py-1"
+              style={{ color: "rgb(255 255 255 / 92%)" }}
+            >
+              {renderHighlightedClothesName(item.name, highlightIndexes)}
+            </Typography.Text>
+          </div>
+        </>
+      ) : (
+        <div className="clothes-gallery-card-placeholder absolute inset-0 flex items-center justify-center p-4 text-center">
+          <Typography.Text
+            className="line-clamp-3 text-base font-medium leading-6"
+            style={{ color: "var(--home-theme-text)" }}
+          >
+            {renderHighlightedClothesName(item.name, highlightIndexes)}
+          </Typography.Text>
+        </div>
+      )}
       {showCount ? (
         <span className="clothes-gallery-card-count-badge">
           x{item.count ?? 1}
         </span>
+      ) : null}
+      {item.download_url ? (
+        <Button
+          aria-label={`下载 ${item.name}`}
+          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button"
+          href={item.download_url}
+          icon={<DownloadOutlined />}
+          rel="noreferrer"
+          shape="circle"
+          size="small"
+          target="_blank"
+          type="primary"
+        />
       ) : null}
       <Button
         aria-label={`编辑 ${item.name}`}

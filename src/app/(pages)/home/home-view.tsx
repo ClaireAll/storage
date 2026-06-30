@@ -13,8 +13,7 @@ import {
 } from "@/app/(pages)/theme/theme-utils";
 import type { ThemeConfig } from "@/app/(pages)/theme/types";
 import { cn } from "@/lib/utils";
-import { SearchOutlined } from "@ant-design/icons";
-import { Button, Empty, Layout, Space } from "antd";
+import { Empty, Layout, Space } from "antd";
 import { SessionProvider } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -31,24 +30,20 @@ import {
   useHomeProfile,
   type HomeUser,
 } from "./home-profile";
-import {
-  getItemCategoryConfig,
-  itemCategoryConfigs,
-} from "./item-edit-config";
+import { getItemCategoryConfig, itemCategoryConfigs } from "./item-edit-config";
 
 type HomeContentActions = {
-  /** 鎵撳紑褰撳墠鍒嗙被鍙敤鐨勬柊澧炴枃绔犳帹鑽愬脊绐椼€?*/
+  /** 打开当前分类可用的新增文章推荐弹窗。 */
   openClothesCreateModal: () => void;
-  /** 鎵撳紑褰撳墠鍒嗙被鍙敤鐨勭紪杈戞枃绔犳帹鑽愬脊绐椼€?*/
+  /** 打开当前分类可用的编辑文章推荐弹窗。 */
   openClothesEditModal: (item: ClothesItem) => void;
 };
-
 
 const HomeContentActionsContext = createContext<HomeContentActions | null>(
   null,
 );
 
-/** 鍒嗙被鍐呭鍖轰娇鐢ㄧ殑涓婚〉鍔ㄤ綔銆?*/
+/** 分类内容区使用的主页动作。 */
 export function useHomeContentActions() {
   const actions = useContext(HomeContentActionsContext);
 
@@ -59,17 +54,17 @@ export function useHomeContentActions() {
   return actions;
 }
 
-/** 棣栭〉缁勪欢鎺ユ敹鐨勫睘鎬с€?*/
+/** 首页组件接收的属性。 */
 type HomePageProps = {
-  /** 椤甸潰棣栨娓叉煋浣跨敤鐨勪富棰橀厤缃€?*/
+  /** 页面首次渲染使用的主题配置。 */
   initialTheme: ThemeConfig;
-  /** 褰撳墠鐧诲綍鐢ㄦ埛淇℃伅锛岀敤浜庡睍绀哄ご鍍忓拰涓汉璧勬枡寮圭獥銆?*/
+  /** 当前登录用户信息，用于展示头像和个人资料弹窗。 */
   user: HomeUser;
-  /** 褰撳墠璺敱閫変腑鐨勫垎绫昏矾寰勶紝鐢ㄤ簬鎺у埗鍙充晶鍐呭鍖哄睍绀恒€?*/
+  /** 当前路由选中的分类路径，用于控制右侧内容区展示。 */
   activeCategoryHref?: string;
-  /** 褰撳墠鍒嗙被鏂囩珷鎺ㄨ崘鏁伴噺銆?*/
+  /** 当前分类文章推荐数量。 */
   itemCount?: number;
-  /** 褰撳墠鍒嗙被椤甸潰鎻愪緵鐨勫唴瀹瑰尯鍩熴€?*/
+  /** 当前分类页面提供的内容区域。 */
   children?: ReactNode;
 };
 
@@ -109,10 +104,10 @@ export default function HomePage({
     (category) => category.href === activeCategoryHref,
   );
   const emptyDescription = activeCategory
-    ? `${activeCategory.label}鍒嗙被鏆傛湭娣诲姞鍐呭`
-    : "璇烽€夋嫨宸︿晶鍒嗙被";
+    ? `${activeCategory.label}分类暂未添加内容`
+    : "请选择左侧分类";
 
-  /** 鍒囨崲鍒嗙被澶嶉€夋寜閽紝骞舵帶鍒跺乏渚у垎绫诲垪琛ㄦ樉绀哄摢浜涢」銆?*/
+  /** 切换分类复选按钮，并控制左侧分类列表显示哪些项。 */
   function toggleCategoryVisible(categoryHref: string) {
     setVisibleCategoryHrefs((currentHrefs) =>
       currentHrefs.includes(categoryHref)
@@ -121,7 +116,7 @@ export default function HomePage({
     );
   }
 
-  /** 鍒囨崲鍏ㄩ儴鍒嗙被澶嶉€夋寜閽紝鍏ㄩ€夋椂鍐嶆鐐瑰嚮浼氭竻绌哄乏渚у垎绫诲垪琛ㄣ€?*/
+  /** 切换全部分类复选按钮，全选时再次点击会清空左侧分类列表。 */
   function toggleAllCategoriesVisible() {
     setVisibleCategoryHrefs((currentHrefs) =>
       currentHrefs.length === homeCategories.length
@@ -130,7 +125,7 @@ export default function HomePage({
     );
   }
 
-  /** 鎵撳紑褰撳墠鍒嗙被鏂板寮圭獥锛屼粎鏀寔宸茬粡寮€鍙戠殑鏂囩珷鎺ㄨ崘鍒嗙被銆?*/
+  /** 打开当前分类新增弹窗，仅支持已经开发的文章推荐分类。 */
   function openClothesCreateModal() {
     if (activeItemCategory) {
       setSelectedItemCategoryHref(activeCategoryHref);
@@ -147,7 +142,7 @@ export default function HomePage({
     setIsClothesCreateModalOpen(true);
   }
 
-  /** 鎵撳紑褰撳墠鍒嗙被缂栬緫寮圭獥锛屼粎鏀寔宸茬粡寮€鍙戠殑鏂囩珷鎺ㄨ崘鍒嗙被銆?*/
+  /** 打开当前分类编辑弹窗，仅支持已经开发的文章推荐分类。 */
   function openClothesEditModal(item: ClothesItem) {
     if (activeItemCategory) {
       setSelectedItemCategoryHref(activeCategoryHref);
@@ -157,7 +152,7 @@ export default function HomePage({
     }
   }
 
-  /** 鍏抽棴琛ｆ湇缂栬緫寮圭獥骞舵竻鐞嗙紪杈戝璞°€?*/
+  /** 关闭衣服编辑弹窗并清理编辑对象。 */
   function closeClothesModal() {
     setIsClothesCreateModalOpen(false);
     setEditingClothes(null);
@@ -165,7 +160,7 @@ export default function HomePage({
     setShouldShowItemCategorySelect(false);
   }
 
-  /** 鏂囩珷鎺ㄨ崘淇濆瓨鎴愬姛鍚庡埛鏂板綋鍓嶈矾鐢憋紝璁╂湇鍔＄璇诲彇鍒版渶鏂版枃绔犳帹鑽愬垪琛ㄣ€?*/
+  /** 文章推荐保存成功后刷新当前路由，让服务端读取到最新文章推荐列表。 */
   function refreshClothesAfterSaved() {
     router.refresh();
   }
@@ -254,11 +249,10 @@ export default function HomePage({
                         color: activePalette.color,
                       }}
                     >
-                      {profileEditor.profile.name ?? "鐢ㄦ埛"}
+                      {profileEditor.profile.name ?? "用户"}
                     </span>
                   </div>
-                  <Space wrap>
-                    <Button icon={<SearchOutlined />}>鎼滅储</Button>
+                  <Space>
                     <ThemeControl />
                   </Space>
                 </header>
@@ -293,10 +287,16 @@ export default function HomePage({
                   categoryOptions={itemCategoryOptions}
                   editingClothes={editingClothes}
                   hasBookCategory={selectedItemCategory?.hasBookCategory}
+                  hasBookFile={selectedItemCategory?.hasBookFile}
                   hasColor={selectedItemCategory?.hasColor}
                   hasCount={selectedItemCategory?.hasCount}
                   hasDate={selectedItemCategory?.hasDate}
+                  hasImage={selectedItemCategory?.hasImage}
+                  hasPrice={selectedItemCategory?.hasPrice}
                   hasSeason={selectedItemCategory?.hasSeason}
+                  itemCategoryOptions={
+                    selectedItemCategory?.itemCategoryOptions
+                  }
                   itemLabel={selectedItemCategory?.itemLabel}
                   namePlaceholder={selectedItemCategory?.namePlaceholder}
                   onCategoryHrefChange={setSelectedItemCategoryHref}

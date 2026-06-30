@@ -1,0 +1,59 @@
+@font-face {
+  font-family: "iconfont"; /* Project id 4012350 */
+  src: url('iconfont.woff2?t=1782787811305') format('woff2'),
+       url('iconfont.woff?t=1782787811305') format('woff'),
+       url('iconfont.ttf?t=1782787811305') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-jewelry:before {
+  content: "\e605";
+}
+
+.icon-cosmetic:before {
+  content: "\e611";
+}
+
+.icon-skincare:before {
+  content: "\e656";
+}
+
+.icon-clothes:before {
+  content: "\e67c";
+}
+
+.icon-hobby:before {
+  content: "\e60a";
+}
+
+.icon-toiletries:before {
+  content: "\e613";
+}
+
+.icon-book:before {
+  content: "\e6be";
+}
+
+.icon-pants:before {
+  content: "\e601";
+}
+
+.icon-qunzi:before {
+  content: "\e603";
+}
+
+.icon-avatar:before {
+  content: "\e62c";
+}
+
+.icon-theme-exchange:before {
+  content: "\e655";
+}
+

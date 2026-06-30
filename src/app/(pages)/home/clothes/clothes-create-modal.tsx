@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { uploadImageToOss } from "@/utils/oss";
+import { uploadFileToOss, uploadImageToOss } from "@/utils/oss";
 import { reqDelete, reqPost, reqPut } from "@/utils/request";
 import { DeleteOutlined, UploadOutlined } from "@ant-design/icons";
 import type { FormInstance } from "antd";
@@ -31,53 +31,60 @@ import {
   useImageCrop,
 } from "./clothes-utils";
 
-/** 娣诲姞琛ｆ湇寮圭獥鎺ユ敹鐨勫睘鎬с€?*/
+/** 添加衣服弹窗接收的属性。 */
 type ClothesCreateModalProps = {
-  /** 鏂板鍜岀紪杈戞帴鍙ｅ湴鍧€銆?*/
+  /** 新增和编辑接口地址。 */
   apiPath: string;
-  /** 姝ｅ湪缂栬緫鐨勮。鏈嶏紱涓虹┖鏃惰〃绀烘柊澧炪€?*/
+  /** 正在编辑的衣服；为空时表示新增。 */
   editingClothes?: ClothesItem | null;
-  /** 鏄惁灞曠ず鍥句功鍒嗙被瀛楁銆?*/
+  /** 是否展示图书分类字段。 */
   hasBookCategory?: boolean;
-  /** 鏄惁灞曠ず棰滆壊瀛楁銆?*/
+  /** 是否展示图书文件上传字段。 */
+  hasBookFile?: boolean;
+  /** 是否展示颜色字段。 */
   hasColor?: boolean;
-  /** 鏄惁灞曠ず璐拱鏃ユ湡瀛楁銆?*/
+  /** 是否展示购买日期字段。 */
   hasDate?: boolean;
-  /** 鏄惁灞曠ず瀛ｈ妭瀛楁銆?*/
+  /** 是否展示图片上传区域。 */
+  hasImage?: boolean;
+  /** 是否展示价格字段。 */
+  hasPrice?: boolean;
+  /** 是否展示季节字段。 */
   hasSeason?: boolean;
-  /** 鏄惁灞曠ず鏁伴噺瀛楁銆?*/
+  /** 是否展示数量字段。 */
   hasCount?: boolean;
-  /** 鏂囩珷鎺ㄨ崘鍚嶇О锛岀敤浜庤〃鍗曟枃妗堛€?*/
+  /** 文章推荐名称，用于表单文案。 */
   itemLabel?: string;
-  /** 鍚嶅瓧杈撳叆妗嗙ず渚嬨€?*/
+  /** 名称输入框示例。 */
   namePlaceholder?: string;
-  /** 寮圭獥鏄惁鎵撳紑銆?*/
+  /** 弹窗是否打开。 */
   open: boolean;
-  /** 褰撳墠涓婚〉涓婚鑹诧紝鐢ㄤ簬寮圭獥鍐呴€変腑鎬併€?*/
+  /** 当前主页主题色，用于弹窗内选中态。 */
   themeColor: string;
-  /** OSS 涓婁紶鐩綍銆?*/
-  uploadDirectory: "clothes" | "pants" | "toiletries" | "books";
+  /** OSS 上传目录。 */
+  uploadDirectory: "clothes" | "pants" | "toiletries" | "books" | "hobby";
   categoryOptions?: { label: string; value: string }[];
+  itemCategoryOptions?: { label: string; value: number }[];
   showCategorySelect?: boolean;
   selectedCategoryHref?: string;
   onCategoryHrefChange?: (categoryHref: string) => void;
-  /** 鍏抽棴寮圭獥銆?*/
+  /** 关闭弹窗。 */
   onClose: () => void;
-  /** 淇濆瓨鎴愬姛鍚庣殑鍥炶皟銆?*/
+  /** 保存成功后的回调。 */
   onSaved?: () => void;
 };
 
-/** 娣诲姞琛ｆ湇琛ㄥ崟瀛楁銆?*/
+/** 添加衣服表单字段。 */
 type ClothesCreateFormValues = {
-  /** 鍥句功鍒嗙被銆?*/
+  /** 图书分类。 */
   category?: number;
-  /** 鏁伴噺銆?*/
+  /** 数量。 */
   count?: number | null;
-  /** 璐拱鏃ユ湡銆?*/
+  /** 购买日期。 */
   timeStamp?: Dayjs;
-  /** 浠锋牸銆?*/
-  price: number;
-  /** 瀛ｈ妭銆?*/
+  /** 价格。 */
+  price?: number;
+  /** 季节。 */
   season?: string[];
 };
 
@@ -89,16 +96,30 @@ const bookCategoryOptions = [
 const formControlWidthClassName = "w-[200px] max-w-full";
 const fallbackColor = "#8b8b8b";
 
-/** 娣诲姞琛ｆ湇寮圭獥銆?*/
+function getFileNameFromUrl(fileUrl: string) {
+  try {
+    const pathname = new URL(fileUrl).pathname;
+
+    return decodeURIComponent(pathname.split("/").pop() ?? "");
+  } catch {
+    return fileUrl.split("/").pop() ?? "";
+  }
+}
+
+/** 添加衣服弹窗。 */
 export function ItemEditDialog({
   apiPath,
   categoryOptions,
   editingClothes,
   hasBookCategory = false,
+  hasBookFile = false,
   hasColor = true,
   hasCount = false,
   hasDate = true,
+  hasImage = true,
+  hasPrice = true,
   hasSeason = true,
+  itemCategoryOptions,
   itemLabel = "衣服",
   namePlaceholder,
   onCategoryHrefChange,
@@ -127,6 +148,9 @@ export function ItemEditDialog({
   const [nameDraft, setNameDraft] = useState("");
   const [nameError, setNameError] = useState("");
   const [sourceFileName, setSourceFileName] = useState("");
+  const bookFileInputRef = useRef<HTMLInputElement>(null);
+  const [bookFile, setBookFile] = useState<File | null>(null);
+  const [bookFileName, setBookFileName] = useState("");
   const {
     changeCropScale,
     cropFrameRef,
@@ -161,7 +185,7 @@ export function ItemEditDialog({
         ? "牙膏"
         : "白色短袖");
 
-  /** 閲婃斁鏈湴鍥剧墖棰勮鍦板潃銆?*/
+  /** 释放本地图片预览地址。 */
   function revokePreviewObjectUrl() {
     if (previewObjectUrlRef.current) {
       URL.revokeObjectURL(previewObjectUrlRef.current);
@@ -169,7 +193,7 @@ export function ItemEditDialog({
     }
   }
 
-  /** 閲婃斁瑁佸壀婧愬浘鏈湴鍦板潃銆?*/
+  /** 释放裁剪源图本地地址。 */
   function revokeSourceObjectUrl() {
     if (sourceObjectUrlRef.current) {
       URL.revokeObjectURL(sourceObjectUrlRef.current);
@@ -177,7 +201,7 @@ export function ItemEditDialog({
     }
   }
 
-  /** 閲嶇疆寮圭獥涓殑涓存椂琛ㄥ崟鐘舵€併€?*/
+  /** 重置弹窗中的临时表单状态。 */
   function resetDraft(nextEditingClothes: ClothesItem | null = null) {
     revokePreviewObjectUrl();
     revokeSourceObjectUrl();
@@ -193,12 +217,27 @@ export function ItemEditDialog({
     setNameDraft(nextEditingClothes?.name ?? "");
     setNameError("");
     setSourceFileName("");
+    setBookFile(null);
+    setBookFileName(
+      hasBookFile && nextEditingClothes?.download_url
+        ? getFileNameFromUrl(nextEditingClothes.download_url)
+        : "",
+    );
+    if (bookFileInputRef.current) {
+      bookFileInputRef.current.value = "";
+    }
+    const resolvedItemCategoryOptions = itemCategoryOptions ?? [];
+
     form.setFieldsValue({
-      category: hasBookCategory
-        ? (nextEditingClothes?.category ?? bookCategoryOptions[0].value)
+      category:
+        hasBookCategory || resolvedItemCategoryOptions.length
+        ? (nextEditingClothes?.category ??
+          (hasBookCategory
+            ? bookCategoryOptions[0].value
+            : resolvedItemCategoryOptions[0]?.value))
         : undefined,
       count: hasCount ? (nextEditingClothes?.count ?? 1) : undefined,
-      price: nextEditingClothes?.price ?? 0,
+      price: hasPrice ? (nextEditingClothes?.price ?? 0) : undefined,
       season: nextEditingClothes?.season
         ? parseClothesSeasons(nextEditingClothes.season)
         : [seasons[0]],
@@ -210,7 +249,7 @@ export function ItemEditDialog({
     });
   }
 
-  /** 鍏抽棴鍓嶅厛娓呮帀鏈涓婁紶鑽夌锛岄伩鍏嶄笅娆℃墦寮€鏃堕棯杩囨棫鍥剧墖銆?*/
+  /** 关闭前先清理本次上传草稿，避免下次打开时闪过旧图片。 */
   function closeModal() {
     resetDraft();
     onClose();
@@ -224,7 +263,7 @@ export function ItemEditDialog({
     [],
   );
 
-  /** 閫夋嫨琛ｆ湇鍥剧墖鍚庡垱寤洪瑙堬紝骞跺皾璇曟彁鍙栦富鑹诧紝鍙傛暟 files 涓虹敤鎴烽€夋嫨銆佹嫋鎷芥垨绮樿创鐨勬枃浠跺垪琛ㄣ€?*/
+  /** 选择衣服图片后创建预览，并尝试提取主色，参数 files 为用户选择、拖拽或粘贴的文件列表。 */
   async function handleImageChange(files: ArrayLike<File> | null) {
     setIsDragOverUpload(false);
     setIsUploadPasteReady(false);
@@ -278,28 +317,28 @@ export function ItemEditDialog({
     }
   }
 
-  /** 鏂囦欢鎷栧叆涓婁紶鍖烘椂淇濇寔娴忚鍣ㄤ笉鎵撳紑鍥剧墖锛屽苟鏄剧ず涓婁紶鍖洪珮浜€?*/
+  /** 文件拖入上传区时保持浏览器不打开图片，并显示上传区高亮。 */
   function dragOverUpload(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
     setIsDragOverUpload(true);
   }
 
-  /** 鏂囦欢绂诲紑涓婁紶鍖烘椂鍙栨秷涓婁紶鍖洪珮浜€?*/
+  /** 文件离开上传区时取消上传区高亮。 */
   function dragLeaveUpload(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
     setIsDragOverUpload(false);
   }
 
-  /** 鍦ㄤ笂浼犲尯閲婃斁鏂囦欢鏃惰鍙栨嫋鎷藉浘鐗囧苟杩涘叆瑁佸壀娴佺▼銆?*/
+  /** 在上传区释放文件时读取拖拽图片并进入裁剪流程。 */
   function dropUpload(event: React.DragEvent<HTMLDivElement>) {
     event.preventDefault();
     event.stopPropagation();
     handleImageChange(event.dataTransfer.files);
   }
 
-  /** 鍦ㄤ笂浼犲尯绮樿创鍥剧墖鏃惰鍙栧壀璐存澘鍥剧墖骞惰繘鍏ヨ鍓祦绋嬨€?*/
+  /** 在上传区粘贴图片时读取剪贴板图片并进入裁剪流程。 */
   function pasteUpload(event: React.ClipboardEvent<HTMLElement>) {
     const imageFiles = Array.from(event.clipboardData.files).filter((file) =>
       file.type.startsWith("image/"),
@@ -314,7 +353,7 @@ export function ItemEditDialog({
     handleImageChange(imageFiles);
   }
 
-  /** 鍗曞嚮涓婁紶鍖烘椂鍙仛鐒﹀苟鏍囪涓哄彲绮樿创锛屼笉绔嬪嵆鎵撳紑鏂囦欢閫夋嫨鍣ㄣ€?*/
+  /** 单击上传区时只聚焦并标记为可粘贴，不立即打开文件选择器。 */
   function focusUploadForPaste(event: React.MouseEvent<HTMLDivElement>) {
     if (isCropping) {
       event.preventDefault();
@@ -324,7 +363,7 @@ export function ItemEditDialog({
     setIsUploadPasteReady(true);
   }
 
-  /** 鍙屽嚮涓婁紶鍖烘椂鎵撳紑鏈湴鏂囦欢閫夋嫨鍣ㄣ€?*/
+  /** 双击上传区时打开本地文件选择器。 */
   function openUploadFilePicker(event: React.MouseEvent<HTMLDivElement>) {
     if (isCropping) {
       event.preventDefault();
@@ -346,7 +385,24 @@ export function ItemEditDialog({
     }
   }
 
-  /** 榛樿浠锋牸涓?0 鏃惰仛鐒﹀叏閫夛紝鏂逛究鐩存帴瑕嗙洊杈撳叆銆?*/
+  function chooseBookFile(files: ArrayLike<File> | null) {
+    const file = files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setImageError("文件大小不能超过 50MB");
+      return;
+    }
+
+    setBookFile(file);
+    setBookFileName(file.name);
+    setImageError("");
+  }
+
+  /** 默认价格为 0 时聚焦全选，方便直接覆盖输入。 */
   function focusPriceInput(event: React.FocusEvent<HTMLInputElement>) {
     if (form.getFieldValue("price") !== 0) {
       return;
@@ -359,7 +415,7 @@ export function ItemEditDialog({
     });
   }
 
-  /** 鎻愪氦琛ｆ湇琛ㄥ崟锛屾柊澧炴椂鍒涘缓璁板綍锛岀紪杈戞椂鏇存柊褰撳墠璁板綍銆?*/
+  /** 提交衣服表单，新增时创建记录，编辑时更新当前记录。 */
   async function submitClothes(values: ClothesCreateFormValues) {
     const currentCropSourceUrl = cropSourceUrl;
     const currentEditingClothes = editingClothes ?? null;
@@ -367,6 +423,7 @@ export function ItemEditDialog({
     const itemCount = Number(values.count ?? 0);
     const shouldUploadNewImage =
       Boolean(currentCropSourceUrl) && Boolean(sourceObjectUrlRef.current);
+    const shouldRequireImage = hasImage && !hasBookCategory;
 
     if (!hasSelectedCategory) {
       setNameError("请先选择分类");
@@ -388,7 +445,11 @@ export function ItemEditDialog({
       return;
     }
 
-    if (!shouldUploadNewImage && !currentEditingClothes?.pic_url) {
+    if (
+      shouldRequireImage &&
+      !shouldUploadNewImage &&
+      !currentEditingClothes?.pic_url
+    ) {
       setImageError(`请上传${itemLabel}图片`);
       return;
     }
@@ -399,10 +460,11 @@ export function ItemEditDialog({
 
     try {
       let clothesColor = color;
-      let picUrl = currentEditingClothes?.pic_url ?? "";
+      let picUrl = hasImage ? (currentEditingClothes?.pic_url ?? "") : "";
+      let downloadUrl = currentEditingClothes?.download_url ?? "";
       let croppedFile: File | null = null;
 
-      if (shouldUploadNewImage && currentCropSourceUrl) {
+      if (hasImage && shouldUploadNewImage && currentCropSourceUrl) {
         croppedFile = await createCroppedImageFile({
           cropOffsetX,
           cropOffsetY,
@@ -434,20 +496,33 @@ export function ItemEditDialog({
         });
       }
 
+      if (hasBookFile && bookFile) {
+        downloadUrl = await uploadFileToOss(bookFile, {
+          directory: "books",
+        });
+      }
+
       const clothesPayload: {
         category?: number;
         color?: string;
         count?: number;
+        download_url?: string;
         name: string;
-        pic_url: string;
-        price: number;
+        pic_url?: string;
+        price?: number;
         season?: string;
         timeStamp?: string;
       } = {
         name: clothesName,
-        pic_url: picUrl,
-        price: Number(values.price.toFixed(2)),
       };
+
+      if (hasImage) {
+        clothesPayload.pic_url = picUrl;
+      }
+
+      if (hasPrice) {
+        clothesPayload.price = Number((values.price ?? 0).toFixed(2));
+      }
 
       if (hasDate && values.timeStamp) {
         clothesPayload.timeStamp = values.timeStamp.format("YYYY-MM-DD");
@@ -460,6 +535,15 @@ export function ItemEditDialog({
       if (hasBookCategory) {
         clothesPayload.category =
           values.category ?? bookCategoryOptions[0].value;
+      }
+
+      if (hasBookFile) {
+        clothesPayload.download_url = downloadUrl;
+      }
+
+      if (itemCategoryOptions?.length) {
+        clothesPayload.category =
+          values.category ?? itemCategoryOptions[0].value;
       }
 
       if (hasSeason) {
@@ -487,9 +571,7 @@ export function ItemEditDialog({
       message.success("保存成功");
     } catch (error) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : `保存${itemLabel}信息失败`;
+        error instanceof Error ? error.message : `保存${itemLabel}信息失败`;
 
       setImageError(errorMessage);
       message.error(errorMessage);
@@ -579,46 +661,60 @@ export function ItemEditDialog({
       }
       width={608}
     >
-      <div className="grid grid-cols-[260px_276px] gap-x-6 gap-y-2 pt-4 max-sm:grid-cols-1">
-        <ImageUploader
-          cropFrameRef={cropFrameRef}
-          cropSourceUrl={cropSourceUrl}
-          dragCrop={dragCrop}
-          dragLeaveUpload={dragLeaveUpload}
-          dragOverUpload={dragOverUpload}
-          dropUpload={dropUpload}
-          editingClothes={editingClothes}
-          fileInputRef={fileInputRef}
-          focusUploadForPaste={focusUploadForPaste}
-          getCropImageStyle={getCropImageStyle}
-          handleImageChange={handleImageChange}
-          isCropping={isCropping}
-          isDragOverUpload={isDragOverUpload}
-          isUploadPasteReady={isUploadPasteReady}
-          itemLabel={itemLabel}
-          keyDownUpload={keyDownUpload}
-          openUploadFilePicker={openUploadFilePicker}
-          pasteUpload={pasteUpload}
-          setCropImageAspectRatio={setCropImageAspectRatio}
-          setIsUploadPasteReady={setIsUploadPasteReady}
-          startDragCrop={startDragCrop}
-          stopDragCrop={stopDragCrop}
-          uploadAreaRef={uploadAreaRef}
-        />
+      <div
+        className={
+          hasImage
+            ? "grid grid-cols-[260px_276px] gap-x-6 gap-y-2 pt-4 max-sm:grid-cols-1"
+            : "grid grid-cols-[276px] gap-y-2 pt-4"
+        }
+      >
+        {hasImage ? (
+          <ImageUploader
+            cropFrameRef={cropFrameRef}
+            cropSourceUrl={cropSourceUrl}
+            dragCrop={dragCrop}
+            dragLeaveUpload={dragLeaveUpload}
+            dragOverUpload={dragOverUpload}
+            dropUpload={dropUpload}
+            editingClothes={editingClothes}
+            fileInputRef={fileInputRef}
+            focusUploadForPaste={focusUploadForPaste}
+            getCropImageStyle={getCropImageStyle}
+            handleImageChange={handleImageChange}
+            isCropping={isCropping}
+            isDragOverUpload={isDragOverUpload}
+            isUploadPasteReady={isUploadPasteReady}
+            itemLabel={itemLabel}
+            keyDownUpload={keyDownUpload}
+            openUploadFilePicker={openUploadFilePicker}
+            pasteUpload={pasteUpload}
+            setCropImageAspectRatio={setCropImageAspectRatio}
+            setIsUploadPasteReady={setIsUploadPasteReady}
+            startDragCrop={startDragCrop}
+            stopDragCrop={stopDragCrop}
+            uploadAreaRef={uploadAreaRef}
+          />
+        ) : null}
 
         <ItemEditForm
           categoryOptions={categoryOptions}
           color={color}
           form={form}
           focusPriceInput={focusPriceInput}
+          bookFileInputRef={bookFileInputRef}
+          bookFileName={bookFileName}
+          chooseBookFile={chooseBookFile}
           hasBookCategory={hasBookCategory}
+          hasBookFile={hasBookFile}
           hasColor={hasColor}
           hasCount={hasCount}
           hasDate={hasDate}
+          hasPrice={hasPrice}
           hasSeason={hasSeason}
           hasSelectedCategory={hasSelectedCategory}
           isEditing={isEditing}
           itemLabel={itemLabel}
+          itemCategoryOptions={itemCategoryOptions}
           nameDraft={nameDraft}
           nameError={nameError}
           onCategoryHrefChange={onCategoryHrefChange}
@@ -630,15 +726,28 @@ export function ItemEditDialog({
           setNameError={setNameError}
           showCategorySelect={showCategorySelect}
         />
-        <div className="col-span-full grid grid-cols-[260px_276px] items-center gap-x-6 gap-y-2 max-sm:grid-cols-1">
-          <ImageToolbar
-            changeCropScale={changeCropScale}
-            cropScale={cropScale}
-            cropSourceUrl={cropSourceUrl}
-            fileInputRef={fileInputRef}
-            imageError={imageError}
-            isCropping={isCropping}
-          />
+        <div
+          className={
+            hasImage
+              ? "col-span-full grid grid-cols-[260px_276px] items-center gap-x-6 gap-y-2 max-sm:grid-cols-1"
+              : "col-span-full grid gap-y-2"
+          }
+        >
+          {hasImage ? (
+            <ImageToolbar
+              changeCropScale={changeCropScale}
+              cropScale={cropScale}
+              cropSourceUrl={cropSourceUrl}
+              fileInputRef={fileInputRef}
+              imageError={imageError}
+              isCropping={isCropping}
+            />
+          ) : null}
+          {!hasImage && imageError ? (
+            <Typography.Text className="text-xs" type="danger">
+              {imageError}
+            </Typography.Text>
+          ) : null}
           <div className="flex justify-between gap-3">
             {isEditing ? (
               <Button
@@ -671,17 +780,23 @@ export function ItemEditDialog({
 }
 
 type ItemEditFormProps = {
+  bookFileInputRef: React.RefObject<HTMLInputElement | null>;
+  bookFileName: string;
   categoryOptions?: { label: string; value: string }[];
+  chooseBookFile: (files: ArrayLike<File> | null) => void;
   color: string;
   form: FormInstance<ClothesCreateFormValues>;
   focusPriceInput: (event: React.FocusEvent<HTMLInputElement>) => void;
   hasBookCategory: boolean;
+  hasBookFile: boolean;
   hasColor: boolean;
   hasCount: boolean;
   hasDate: boolean;
+  hasPrice: boolean;
   hasSeason: boolean;
   hasSelectedCategory: boolean;
   isEditing: boolean;
+  itemCategoryOptions?: { label: string; value: number }[];
   itemLabel: string;
   nameDraft: string;
   nameError: string;
@@ -696,17 +811,23 @@ type ItemEditFormProps = {
 };
 
 export function ItemEditForm({
+  bookFileInputRef,
+  bookFileName,
   categoryOptions,
+  chooseBookFile,
   color,
   form,
   focusPriceInput,
   hasBookCategory,
+  hasBookFile,
   hasColor,
   hasCount,
   hasDate,
+  hasPrice,
   hasSeason,
   hasSelectedCategory,
   isEditing,
+  itemCategoryOptions,
   itemLabel,
   nameDraft,
   nameError,
@@ -719,6 +840,8 @@ export function ItemEditForm({
   setNameError,
   showCategorySelect,
 }: ItemEditFormProps) {
+  const itemFormCategoryOptions = itemCategoryOptions ?? bookCategoryOptions;
+
   return (
     <div className="flex flex-col">
       <Form
@@ -790,23 +913,25 @@ export function ItemEditForm({
           </Form.Item>
         ) : null}
 
-        <Form.Item
-          label="价格"
-          name="price"
-          rules={[{ message: "请输入价格", required: true }]}
-        >
-          <InputNumber
-            className={formControlWidthClassName}
-            min={0}
-            onFocus={focusPriceInput}
-            precision={2}
-            prefix="¥"
-          />
-        </Form.Item>
+        {hasPrice ? (
+          <Form.Item
+            label="价格"
+            name="price"
+            rules={[{ message: "请输入价格", required: true }]}
+          >
+            <InputNumber
+              className={formControlWidthClassName}
+              min={0}
+              onFocus={focusPriceInput}
+              precision={2}
+              prefix="¥"
+            />
+          </Form.Item>
+        ) : null}
 
         {hasSelectedCategory ? (
           <>
-            {hasBookCategory ? (
+            {hasBookCategory || itemCategoryOptions?.length ? (
               <Form.Item
                 label="分类"
                 name="category"
@@ -814,9 +939,35 @@ export function ItemEditForm({
               >
                 <Select<number>
                   className={formControlWidthClassName}
-                  options={bookCategoryOptions}
+                  options={itemFormCategoryOptions}
                   placeholder="请选择分类"
                 />
+              </Form.Item>
+            ) : null}
+
+            {hasBookFile ? (
+              <Form.Item label="文件">
+                <div className="flex max-w-full items-center gap-2">
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => bookFileInputRef.current?.click()}
+                  >
+                    选择文件
+                  </Button>
+                  <Typography.Text
+                    className="min-w-0 flex-1"
+                    ellipsis={{ tooltip: bookFileName || "未选择文件" }}
+                    type={bookFileName ? undefined : "secondary"}
+                  >
+                    {bookFileName || "未选择文件"}
+                  </Typography.Text>
+                  <input
+                    className="hidden!"
+                    onChange={(event) => chooseBookFile(event.target.files)}
+                    ref={bookFileInputRef}
+                    type="file"
+                  />
+                </div>
               </Form.Item>
             ) : null}
 
