@@ -8,7 +8,15 @@ type OssDeleteConfig = {
   publicBaseUrl: string;
 };
 
-type OssDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books" | "hobby";
+type OssDirectory =
+  | "avatars"
+  | "clothes"
+  | "pants"
+  | "toiletries"
+  | "books"
+  | "hobby"
+  | "cosmetic"
+  | "skincare";
 
 function getOssDeleteConfig(): OssDeleteConfig {
   const accessKeyId = process.env.ALIYUN_OSS_ACCESS_KEY_ID?.trim() ?? "";

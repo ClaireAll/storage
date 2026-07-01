@@ -6,9 +6,9 @@ import {
   EnvironmentOutlined,
   PlusOutlined,
   ReloadOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Cascader, Menu, Typography } from "antd";
-import Link from "next/link";
+import { Button, Card, Cascader, Menu, Spin, Typography } from "antd";
 import {
   useCallback,
   useEffect,
@@ -61,9 +61,11 @@ type HomeDashboardProps = {
   children?: ReactNode;
   itemCount: number;
   visibleCategoryHrefs: string[];
+  isCategoryContentLoading: boolean;
   isAllCategoriesVisible: boolean;
   surfaceBackground: string;
   surfaceBorderColor: string;
+  onCategoryNavigate: (categoryHref: string) => void;
   onOpenQuickItemCreate: () => void;
   onToggleAllCategoriesVisible: () => void;
   onToggleCategoryVisible: (categoryHref: string) => void;
@@ -72,6 +74,8 @@ type HomeDashboardProps = {
 export function HomeDashboard({
   activeCategoryHref,
   children,
+  isCategoryContentLoading,
+  onCategoryNavigate,
   onOpenQuickItemCreate,
   surfaceBackground,
   surfaceBorderColor,
@@ -107,7 +111,7 @@ export function HomeDashboard({
             />
           ),
           key: category.href,
-          label: <Link href={category.href}>{category.label}</Link>,
+          label: category.label,
         })),
     [activeCategoryHref, visibleCategoryHrefs],
   );
@@ -284,8 +288,6 @@ export function HomeDashboard({
     <main className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
       <section className="grid shrink-0 grid-cols-3 gap-4 max-md:grid-cols-1">
         {homeStats.map((stat) => {
-          const StatIcon = stat.Icon;
-
           return (
             <Card
               className="home-soft-shadow"
@@ -336,7 +338,7 @@ export function HomeDashboard({
               ) : stat.label === "快捷功能" ? (
                 <div className="flex h-full min-h-[140px] flex-col justify-between">
                   <Typography.Text type="secondary">
-                    <StatIcon />
+                    <TagsOutlined />
                     <span className="ml-1">快捷功能</span>
                   </Typography.Text>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -405,6 +407,7 @@ export function HomeDashboard({
             className="home-category-menu"
             items={menuItems}
             mode="inline"
+            onClick={({ key }) => onCategoryNavigate(String(key))}
             selectedKeys={selectedCategoryKeys}
           />
         </aside>
@@ -416,7 +419,16 @@ export function HomeDashboard({
           }}
           style={surfaceStyle}
         >
-          {children}
+          {isCategoryContentLoading ? (
+            <div
+              aria-busy="true"
+              className="flex min-h-0 flex-1 items-center justify-center"
+            >
+              <Spin />
+            </div>
+          ) : (
+            children
+          )}
         </Card>
       </section>
     </main>

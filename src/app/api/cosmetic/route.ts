@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { hobbyCategoryOptions } from "@/app/(pages)/home/constant";
+import { cosmeticCategoryOptions } from "@/app/(pages)/home/constant";
 import {
   createItem,
   deleteItem,
@@ -11,42 +11,45 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
 
-type HobbyCreatePayload = {
+type CosmeticCreatePayload = {
   category?: number;
+  count?: number;
   name?: string;
   pic_url?: string;
   price?: number;
   timeStamp?: string;
 };
 
-type HobbyUpdatePayload = HobbyCreatePayload & {
+type CosmeticUpdatePayload = CosmeticCreatePayload & {
   c_id?: string | number;
-  h_id?: string | number;
 };
 
-type HobbyDeletePayload = {
+type CosmeticDeletePayload = {
   c_id?: string | number;
-  h_id?: string | number;
 };
 
-const supportedHobbyCategories = hobbyCategoryOptions.map(({ value }) => value);
+const supportedCosmeticCategories = cosmeticCategoryOptions.map(
+  ({ value }) => value,
+);
 
 function isDateString(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function getHobbyId(payload: HobbyUpdatePayload | HobbyDeletePayload) {
-  return typeof payload.h_id === "number" || typeof payload.h_id === "string"
-    ? String(payload.h_id).trim()
-    : typeof payload.c_id === "number" || typeof payload.c_id === "string"
-      ? String(payload.c_id).trim()
-      : "";
+function getCosmeticId(payload: CosmeticUpdatePayload | CosmeticDeletePayload) {
+  return typeof payload.c_id === "number" || typeof payload.c_id === "string"
+    ? String(payload.c_id).trim()
+    : "";
 }
 
-function parseHobbyValues(payload: HobbyCreatePayload) {
+function parseCosmeticValues(payload: CosmeticCreatePayload) {
   const price =
     typeof payload.price === "number" && Number.isFinite(payload.price)
       ? Number(payload.price.toFixed(2))
+      : null;
+  const count =
+    typeof payload.count === "number" && Number.isFinite(payload.count)
+      ? Math.floor(payload.count)
       : null;
   const category =
     typeof payload.category === "number" && Number.isInteger(payload.category)
@@ -55,6 +58,7 @@ function parseHobbyValues(payload: HobbyCreatePayload) {
 
   return {
     category,
+    count,
     name: payload.name?.trim() ?? "",
     picUrl: payload.pic_url?.trim() ?? "",
     price,
@@ -62,31 +66,36 @@ function parseHobbyValues(payload: HobbyCreatePayload) {
   };
 }
 
-function validateHobbyValues({
+function validateCosmeticValues({
   category,
+  count,
   name,
   picUrl,
   price,
   timeStamp,
-}: ReturnType<typeof parseHobbyValues>) {
+}: ReturnType<typeof parseCosmeticValues>) {
   if (!name) {
-    return "请输入爱好名称";
+    return "请输入化妆品名称";
   }
 
   if (!timeStamp || !isDateString(timeStamp)) {
     return "请选择日期";
   }
 
-  if (category === null || !supportedHobbyCategories.includes(category)) {
-    return "请选择爱好分类";
-  }
-
-  if (!picUrl) {
-    return "请上传爱好图片";
+  if (category === null || !supportedCosmeticCategories.includes(category)) {
+    return "请选择化妆品分类";
   }
 
   if (price === null || price < 0) {
     return "请输入有效价格";
+  }
+
+  if (count !== null && count < 1) {
+    return "请输入有效数量";
+  }
+
+  if (!picUrl) {
+    return "请上传化妆品图片";
   }
 
   return "";
@@ -99,22 +108,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const values = parseHobbyValues((await request.json()) as HobbyCreatePayload);
-  const validationMessage = validateHobbyValues(values);
+  const values = parseCosmeticValues(
+    (await request.json()) as CosmeticCreatePayload,
+  );
+  const validationMessage = validateCosmeticValues(values);
 
   if (validationMessage) {
     return NextResponse.json({ message: validationMessage }, { status: 400 });
   }
 
   const supabase = await createClient();
-  const { data, error } = await createItem(supabase, "hobby", session.user.id, {
-    category: values.category ?? supportedHobbyCategories[0],
-    h_id: randomUUID(),
-    name: values.name,
-    pic_url: values.picUrl,
-    price: values.price ?? 0,
-    timeStamp: values.timeStamp,
-  });
+  const { data, error } = await createItem(
+    supabase,
+    "cosmetic",
+    session.user.id,
+    {
+      c_id: randomUUID(),
+      category: values.category ?? supportedCosmeticCategories[0],
+      count: values.count ?? 1,
+      name: values.name,
+      pic_url: values.picUrl,
+      price: values.price ?? 0,
+      timeStamp: values.timeStamp,
+    },
+  );
 
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -130,13 +147,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as HobbyUpdatePayload;
-  const hobbyId = getHobbyId(payload);
-  const values = parseHobbyValues(payload);
-  const validationMessage = validateHobbyValues(values);
+  const payload = (await request.json()) as CosmeticUpdatePayload;
+  const cosmeticId = getCosmeticId(payload);
+  const values = parseCosmeticValues(payload);
+  const validationMessage = validateCosmeticValues(values);
 
-  if (!hobbyId) {
-    return NextResponse.json({ message: "缺少爱好标识" }, { status: 400 });
+  if (!cosmeticId) {
+    return NextResponse.json({ message: "缺少化妆品标识" }, { status: 400 });
   }
 
   if (validationMessage) {
@@ -146,11 +163,12 @@ export async function PUT(request: Request) {
   const supabase = await createClient();
   const { data, error } = await updateItem(
     supabase,
-    "hobby",
+    "cosmetic",
     session.user.id,
-    hobbyId,
+    cosmeticId,
     {
-      category: values.category ?? supportedHobbyCategories[0],
+      category: values.category ?? supportedCosmeticCategories[0],
+      count: values.count ?? 1,
       name: values.name,
       pic_url: values.picUrl,
       price: values.price ?? 0,
@@ -172,34 +190,32 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
   }
 
-  const payload = (await request.json()) as HobbyDeletePayload;
-  const hobbyId = getHobbyId(payload);
+  const payload = (await request.json()) as CosmeticDeletePayload;
+  const cosmeticId = getCosmeticId(payload);
 
-  if (!hobbyId) {
-    return NextResponse.json({ message: "缺少爱好标识" }, { status: 400 });
+  if (!cosmeticId) {
+    return NextResponse.json({ message: "缺少化妆品标识" }, { status: 400 });
   }
 
   const supabase = await createClient();
-  const { data: currentHobby, error: currentHobbyError } =
-    await getItemPicture(supabase, "hobby", session.user.id, hobbyId);
+  const { data: currentCosmetic, error: currentCosmeticError } =
+    await getItemPicture(supabase, "cosmetic", session.user.id, cosmeticId);
 
-  if (currentHobbyError) {
+  if (currentCosmeticError) {
     return NextResponse.json(
-      { message: currentHobbyError.message },
+      { message: currentCosmeticError.message },
       { status: 500 },
     );
   }
 
-  if (!currentHobby) {
-    return NextResponse.json({ message: "爱好不存在" }, { status: 404 });
+  if (!currentCosmetic) {
+    return NextResponse.json({ message: "化妆品不存在" }, { status: 404 });
   }
 
   try {
-    if (currentHobby.pic_url) {
-      await deleteOwnOssObject(currentHobby.pic_url, session.user.id, [
-        "hobby",
-      ]);
-    }
+    await deleteOwnOssObject(currentCosmetic.pic_url, session.user.id, [
+      "cosmetic",
+    ]);
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "删除图片失败" },
@@ -209,9 +225,9 @@ export async function DELETE(request: Request) {
 
   const { error } = await deleteItem(
     supabase,
-    "hobby",
+    "cosmetic",
     session.user.id,
-    hobbyId,
+    cosmeticId,
   );
 
   if (error) {

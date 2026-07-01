@@ -20,6 +20,7 @@ import {
   createContext,
   useContext,
   useState,
+  useTransition,
   type CSSProperties,
   type ReactNode,
 } from "react";
@@ -77,11 +78,16 @@ export default function HomePage({
 }: HomePageProps) {
   const router = useRouter();
   const profileEditor = useHomeProfile(user);
+  const [, startCategoryTransition] = useTransition();
   const [isClothesCreateModalOpen, setIsClothesCreateModalOpen] =
     useState(false);
   const [editingClothes, setEditingClothes] = useState<ClothesItem | null>(
     null,
   );
+  const [categoryNavigation, setCategoryNavigation] = useState<{
+    fromCategoryHref?: string;
+    pendingCategoryHref?: string;
+  }>({});
   const [selectedItemCategoryHref, setSelectedItemCategoryHref] =
     useState<string>();
   const [shouldShowItemCategorySelect, setShouldShowItemCategorySelect] =
@@ -91,7 +97,16 @@ export default function HomePage({
   );
   const isAllCategoriesVisible =
     visibleCategoryHrefs.length === homeCategories.length;
-  const activeItemCategory = getItemCategoryConfig(activeCategoryHref);
+  const pendingCategoryHref =
+    categoryNavigation.fromCategoryHref === activeCategoryHref
+      ? categoryNavigation.pendingCategoryHref
+      : undefined;
+  const displayActiveCategoryHref =
+    pendingCategoryHref ?? activeCategoryHref;
+  const isCategoryContentLoading = Boolean(
+    pendingCategoryHref && pendingCategoryHref !== activeCategoryHref,
+  );
+  const activeItemCategory = getItemCategoryConfig(displayActiveCategoryHref);
   const selectedItemCategory =
     getItemCategoryConfig(selectedItemCategoryHref) ?? activeItemCategory;
   const itemCategoryOptions = homeCategories
@@ -101,7 +116,7 @@ export default function HomePage({
       value: category.href,
     }));
   const activeCategory = homeCategories.find(
-    (category) => category.href === activeCategoryHref,
+    (category) => category.href === displayActiveCategoryHref,
   );
   const emptyDescription = activeCategory
     ? `${activeCategory.label}分类暂未添加内容`
@@ -125,10 +140,24 @@ export default function HomePage({
     );
   }
 
+  function navigateItemCategory(categoryHref: string) {
+    if (categoryHref === displayActiveCategoryHref) {
+      return;
+    }
+
+    setCategoryNavigation({
+      fromCategoryHref: activeCategoryHref,
+      pendingCategoryHref: categoryHref,
+    });
+    startCategoryTransition(() => {
+      router.push(categoryHref);
+    });
+  }
+
   /** 打开当前分类新增弹窗，仅支持已经开发的文章推荐分类。 */
   function openClothesCreateModal() {
     if (activeItemCategory) {
-      setSelectedItemCategoryHref(activeCategoryHref);
+      setSelectedItemCategoryHref(displayActiveCategoryHref);
       setShouldShowItemCategorySelect(false);
       setEditingClothes(null);
       setIsClothesCreateModalOpen(true);
@@ -145,7 +174,7 @@ export default function HomePage({
   /** 打开当前分类编辑弹窗，仅支持已经开发的文章推荐分类。 */
   function openClothesEditModal(item: ClothesItem) {
     if (activeItemCategory) {
-      setSelectedItemCategoryHref(activeCategoryHref);
+      setSelectedItemCategoryHref(displayActiveCategoryHref);
       setShouldShowItemCategorySelect(false);
       setEditingClothes(item);
       setIsClothesCreateModalOpen(true);
@@ -258,9 +287,11 @@ export default function HomePage({
                 </header>
 
                 <HomeDashboard
-                  activeCategoryHref={activeCategoryHref}
+                  activeCategoryHref={displayActiveCategoryHref}
+                  isCategoryContentLoading={isCategoryContentLoading}
                   isAllCategoriesVisible={isAllCategoriesVisible}
                   itemCount={itemCount}
+                  onCategoryNavigate={navigateItemCategory}
                   onOpenQuickItemCreate={openQuickItemCreateModal}
                   onToggleAllCategoriesVisible={toggleAllCategoriesVisible}
                   onToggleCategoryVisible={toggleCategoryVisible}

@@ -1,3 +1,10 @@
+import {
+  cosmeticCategoryOptions,
+  hobbyCategoryOptions,
+  skincareCategoryOptions,
+  type ItemCategoryOption,
+} from "./constant";
+
 export type ItemCategoryConfig = {
   apiPath: string;
   hasColor?: boolean;
@@ -8,10 +15,17 @@ export type ItemCategoryConfig = {
   hasPrice?: boolean;
   hasCount?: boolean;
   hasBookCategory?: boolean;
-  itemCategoryOptions?: { label: string; value: number }[];
+  itemCategoryOptions?: ItemCategoryOption[];
   itemLabel: string;
   namePlaceholder?: string;
-  uploadDirectory: "clothes" | "pants" | "toiletries" | "books" | "hobby";
+  uploadDirectory:
+    | "clothes"
+    | "pants"
+    | "toiletries"
+    | "books"
+    | "hobby"
+    | "cosmetic"
+    | "skincare";
 };
 
 export const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
@@ -49,14 +63,30 @@ export const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
     apiPath: "/api/hobby",
     hasColor: false,
     hasSeason: false,
-    itemCategoryOptions: [
-      { label: "金属拼图", value: 1 },
-      { label: "数字油画", value: 2 },
-      { label: "钻石画", value: 3 },
-    ],
+    itemCategoryOptions: hobbyCategoryOptions,
     itemLabel: "爱好",
     namePlaceholder: "金属拼图",
     uploadDirectory: "hobby",
+  },
+  "/home/cosmetic": {
+    apiPath: "/api/cosmetic",
+    hasColor: false,
+    hasCount: true,
+    hasSeason: false,
+    itemCategoryOptions: cosmeticCategoryOptions,
+    itemLabel: "化妆品",
+    namePlaceholder: "口红",
+    uploadDirectory: "cosmetic",
+  },
+  "/home/skincare": {
+    apiPath: "/api/skincare",
+    hasColor: false,
+    hasCount: true,
+    hasSeason: false,
+    itemCategoryOptions: skincareCategoryOptions,
+    itemLabel: "护肤品",
+    namePlaceholder: "面霜",
+    uploadDirectory: "skincare",
   },
 };
 

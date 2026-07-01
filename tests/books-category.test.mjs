@@ -56,7 +56,7 @@ test("books category uses the refreshed iconfont class", () => {
 });
 
 test("database helpers map books records by b_id", () => {
-  assert.match(databaseSource, /type ItemCategory = [\s\S]*"books"/);
+  assert.match(databaseSource, /type ItemCategory =[\s\S]*"books"/);
   assert.match(databaseSource, /books:\s*\{[\s\S]*idColumn:\s*"b_id"/);
   assert.match(databaseSource, /books:\s*\{[\s\S]*selectFields:\s*"b_id,name,price,pic_url,category,download_url"/);
   assert.match(databaseSource, /books:\s*\{[\s\S]*table:\s*"books"/);
@@ -95,8 +95,8 @@ test("item edit dialog exposes book category dropdown options", () => {
   assert.match(dialogSource, /bookFileInputRef/);
   assert.match(dialogSource, /download_url/);
   assert.match(dialogSource, /label="文件"/);
-  assert.match(dialogSource, /bookCategoryOptions[\s\S]*\u5b9e\u4f53\u4e66[\s\S]*value:\s*1/);
-  assert.match(dialogSource, /bookCategoryOptions[\s\S]*\u7535\u5b50\u4e66[\s\S]*value:\s*2/);
+  assert.match(constantSource, /bookCategoryOptions[\s\S]*\u5b9e\u4f53\u4e66[\s\S]*value:\s*1/);
+  assert.match(constantSource, /bookCategoryOptions[\s\S]*\u7535\u5b50\u4e66[\s\S]*value:\s*2/);
   assert.match(dialogSource, /label="\u5206\u7c7b"[\s\S]*name="category"/);
 });
 
@@ -127,9 +127,9 @@ test("books with uploaded files expose a download action on detail rows", () => 
 test("books images can upload to the books OSS directory", () => {
   assert.match(ossSource, /uploadFileToOss/);
   assert.match(ossSource, /kind:\s*"file"/);
-  assert.match(ossSource, /"avatars" \| "clothes" \| "pants" \| "toiletries" \| "books"/);
-  assert.match(ossServerSource, /"avatars" \| "clothes" \| "pants" \| "toiletries" \| "books"/);
-  assert.match(ossPolicySource, /"avatars" \| "clothes" \| "pants" \| "toiletries" \| "books"/);
+  assert.match(ossSource, /"books"/);
+  assert.match(ossServerSource, /"books"/);
+  assert.match(ossPolicySource, /"books"/);
   assert.match(ossPolicySource, /type OssUploadKind = "image" \| "file"/);
   assert.match(ossPolicySource, /directory !== "books"/);
 });

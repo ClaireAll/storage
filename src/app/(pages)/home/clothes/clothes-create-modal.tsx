@@ -20,6 +20,7 @@ import {
 } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
+import { bookCategoryOptions, type ItemCategoryOption } from "../constant";
 import type { ClothesItem } from "./clothes-type";
 import {
   createCroppedImageFile,
@@ -62,9 +63,16 @@ type ClothesCreateModalProps = {
   /** 当前主页主题色，用于弹窗内选中态。 */
   themeColor: string;
   /** OSS 上传目录。 */
-  uploadDirectory: "clothes" | "pants" | "toiletries" | "books" | "hobby";
+  uploadDirectory:
+    | "clothes"
+    | "pants"
+    | "toiletries"
+    | "books"
+    | "hobby"
+    | "cosmetic"
+    | "skincare";
   categoryOptions?: { label: string; value: string }[];
-  itemCategoryOptions?: { label: string; value: number }[];
+  itemCategoryOptions?: ItemCategoryOption[];
   showCategorySelect?: boolean;
   selectedCategoryHref?: string;
   onCategoryHrefChange?: (categoryHref: string) => void;
@@ -89,10 +97,6 @@ type ClothesCreateFormValues = {
 };
 
 const seasons = ["春", "夏", "秋", "冬"];
-const bookCategoryOptions = [
-  { label: "实体书", value: 1 },
-  { label: "电子书", value: 2 },
-];
 const formControlWidthClassName = "w-[200px] max-w-full";
 const fallbackColor = "#8b8b8b";
 

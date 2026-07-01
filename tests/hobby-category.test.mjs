@@ -54,14 +54,15 @@ test("hobby config uses fixed hobby category options without file upload or colo
   assert.match(configSource, /"\/home\/hobby"[\s\S]*hasSeason:\s*false/);
   assert.doesNotMatch(configSource, /"\/home\/hobby"[\s\S]*hasBookCategory:\s*true/);
   assert.doesNotMatch(configSource, /"\/home\/hobby"[\s\S]*hasBookFile:\s*true/);
-  assert.match(configSource, /"\/home\/hobby"[\s\S]*itemCategoryOptions:[\s\S]*金属拼图[\s\S]*value:\s*1/);
-  assert.match(configSource, /"\/home\/hobby"[\s\S]*数字油画[\s\S]*value:\s*2/);
-  assert.match(configSource, /"\/home\/hobby"[\s\S]*钻石画[\s\S]*value:\s*3/);
+  assert.match(configSource, /"\/home\/hobby"[\s\S]*itemCategoryOptions:\s*hobbyCategoryOptions/);
+  assert.match(constantSource, /hobbyCategoryOptions[\s\S]*金属拼图[\s\S]*value:\s*1/);
+  assert.match(constantSource, /hobbyCategoryOptions[\s\S]*数字油画[\s\S]*value:\s*2/);
+  assert.match(constantSource, /hobbyCategoryOptions[\s\S]*钻石画[\s\S]*value:\s*3/);
   assert.match(configSource, /"\/home\/hobby"[\s\S]*uploadDirectory:\s*"hobby"/);
 });
 
 test("database helpers map hobby records by h_id", () => {
-  assert.match(databaseSource, /type ItemCategory = [\s\S]*"hobby"/);
+  assert.match(databaseSource, /type ItemCategory =[\s\S]*"hobby"/);
   assert.match(databaseSource, /hobby:\s*\{[\s\S]*idColumn:\s*"h_id"/);
   assert.match(databaseSource, /hobby:\s*\{[\s\S]*selectFields:\s*"h_id,name,timeStamp,price,pic_url,category"/);
   assert.match(databaseSource, /h_id\?: string \| number/);
@@ -100,8 +101,8 @@ test("shared dialog and gallery support hobby categories with image upload and h
 });
 
 test("hobby images can upload to the hobby OSS directory", () => {
-  assert.match(ossSource, /"avatars" \| "clothes" \| "pants" \| "toiletries" \| "books" \| "hobby"/);
-  assert.match(ossServerSource, /"avatars" \| "clothes" \| "pants" \| "toiletries" \| "books" \| "hobby"/);
-  assert.match(ossPolicySource, /"avatars" \| "clothes" \| "pants" \| "toiletries" \| "books" \| "hobby"/);
+  assert.match(ossSource, /"hobby"/);
+  assert.match(ossServerSource, /"hobby"/);
+  assert.match(ossPolicySource, /"hobby"/);
   assert.match(ossPolicySource, /directory !== "hobby"/);
 });

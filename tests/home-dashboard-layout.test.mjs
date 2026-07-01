@@ -10,6 +10,10 @@ const dashboardSource = readFileSync(
   new URL("../src/app/(pages)/home/home-dashboard.tsx", import.meta.url),
   "utf8",
 );
+const homeViewSource = readFileSync(
+  new URL("../src/app/(pages)/home/home-view.tsx", import.meta.url),
+  "utf8",
+);
 const utilsSource = readFileSync(
   new URL("../src/app/(pages)/home/home-utils.ts", import.meta.url),
   "utf8",
@@ -28,10 +32,17 @@ test("top home cards put weather before quick actions", () => {
 });
 
 test("weather card uses the original non-centered card layout", () => {
-  assert.doesNotMatch(
-    dashboardSource,
-    /stat\.label === "位置"[\s\S]*items-center justify-center/,
+  const weatherBranchStart = dashboardSource.indexOf('stat.label === "位置"');
+  const weatherBranchEnd = dashboardSource.indexOf(
+    "\n              ) : null}",
+    weatherBranchStart,
   );
+  const weatherBranch = dashboardSource.slice(
+    weatherBranchStart,
+    weatherBranchEnd,
+  );
+
+  assert.doesNotMatch(weatherBranch, /items-center justify-center/);
   assert.doesNotMatch(dashboardSource, /w-full text-center/);
   assert.match(dashboardSource, /<div>\s*<Typography\.Text type="secondary">/);
 });
@@ -72,4 +83,22 @@ test("current weather location resolves a concrete place label before display", 
   );
   assert.doesNotMatch(dashboardSource, /const nextAreaPath = \["当前位置"\]/);
   assert.doesNotMatch(dashboardSource, /name: "当前位置"/);
+});
+
+test("category navigation switches selection immediately and shows a content spin", () => {
+  assert.match(homeViewSource, /pendingCategoryHref/);
+  assert.match(homeViewSource, /startCategoryTransition/);
+  assert.match(homeViewSource, /router\.push\(categoryHref\)/);
+  assert.match(
+    homeViewSource,
+    /activeCategoryHref=\{displayActiveCategoryHref\}/,
+  );
+  assert.match(
+    homeViewSource,
+    /isCategoryContentLoading=\{isCategoryContentLoading\}/,
+  );
+  assert.match(dashboardSource, /Spin/);
+  assert.match(dashboardSource, /isCategoryContentLoading/);
+  assert.match(dashboardSource, /onCategoryNavigate\(String\(key\)\)/);
+  assert.doesNotMatch(dashboardSource, /import Link from "next\/link"/);
 });

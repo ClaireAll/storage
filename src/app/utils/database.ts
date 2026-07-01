@@ -18,11 +18,20 @@ export type UserAuthProfileRow = {
 
 export type UserProfileWriteValues = Record<string, string | null>;
 
-export type ItemCategory = "clothes" | "pants" | "toiletries" | "books" | "hobby";
+export type ItemCategory =
+  | "clothes"
+  | "pants"
+  | "toiletries"
+  | "books"
+  | "hobby"
+  | "cosmetic"
+  | "skincare";
 
 export type ItemWriteValues = {
   b_id?: string | number;
+  c_id?: string | number;
   h_id?: string | number;
+  s_id?: string | number;
   category?: number;
   color?: string;
   count?: number;
@@ -35,7 +44,7 @@ export type ItemWriteValues = {
 };
 
 type ItemCategoryConfig = {
-  idColumn: "c_id" | "p_id" | "t_id" | "b_id" | "h_id";
+  idColumn: "c_id" | "p_id" | "t_id" | "b_id" | "h_id" | "s_id";
   selectFields: string;
   table: ItemCategory;
   hasTimeStamp?: boolean;
@@ -70,6 +79,16 @@ const itemCategoryConfigs: Record<ItemCategory, ItemCategoryConfig> = {
     idColumn: "h_id",
     selectFields: "h_id,name,timeStamp,price,pic_url,category",
     table: "hobby",
+  },
+  cosmetic: {
+    idColumn: "c_id",
+    selectFields: "c_id,name,timeStamp,price,pic_url,count,category",
+    table: "cosmetic",
+  },
+  skincare: {
+    idColumn: "s_id",
+    selectFields: "s_id,name,timeStamp,price,pic_url,count,category",
+    table: "skincare",
   },
 };
 

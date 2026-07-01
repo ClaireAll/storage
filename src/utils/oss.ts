@@ -28,7 +28,15 @@ function validateUploadFile(file: File) {
 }
 
 /** 图片上传到 OSS 时可指定的业务目录。 */
-type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books" | "hobby";
+type OssUploadDirectory =
+  | "avatars"
+  | "clothes"
+  | "pants"
+  | "toiletries"
+  | "books"
+  | "hobby"
+  | "cosmetic"
+  | "skincare";
 type OssUploadKind = "image" | "file";
 
 async function uploadToOss(

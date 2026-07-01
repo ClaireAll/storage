@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { bookCategoryOptions } from "@/app/(pages)/home/constant";
 import {
   createItem,
   deleteItem,
@@ -28,7 +29,7 @@ type BookDeletePayload = {
   c_id?: string | number;
 };
 
-const supportedBookCategories = [1, 2];
+const supportedBookCategories = bookCategoryOptions.map(({ value }) => value);
 
 function getBookId(payload: BookUpdatePayload | BookDeletePayload) {
   return typeof payload.b_id === "number" || typeof payload.b_id === "string"

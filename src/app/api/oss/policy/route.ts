@@ -38,7 +38,15 @@ function getOssConfig() {
 }
 
 /** OSS 允许前端上传的业务目录。 */
-type OssUploadDirectory = "avatars" | "clothes" | "pants" | "toiletries" | "books" | "hobby";
+type OssUploadDirectory =
+  | "avatars"
+  | "clothes"
+  | "pants"
+  | "toiletries"
+  | "books"
+  | "hobby"
+  | "cosmetic"
+  | "skincare";
 type OssUploadKind = "image" | "file";
 
 /** 根据当前用户、业务目录和文件名生成图片在 OSS 中的对象 Key。 */
@@ -121,7 +129,9 @@ export async function POST(request: Request) {
     directory !== "pants" &&
     directory !== "toiletries" &&
     directory !== "books" &&
-    directory !== "hobby"
+    directory !== "hobby" &&
+    directory !== "cosmetic" &&
+    directory !== "skincare"
   ) {
     return NextResponse.json({ message: "上传目录无效" }, { status: 400 });
   }
