@@ -1,14 +1,6 @@
-import { createHmac } from "crypto";
+import { createHmac, randomUUID } from "crypto";
 
-type OssDeleteConfig = {
-  accessKeyId: string;
-  accessKeySecret: string;
-  bucket: string;
-  host: string;
-  publicBaseUrl: string;
-};
-
-type OssDirectory =
+type ServerOssUploadDirectory =
   | "avatars"
   | "clothes"
   | "pants"
@@ -16,9 +8,20 @@ type OssDirectory =
   | "books"
   | "hobby"
   | "cosmetic"
-  | "skincare";
+  | "skincare"
+  | "ai-outfits";
 
-function getOssDeleteConfig(): OssDeleteConfig {
+type UploadPublicBufferOptions = {
+  body: ArrayBuffer | Buffer;
+  contentType: string;
+  directory: ServerOssUploadDirectory;
+  fileName: string;
+  userId: string;
+};
+
+type DeleteOwnOssObjectDirectory = ServerOssUploadDirectory;
+
+function getOssConfig() {
   const accessKeyId = process.env.ALIYUN_OSS_ACCESS_KEY_ID?.trim() ?? "";
   const accessKeySecret =
     process.env.ALIYUN_OSS_ACCESS_KEY_SECRET?.trim() ?? "";
@@ -28,98 +31,170 @@ function getOssDeleteConfig(): OssDeleteConfig {
   const publicBaseUrl = process.env.ALIYUN_OSS_PUBLIC_BASE_URL?.trim() ?? "";
 
   if (!accessKeyId || !accessKeySecret || !bucket || !region || !publicBaseUrl) {
-    throw new Error("请先配置阿里云 OSS 删除所需环境变量");
+    throw new Error("请先配置阿里云 OSS 环境变量");
   }
 
   return {
     accessKeyId,
     accessKeySecret,
     bucket,
-    host: (endpoint || `https://${bucket}.${region}.aliyuncs.com`).replace(
-      /\/$/,
-      "",
-    ),
+    host: endpoint || `https://${bucket}.${region}.aliyuncs.com`,
     publicBaseUrl: publicBaseUrl.replace(/\/$/, ""),
   };
 }
 
-function parseOwnObjectKey(
-  objectUrl: string,
+function createImageObjectKey(
   userId: string,
-  publicBaseUrl: string,
-  directories: OssDirectory[],
+  fileName: string,
+  directory: ServerOssUploadDirectory,
 ) {
-  const normalizedUrl = objectUrl.split("?")[0];
-  const publicUrlPrefix = `${publicBaseUrl}/`;
+  const extension = fileName.includes(".")
+    ? fileName.split(".").pop()?.toLowerCase()
+    : "png";
 
-  if (!normalizedUrl.startsWith(publicUrlPrefix)) {
-    return null;
-  }
-
-  const objectKey = normalizedUrl.slice(publicUrlPrefix.length);
-
-  return directories.some((directory) =>
-    objectKey.startsWith(`${directory}/${userId}/`),
-  )
-    ? objectKey
-    : null;
+  return `${directory}/${userId}/${Date.now()}-${randomUUID()}.${extension || "png"}`;
 }
 
-function signOssRequest(
-  method: string,
-  bucket: string,
-  objectKey: string,
-  date: string,
-  accessKeySecret: string,
-) {
-  const stringToSign = `${method}\n\n\n${date}\n/${bucket}/${objectKey}`;
+function createPolicy(objectKey: string, maxFileSize: number) {
+  const expiration = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
+  return Buffer.from(
+    JSON.stringify({
+      conditions: [
+        ["eq", "$key", objectKey],
+        ["starts-with", "$Content-Type", "image/"],
+        ["eq", "$x-oss-object-acl", "public-read"],
+        ["content-length-range", 1, maxFileSize],
+      ],
+      expiration,
+    }),
+  ).toString("base64");
+}
+
+function signPolicy(policy: string, accessKeySecret: string) {
+  return createHmac("sha1", accessKeySecret).update(policy).digest("base64");
+}
+
+function signOssRequest(stringToSign: string, accessKeySecret: string) {
   return createHmac("sha1", accessKeySecret)
     .update(stringToSign)
     .digest("base64");
 }
 
-function encodeObjectKeyPath(objectKey: string) {
-  return objectKey.split("/").map(encodeURIComponent).join("/");
+function getObjectKeyFromPublicUrl(fileUrl: string, publicBaseUrl: string) {
+  try {
+    const target = new URL(fileUrl);
+    const base = new URL(publicBaseUrl);
+
+    if (target.origin !== base.origin) {
+      return "";
+    }
+
+    const basePath = decodeURIComponent(base.pathname)
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "");
+    let key = decodeURIComponent(target.pathname).replace(/^\/+/, "");
+
+    if (basePath && key.startsWith(`${basePath}/`)) {
+      key = key.slice(basePath.length + 1);
+    }
+
+    return key;
+  } catch {
+    return "";
+  }
+}
+
+function isOwnAllowedObjectKey(
+  key: string,
+  userId: string,
+  allowedDirectories: DeleteOwnOssObjectDirectory[],
+) {
+  return allowedDirectories.some((directory) =>
+    key.startsWith(`${directory}/${userId}/`),
+  );
+}
+
+export async function uploadPublicBufferToOss({
+  body,
+  contentType,
+  directory,
+  fileName,
+  userId,
+}: UploadPublicBufferOptions) {
+  if (!contentType.startsWith("image/")) {
+    throw new Error("只支持上传图片结果");
+  }
+
+  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  const maxFileSize = 10 * 1024 * 1024;
+
+  if (buffer.byteLength > maxFileSize) {
+    throw new Error("生成图片大小不能超过 10MB");
+  }
+
+  const ossConfig = getOssConfig();
+  const key = createImageObjectKey(userId, fileName, directory);
+  const policy = createPolicy(key, maxFileSize);
+  const signature = signPolicy(policy, ossConfig.accessKeySecret);
+  const formData = new FormData();
+
+  formData.append("Content-Type", contentType);
+  formData.append("OSSAccessKeyId", ossConfig.accessKeyId);
+  formData.append("Signature", signature);
+  formData.append("key", key);
+  formData.append("policy", policy);
+  formData.append("success_action_status", "204");
+  formData.append("x-oss-object-acl", "public-read");
+  formData.append(
+    "file",
+    new Blob([new Uint8Array(buffer)], { type: contentType }),
+    fileName,
+  );
+
+  const response = await fetch(ossConfig.host, {
+    body: formData,
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("生成图片转存 OSS 失败");
+  }
+
+  return `${ossConfig.publicBaseUrl}/${encodeURI(key)}`;
 }
 
 export async function deleteOwnOssObject(
-  objectUrl: string,
+  fileUrl: string | null | undefined,
   userId: string,
-  directories: OssDirectory[],
+  allowedDirectories: DeleteOwnOssObjectDirectory[],
 ) {
-  const ossConfig = getOssDeleteConfig();
-  const objectKey = parseOwnObjectKey(
-    objectUrl,
-    userId,
-    ossConfig.publicBaseUrl,
-    directories,
-  );
+  if (!fileUrl) {
+    return;
+  }
 
-  if (!objectKey) {
-    throw new Error("图片地址不属于当前用户，已取消删除");
+  const ossConfig = getOssConfig();
+  const key = getObjectKeyFromPublicUrl(fileUrl, ossConfig.publicBaseUrl);
+
+  if (!key || !isOwnAllowedObjectKey(key, userId, allowedDirectories)) {
+    return;
   }
 
   const date = new Date().toUTCString();
+  const resource = `/${ossConfig.bucket}/${key}`;
   const signature = signOssRequest(
-    "DELETE",
-    ossConfig.bucket,
-    objectKey,
-    date,
+    `DELETE\n\n\n${date}\n${resource}`,
     ossConfig.accessKeySecret,
   );
-  const response = await fetch(
-    `${ossConfig.host}/${encodeObjectKeyPath(objectKey)}`,
-    {
-      headers: {
-        Authorization: `OSS ${ossConfig.accessKeyId}:${signature}`,
-        Date: date,
-      },
-      method: "DELETE",
+  const response = await fetch(`${ossConfig.host}/${encodeURI(key)}`, {
+    headers: {
+      Authorization: `OSS ${ossConfig.accessKeyId}:${signature}`,
+      Date: date,
     },
-  );
+    method: "DELETE",
+  });
 
   if (!response.ok && response.status !== 404) {
-    throw new Error(`删除图片失败：${response.status} ${await response.text()}`);
+    throw new Error("删除 OSS 文件失败");
   }
 }

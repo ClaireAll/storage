@@ -36,7 +36,8 @@ type OssUploadDirectory =
   | "books"
   | "hobby"
   | "cosmetic"
-  | "skincare";
+  | "skincare"
+  | "ai-outfits";
 type OssUploadKind = "image" | "file";
 
 async function uploadToOss(

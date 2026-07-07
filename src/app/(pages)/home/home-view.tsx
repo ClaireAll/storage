@@ -2,6 +2,7 @@
 
 import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-modal";
 import type { ClothesItem } from "@/app/(pages)/home/clothes/clothes-type";
+import { AiAssistant } from "@/app/(pages)/common/ai-assistant";
 import { HomeDashboard } from "@/app/(pages)/home/home-dashboard";
 import { ThemeTexturePublisher } from "@/app/(pages)/theme/shared-theme-texture";
 import { ThemeControl } from "@/app/(pages)/theme/theme-control";
@@ -288,6 +289,7 @@ export default function HomePage({
 
                 <HomeDashboard
                   activeCategoryHref={displayActiveCategoryHref}
+                  aiAssistant={<AiAssistant />}
                   isCategoryContentLoading={isCategoryContentLoading}
                   isAllCategoriesVisible={isAllCategoriesVisible}
                   itemCount={itemCount}

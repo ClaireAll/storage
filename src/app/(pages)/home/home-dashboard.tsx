@@ -4,6 +4,8 @@ import {
   BulbOutlined,
   CloudOutlined,
   EnvironmentOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   PlusOutlined,
   ReloadOutlined,
   TagsOutlined,
@@ -58,6 +60,7 @@ const homeDashboardCache: {
 
 type HomeDashboardProps = {
   activeCategoryHref?: string;
+  aiAssistant?: ReactNode;
   children?: ReactNode;
   itemCount: number;
   visibleCategoryHrefs: string[];
@@ -73,6 +76,7 @@ type HomeDashboardProps = {
 
 export function HomeDashboard({
   activeCategoryHref,
+  aiAssistant,
   children,
   isCategoryContentLoading,
   onCategoryNavigate,
@@ -91,6 +95,8 @@ export function HomeDashboard({
     () => homeDashboardCache.knowledgeItems,
   );
   const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false);
+  const [isCategorySidebarCollapsed, setIsCategorySidebarCollapsed] =
+    useState(false);
   const surfaceStyle = {
     backgroundColor: surfaceBackground,
     borderColor: surfaceBorderColor,
@@ -112,6 +118,7 @@ export function HomeDashboard({
           ),
           key: category.href,
           label: category.label,
+          title: category.label,
         })),
     [activeCategoryHref, visibleCategoryHrefs],
   );
@@ -285,7 +292,9 @@ export function HomeDashboard({
   }, [refreshKnowledgeItems]);
 
   return (
-    <main className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
+    <main className="home-dashboard-main mx-auto flex min-h-0 w-full max-w-[1540px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
+      <div className="home-dashboard-grid">
+        <div className="home-dashboard-left-stack">
       <section className="grid shrink-0 grid-cols-3 gap-4 max-md:grid-cols-1">
         {homeStats.map((stat) => {
           return (
@@ -397,14 +406,56 @@ export function HomeDashboard({
         })}
       </section>
 
-      <section className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)] gap-6 max-[900px]:min-h-[520px] max-md:grid-cols-1">
+      <section
+        className={cn(
+          "home-category-workspace grid min-h-0 flex-1 justify-center gap-6 transition-[grid-template-columns] duration-200 max-[900px]:min-h-[520px] max-md:grid-cols-1",
+          isCategorySidebarCollapsed
+            ? "home-category-layout-collapsed grid-cols-[72px_minmax(0,1fr)]"
+            : "grid-cols-[260px_minmax(0,1fr)]",
+        )}
+      >
         <aside
-          className="home-soft-shadow h-full min-h-0 overflow-hidden rounded-lg border p-4"
+          className={cn(
+            "home-soft-shadow h-full min-h-0 overflow-hidden rounded-lg border p-4 transition-[padding] duration-200",
+            isCategorySidebarCollapsed && "px-2",
+          )}
           style={surfaceStyle}
         >
-          <Typography.Title level={5}>分类</Typography.Title>
+          <div
+            className={cn(
+              "mb-3 flex items-center",
+              isCategorySidebarCollapsed
+                ? "justify-center"
+                : "justify-between gap-2",
+            )}
+          >
+            {isCategorySidebarCollapsed ? null : (
+              <Typography.Title className="mb-0!" level={5}>
+                分类
+              </Typography.Title>
+            )}
+            <Button
+              aria-label={
+                isCategorySidebarCollapsed ? "展开分类" : "收起分类"
+              }
+              icon={
+                isCategorySidebarCollapsed ? (
+                  <MenuUnfoldOutlined />
+                ) : (
+                  <MenuFoldOutlined />
+                )
+              }
+              onClick={() =>
+                setIsCategorySidebarCollapsed((collapsed) => !collapsed)
+              }
+              size="small"
+              title={isCategorySidebarCollapsed ? "展开分类" : "收起分类"}
+              type="text"
+            />
+          </div>
           <Menu
             className="home-category-menu"
+            inlineCollapsed={isCategorySidebarCollapsed}
             items={menuItems}
             mode="inline"
             onClick={({ key }) => onCategoryNavigate(String(key))}
@@ -431,6 +482,12 @@ export function HomeDashboard({
           )}
         </Card>
       </section>
+        </div>
+
+        {aiAssistant ? (
+          <div className="home-ai-assistant-slot">{aiAssistant}</div>
+        ) : null}
+      </div>
     </main>
   );
 }

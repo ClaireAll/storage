@@ -14,6 +14,10 @@ const homeViewSource = readFileSync(
   new URL("../src/app/(pages)/home/home-view.tsx", import.meta.url),
   "utf8",
 );
+const homeStyleSource = readFileSync(
+  new URL("../src/app/(pages)/theme/styles/home.less", import.meta.url),
+  "utf8",
+);
 const utilsSource = readFileSync(
   new URL("../src/app/(pages)/home/home-utils.ts", import.meta.url),
   "utf8",
@@ -101,4 +105,53 @@ test("category navigation switches selection immediately and shows a content spi
   assert.match(dashboardSource, /isCategoryContentLoading/);
   assert.match(dashboardSource, /onCategoryNavigate\(String\(key\)\)/);
   assert.doesNotMatch(dashboardSource, /import Link from "next\/link"/);
+});
+
+test("category sidebar can collapse to icons and widen content area", () => {
+  assert.match(dashboardSource, /isCategorySidebarCollapsed/);
+  assert.match(dashboardSource, /setIsCategorySidebarCollapsed/);
+  assert.match(dashboardSource, /MenuFoldOutlined/);
+  assert.match(dashboardSource, /MenuUnfoldOutlined/);
+  assert.match(dashboardSource, /home-category-layout-collapsed/);
+  assert.match(dashboardSource, /grid-cols-\[72px_minmax\(0,1fr\)\]/);
+  assert.match(dashboardSource, /inlineCollapsed=\{isCategorySidebarCollapsed\}/);
+  assert.match(
+    dashboardSource,
+    /aria-label=\{[\s\S]*isCategorySidebarCollapsed/,
+  );
+  assert.match(dashboardSource, /title: category\.label/);
+});
+
+test("dashboard centers category content and reserves a same-level AI slot", () => {
+  assert.match(dashboardSource, /className="home-dashboard-main/);
+  assert.match(dashboardSource, /home-dashboard-grid/);
+  assert.match(dashboardSource, /home-dashboard-left-stack/);
+  assert.match(dashboardSource, /home-category-workspace/);
+  assert.match(dashboardSource, /aiAssistant\?: ReactNode/);
+  assert.match(dashboardSource, /home-ai-assistant-slot/);
+  assert.match(dashboardSource, /\{aiAssistant\}/);
+  assert.match(homeViewSource, /aiAssistant=\{<AiAssistant \/>\}/);
+  assert.doesNotMatch(homeViewSource, /<\/HomeDashboard>\s*<AiAssistant \/>/);
+  assert.match(homeStyleSource, /home-dashboard-main/);
+  assert.match(homeStyleSource, /home-dashboard-grid/);
+  assert.match(homeStyleSource, /home-dashboard-left-stack/);
+  assert.match(homeStyleSource, /home-dashboard-grid:has\(\.ai-assistant-root-expanded\)/);
+  assert.match(
+    homeStyleSource,
+    /minmax\(0,\s*1180px\) minmax\(320px,\s*360px\)/,
+  );
+  assert.doesNotMatch(
+    homeStyleSource,
+    /home-category-workspace:has\(\.ai-assistant-root-expanded\)[\s\S]*minmax\(320px,\s*360px\)/,
+  );
+  assert.match(homeStyleSource, /justify-content:\s*center/);
+});
+
+test("collapsed category sidebar centers menu icons", () => {
+  assert.match(homeStyleSource, /home-category-layout-collapsed/);
+  assert.match(homeStyleSource, /justify-content:\s*center/);
+  assert.match(homeStyleSource, /padding-inline:\s*0\s*!important/);
+  assert.match(homeStyleSource, /margin-inline:\s*0\s*!important/);
+  assert.match(homeStyleSource, /width:\s*100%\s*!important/);
+  assert.match(homeStyleSource, /line-height:\s*1/);
 });

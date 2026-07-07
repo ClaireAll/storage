@@ -46,7 +46,8 @@ type OssUploadDirectory =
   | "books"
   | "hobby"
   | "cosmetic"
-  | "skincare";
+  | "skincare"
+  | "ai-outfits";
 type OssUploadKind = "image" | "file";
 
 /** 根据当前用户、业务目录和文件名生成图片在 OSS 中的对象 Key。 */
@@ -131,7 +132,8 @@ export async function POST(request: Request) {
     directory !== "books" &&
     directory !== "hobby" &&
     directory !== "cosmetic" &&
-    directory !== "skincare"
+    directory !== "skincare" &&
+    directory !== "ai-outfits"
   ) {
     return NextResponse.json({ message: "上传目录无效" }, { status: 400 });
   }

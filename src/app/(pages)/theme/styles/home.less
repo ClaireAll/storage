@@ -29,6 +29,69 @@
   color: currentColor;
 }
 
+.home-category-layout-collapsed .home-category-menu.ant-menu-inline-collapsed {
+  width: 100%;
+}
+
+.home-category-layout-collapsed .home-category-menu .ant-menu-item {
+  display: flex;
+  justify-content: center;
+  margin-inline: 0 !important;
+  padding-inline: 0 !important;
+  width: 100% !important;
+}
+
+.home-category-layout-collapsed
+  .home-category-menu
+  .ant-menu-item
+  .ant-menu-item-icon {
+  display: inline-flex;
+  justify-content: center;
+  line-height: 1;
+  margin-inline-end: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.home-dashboard-main {
+  margin-inline: auto;
+}
+
+.home-dashboard-grid {
+  display: grid;
+  flex: 1;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1180px);
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+}
+
+.home-dashboard-left-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.home-category-workspace {
+  justify-content: center;
+}
+
+.home-ai-assistant-slot {
+  display: contents;
+}
+
+.home-dashboard-grid:has(.ai-assistant-root-expanded) {
+  grid-template-columns: minmax(0, 1180px) minmax(320px, 360px) !important;
+}
+
+.home-dashboard-grid:has(.ai-assistant-root-expanded) .home-ai-assistant-slot {
+  display: block;
+  min-height: 0;
+}
+
 .home-shell .ant-btn-default:not(:disabled) {
   background: var(--home-theme-bg);
   border-color: color-mix(
@@ -60,4 +123,367 @@
   box-shadow:
     0 18px 48px rgb(0 0 0 / 24%),
     0 2px 12px rgb(0 0 0 / 16%);
+}
+
+.ai-assistant-root {
+  --ai-assistant-theme-bg: var(
+    --home-theme-bg,
+    var(--theme-page-bg, var(--app-shell-bg, #0b1220))
+  );
+  --ai-assistant-theme-color: var(
+    --home-theme-color,
+    var(--theme-page-color, var(--app-texture-color, #00a3a3))
+  );
+  --ai-assistant-theme-text: var(
+    --home-theme-text,
+    var(--theme-page-text, var(--app-texture-text, #f8fafc))
+  );
+
+  bottom: 24px;
+  pointer-events: none;
+  position: fixed;
+  right: 24px;
+  z-index: 2147483000;
+}
+
+.ai-assistant-root.ai-assistant-root-expanded {
+  align-self: stretch;
+  bottom: auto;
+  height: 100%;
+  min-height: 0;
+  pointer-events: auto;
+  position: static;
+  right: auto;
+  width: 100%;
+  z-index: auto;
+}
+
+.ai-assistant-root .ai-assistant-fab.ant-btn {
+  align-items: center;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--ai-assistant-theme-color) 82%, #ffffff 18%),
+      var(--ai-assistant-theme-color)
+    ) !important;
+  border-color: var(--ai-assistant-theme-color) !important;
+  border-radius: 999px;
+  box-shadow:
+    0 18px 38px rgb(0 0 0 / 28%),
+    0 2px 10px
+      color-mix(in srgb, var(--ai-assistant-theme-color) 42%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 32%);
+  color: rgb(255 255 255 / 92%) !important;
+  display: inline-flex;
+  height: 56px;
+  justify-content: center;
+  min-width: 56px;
+  overflow: hidden;
+  pointer-events: auto;
+  position: relative;
+  width: 56px;
+  z-index: 2;
+}
+
+.ai-assistant-root .ai-assistant-fab.ant-btn::after {
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: inherit;
+  content: "";
+  inset: 5px;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ai-assistant-root .ai-assistant-fab.ant-btn:hover,
+.ai-assistant-root .ai-assistant-fab.ant-btn:focus-visible {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--ai-assistant-theme-color) 72%, #ffffff 28%),
+      color-mix(in srgb, var(--ai-assistant-theme-color) 92%, #000000 8%)
+    ) !important;
+  box-shadow:
+    0 20px 42px rgb(0 0 0 / 30%),
+    0 3px 14px
+      color-mix(in srgb, var(--ai-assistant-theme-color) 52%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 38%);
+}
+
+.ai-assistant-root .ai-assistant-fab-hidden.ant-btn {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px) scale(0.94);
+}
+
+.ai-assistant-root.ai-assistant-root-expanded
+  .ai-assistant-fab-hidden.ant-btn {
+  display: none;
+}
+
+.ai-assistant-root .ai-assistant-fab .iconfont {
+  color: inherit !important;
+}
+
+.ai-assistant-fab-icon {
+  height: 42px;
+  width: 42px;
+}
+
+.ai-assistant-fab-symbol {
+  font-size: 28px;
+  height: 28px;
+  line-height: 1;
+  width: 28px;
+}
+
+.ai-assistant-panel {
+  backdrop-filter: blur(18px);
+  background: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-bg) 88%,
+    transparent
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--ai-assistant-theme-color) 42%, transparent);
+  border-radius: 8px;
+  bottom: 56px;
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 24%),
+    0 2px 10px rgb(0 0 0 / 12%);
+  color: var(--ai-assistant-theme-text);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: min(330px, calc(100dvh - 96px));
+  padding: 14px;
+  pointer-events: auto;
+  position: absolute;
+  right: 12px;
+  width: min(380px, calc(100vw - 48px));
+  z-index: 1;
+}
+
+.ai-assistant-root-expanded .ai-assistant-panel-expanded {
+  bottom: auto;
+  height: 100%;
+  max-height: none;
+  min-height: 0;
+  position: static;
+  right: auto;
+  top: auto;
+  width: 100%;
+}
+
+.ai-assistant-panel-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 28px;
+}
+
+.ai-assistant-header-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ai-assistant-title {
+  color: var(--ai-assistant-theme-text) !important;
+}
+
+.ai-assistant-expand.ant-btn,
+.ai-assistant-close.ant-btn {
+  color: var(--ai-assistant-theme-text) !important;
+}
+
+.ai-assistant-expand.ant-btn:hover,
+.ai-assistant-expand.ant-btn:focus-visible,
+.ai-assistant-close.ant-btn:hover,
+.ai-assistant-close.ant-btn:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-color) 18%,
+    transparent
+  ) !important;
+  color: var(--ai-assistant-theme-text) !important;
+}
+
+.ai-assistant-dialog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.ai-assistant-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ai-assistant-message {
+  border-radius: 8px;
+  line-height: 1.6;
+  max-width: 86%;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+}
+
+.ai-assistant-message .ant-typography {
+  color: inherit;
+}
+
+.ai-assistant-generated-images {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin-top: 8px;
+  width: 100%;
+}
+
+.ai-assistant-generated-image {
+  aspect-ratio: 3 / 4;
+  border: 1px solid
+    color-mix(in srgb, var(--ai-assistant-theme-color) 42%, transparent);
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.ai-assistant-message-user {
+  align-self: flex-end;
+  background: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-color) 22%,
+    transparent
+  );
+}
+
+.ai-assistant-message-assistant {
+  align-self: flex-start;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.ai-assistant-error {
+  display: block;
+}
+
+.ai-assistant-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-assistant-panel .ai-assistant-capability.ant-btn-default {
+  background-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-bg) 86%,
+    var(--ai-assistant-theme-color) 14%
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-color) 36%,
+    transparent
+  ) !important;
+  box-shadow: none !important;
+  color: var(--ai-assistant-theme-text) !important;
+}
+
+.ai-assistant-panel .ai-assistant-capability.ant-btn-default:hover,
+.ai-assistant-panel .ai-assistant-capability.ant-btn-default:focus-visible {
+  background-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-bg) 74%,
+    var(--ai-assistant-theme-color) 26%
+  ) !important;
+  border-color: var(--ai-assistant-theme-color) !important;
+  color: var(--ai-assistant-theme-text) !important;
+}
+
+.ai-assistant-input-row {
+  align-items: flex-end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ai-assistant-panel .ai-assistant-textarea.ant-input,
+.ai-assistant-panel .ai-assistant-textarea.ant-input-outlined {
+  background-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-bg) 88%,
+    var(--ai-assistant-theme-color) 12%
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-color) 38%,
+    transparent
+  ) !important;
+  box-shadow: none !important;
+  caret-color: var(--ai-assistant-theme-color);
+  color: var(--ai-assistant-theme-text) !important;
+}
+
+.ai-assistant-panel .ai-assistant-textarea.ant-input::placeholder {
+  color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-text) 42%,
+    transparent
+  ) !important;
+}
+
+.ai-assistant-panel .ai-assistant-textarea.ant-input:hover,
+.ai-assistant-panel .ai-assistant-textarea.ant-input:focus,
+.ai-assistant-panel .ai-assistant-textarea.ant-input-focused {
+  background-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-bg) 82%,
+    var(--ai-assistant-theme-color) 18%
+  ) !important;
+  border-color: var(--ai-assistant-theme-color) !important;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--ai-assistant-theme-color) 18%, transparent) !important;
+}
+
+.ai-assistant-panel .ai-assistant-send.ant-btn-primary {
+  background-color: var(--ai-assistant-theme-color) !important;
+  border-color: var(--ai-assistant-theme-color) !important;
+  color: rgb(255 255 255 / 92%) !important;
+}
+
+.ai-assistant-panel .ai-assistant-send.ant-btn-primary:hover,
+.ai-assistant-panel .ai-assistant-send.ant-btn-primary:focus-visible {
+  background-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-color) 88%,
+    #ffffff 12%
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--ai-assistant-theme-color) 88%,
+    #ffffff 12%
+  ) !important;
+  color: rgb(255 255 255 / 92%) !important;
+}
+
+@media (max-width: 640px) {
+  .ai-assistant-root {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .home-dashboard-grid:has(.ai-assistant-root-expanded) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ai-assistant-root.ai-assistant-root-expanded {
+    height: min(560px, calc(100dvh - 96px));
+  }
 }
