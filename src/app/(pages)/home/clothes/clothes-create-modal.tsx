@@ -357,10 +357,23 @@ export function ItemEditDialog({
     handleImageChange(imageFiles);
   }
 
-  /** 单击上传区时只聚焦并标记为可粘贴，不立即打开文件选择器。 */
+  /** 判断当前设备是否更适合点按上传，触屏端无法稳定使用双击选择文件。 */
+  function shouldOpenPickerOnUploadClick() {
+    return (
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches
+    );
+  }
+
+  /** 单击上传区时，触屏端打开文件选择器，桌面端只聚焦并标记为可粘贴。 */
   function focusUploadForPaste(event: React.MouseEvent<HTMLDivElement>) {
     if (isCropping) {
       event.preventDefault();
+      return;
+    }
+
+    if (shouldOpenPickerOnUploadClick()) {
+      fileInputRef.current?.click();
       return;
     }
 

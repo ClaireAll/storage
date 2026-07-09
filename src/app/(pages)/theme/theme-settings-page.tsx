@@ -224,6 +224,11 @@ function ThemeSettingsContent({
           } as React.CSSProperties
         }
       >
+        <ThemeGeometryTexture texture={appliedTexture} />
+        <ThemeFallingLights
+          isActive={appliedTexture === "meteor"}
+          variant="shared"
+        />
         <header className="theme-settings-header grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
           <div>
             <Typography.Title className="m-0! theme-settings-title" level={4}>

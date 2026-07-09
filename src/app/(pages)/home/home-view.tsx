@@ -4,8 +4,12 @@ import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-mo
 import type { ClothesItem } from "@/app/(pages)/home/clothes/clothes-type";
 import { AiAssistant } from "@/app/(pages)/common/ai-assistant";
 import { HomeDashboard } from "@/app/(pages)/home/home-dashboard";
-import { ThemeTexturePublisher } from "@/app/(pages)/theme/shared-theme-texture";
+import {
+  ThemeFallingLights,
+  ThemeTexturePublisher,
+} from "@/app/(pages)/theme/shared-theme-texture";
 import { ThemeControl } from "@/app/(pages)/theme/theme-control";
+import { ThemeGeometryTexture } from "@/app/(pages)/theme/theme-geometry-texture";
 import { ThemeProvider } from "@/app/(pages)/theme/theme-provider";
 import { ThemeShellBackground } from "@/app/(pages)/theme/theme-shell-background";
 import {
@@ -260,6 +264,11 @@ export default function HomePage({
                   } as CSSProperties
                 }
               >
+                <ThemeGeometryTexture texture={themeConfig.texture} />
+                <ThemeFallingLights
+                  isActive={themeConfig.texture === "meteor"}
+                  variant="shared"
+                />
                 <header
                   className="flex shrink-0 items-center justify-between gap-4 border-b px-8 py-2 max-md:flex-col max-md:items-start max-md:p-5"
                   style={{

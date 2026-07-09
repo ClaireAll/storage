@@ -52,20 +52,29 @@ const defaultTextureDetail: ThemeTextureChangeDetail = {
   texture: "none",
 };
 
+let latestThemeTextureDetail = defaultTextureDetail;
+
 export function SharedThemeTexture() {
-  const [textureDetail, setTextureDetail] = useState(defaultTextureDetail);
+  const [textureDetail, setTextureDetail] = useState(
+    () => latestThemeTextureDetail,
+  );
 
   useEffect(() => {
-    function handleTextureChange(event: Event) {
-      const customEvent = event as CustomEvent<ThemeTextureChangeDetail>;
+    function syncTextureDetail(nextTextureDetail: ThemeTextureChangeDetail) {
       setTextureDetail((currentDetail) =>
-        isSameTextureDetail(currentDetail, customEvent.detail)
+        isSameTextureDetail(currentDetail, nextTextureDetail)
           ? currentDetail
-          : customEvent.detail,
+          : nextTextureDetail,
       );
     }
 
+    function handleTextureChange(event: Event) {
+      const customEvent = event as CustomEvent<ThemeTextureChangeDetail>;
+      syncTextureDetail(customEvent.detail);
+    }
+
     window.addEventListener(themeTextureChangeEvent, handleTextureChange);
+    syncTextureDetail(latestThemeTextureDetail);
 
     return () => {
       window.removeEventListener(themeTextureChangeEvent, handleTextureChange);
@@ -118,19 +127,26 @@ export function ThemeTexturePublisher({
   texture,
 }: ThemeTextureChangeDetail) {
   useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent<ThemeTextureChangeDetail>(themeTextureChangeEvent, {
-        detail: {
-          background,
-          color,
-          text,
-          texture,
-        },
-      }),
-    );
+    publishThemeTextureDetail({
+      background,
+      color,
+      text,
+      texture,
+    });
   }, [background, color, text, texture]);
 
   return null;
+}
+
+function publishThemeTextureDetail(
+  nextTextureDetail: ThemeTextureChangeDetail,
+) {
+  latestThemeTextureDetail = nextTextureDetail;
+  window.dispatchEvent(
+    new CustomEvent<ThemeTextureChangeDetail>(themeTextureChangeEvent, {
+      detail: nextTextureDetail,
+    }),
+  );
 }
 
 export function ThemeFallingLights({

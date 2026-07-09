@@ -308,7 +308,7 @@ html:has(.app-shell.theme-dark) {
 
 .theme-meteor-line {
   animation: theme-meteor-drop var(--falling-line-duration) linear
-    var(--falling-line-delay) 1 both;
+    var(--falling-line-delay) infinite both;
   background: transparent;
   display: block;
   height: var(--falling-line-height);
@@ -365,7 +365,7 @@ html:has(.app-shell.theme-dark) {
 
 .theme-meteor-spark {
   animation: theme-meteor-spark-twinkle var(--meteor-spark-duration) ease-in-out
-    var(--meteor-spark-delay) 1 both;
+    var(--meteor-spark-delay) infinite both;
   background: radial-gradient(
     circle,
     color-mix(in srgb, var(--app-texture-color, var(--theme-preview-color)) 28%, white) 0 18%,
@@ -401,7 +401,8 @@ html:has(.app-shell.theme-dark) {
   display: none;
 }
 
-.app-textured-shell > .theme-geometry-texture {
+.app-textured-shell > .theme-geometry-texture,
+.app-textured-shell > .theme-meteor-lines {
   z-index: 0;
 }
 
@@ -834,10 +835,7 @@ html:has(.app-shell.theme-dark) {
 /* 动画降级：尊重系统减少动态效果设置。 */
 @media (prefers-reduced-motion: reduce) {
   .app-textured-shell::before,
-  .app-textured-shell::after,
-  .theme-meteor-line,
-  .theme-meteor-spark,
-  .theme-geometry-item {
+  .app-textured-shell::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
   }
