@@ -214,10 +214,8 @@ function normalizeToolImageUrls(value: unknown) {
 
 async function executeWanxiangTool({
   argumentsText,
-  userId,
 }: {
   argumentsText?: string;
-  userId: string;
 }) {
   const parsedArguments = parseToolArguments(argumentsText);
   const prompt =
@@ -233,7 +231,6 @@ async function executeWanxiangTool({
     const result = await generateWanxiangOutfitImage({
       imageUrls: normalizeToolImageUrls(parsedArguments.image_urls),
       prompt,
-      userId,
     });
 
     return JSON.stringify({
@@ -261,7 +258,7 @@ async function executeAiTool({
   }
 
   if (name === "generate_outfit_image") {
-    return executeWanxiangTool({ argumentsText, userId });
+    return executeWanxiangTool({ argumentsText });
   }
 
   return JSON.stringify({ error: "未知工具" });

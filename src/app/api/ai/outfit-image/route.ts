@@ -33,7 +33,6 @@ export async function POST(request: Request) {
     const result = await generateWanxiangOutfitImage({
       imageUrls: normalizeImageUrls(body?.imageUrls),
       prompt,
-      userId: session.user.id,
     });
 
     return NextResponse.json({

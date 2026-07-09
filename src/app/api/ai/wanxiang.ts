@@ -1,9 +1,6 @@
-import { uploadPublicBufferToOss } from "@/utils/oss-server";
-
 type GenerateWanxiangOutfitImageOptions = {
   imageUrls?: string[];
   prompt: string;
-  userId: string;
 };
 
 type WanxiangGenerateResult = {
@@ -84,29 +81,9 @@ export function extractWanxiangImageUrls(result: unknown) {
   return [...urls];
 }
 
-async function downloadWanxiangImage(imageUrl: string) {
-  const response = await fetch(imageUrl);
-
-  if (!response.ok) {
-    throw new Error("下载万相生成图片失败");
-  }
-
-  const contentType = response.headers.get("content-type") || "image/png";
-
-  if (!contentType.startsWith("image/")) {
-    throw new Error("万相返回的结果不是图片");
-  }
-
-  return {
-    body: await response.arrayBuffer(),
-    contentType,
-  };
-}
-
 export async function generateWanxiangOutfitImage({
   imageUrls,
   prompt,
-  userId,
 }: GenerateWanxiangOutfitImageOptions): Promise<WanxiangGenerateResult> {
   const config = getWanxiangConfig();
   const references = normalizeImageUrls(imageUrls);
@@ -149,23 +126,13 @@ export async function generateWanxiangOutfitImage({
   }
 
   const temporaryImageUrls = extractWanxiangImageUrls(result);
-  const temporaryImageUrl = temporaryImageUrls[0];
 
-  if (!temporaryImageUrl) {
+  if (!temporaryImageUrls.length) {
     throw new Error("万相没有返回图片结果");
   }
 
-  const image = await downloadWanxiangImage(temporaryImageUrl);
-  const resultUrl = await uploadPublicBufferToOss({
-    body: image.body,
-    contentType: image.contentType,
-    directory: "ai-outfits",
-    fileName: "wanxiang-outfit.png",
-    userId,
-  });
-
   return {
-    imageUrls: [resultUrl],
+    imageUrls: temporaryImageUrls,
     model: config.model,
     temporaryImageUrls,
   };

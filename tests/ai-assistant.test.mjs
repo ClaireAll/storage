@@ -18,6 +18,7 @@ const outfitRouteSource = readSource("../src/app/api/ai/outfit-image/route.ts");
 const wanxiangSource = readSource("../src/app/api/ai/wanxiang.ts");
 const ossPolicySource = readSource("../src/app/api/oss/policy/route.ts");
 const ossClientSource = readSource("../src/utils/oss.ts");
+const ossServerSource = readSource("../src/utils/oss-server.ts");
 const styleSource = readSource("../src/app/(pages)/theme/styles/home.less");
 
 test("home dashboard mounts the AI assistant in the page card layout", () => {
@@ -94,14 +95,18 @@ test("AI chat route exposes Wanxiang outfit image generation to DeepSeek", () =>
     /services\/aigc\/multimodal-generation\/generation/,
   );
   assert.match(wanxiangSource, /extractWanxiangImageUrls/);
-  assert.match(wanxiangSource, /uploadPublicBufferToOss/);
   assert.match(outfitRouteSource, /generateWanxiangOutfitImage/);
 });
 
-test("Wanxiang generated images are stored in the ai-outfits OSS directory", () => {
-  assert.match(wanxiangSource, /directory:\s*"ai-outfits"/);
-  assert.match(ossPolicySource, /"ai-outfits"/);
-  assert.match(ossClientSource, /"ai-outfits"/);
+test("Wanxiang generated images are returned directly without OSS upload", () => {
+  assert.match(wanxiangSource, /temporaryImageUrls/);
+  assert.match(wanxiangSource, /imageUrls:\s*temporaryImageUrls/);
+  assert.doesNotMatch(wanxiangSource, /uploadPublicBufferToOss/);
+  assert.doesNotMatch(wanxiangSource, /downloadWanxiangImage/);
+  assert.doesNotMatch(wanxiangSource, /directory:\s*"ai-outfits"/);
+  assert.doesNotMatch(ossPolicySource, /"ai-outfits"/);
+  assert.doesNotMatch(ossClientSource, /"ai-outfits"/);
+  assert.doesNotMatch(ossServerSource, /"ai-outfits"/);
 });
 
 test("AI assistant has theme-aware floating and dashboard-card dialog styles", () => {

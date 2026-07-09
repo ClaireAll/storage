@@ -1,6 +1,6 @@
-import { createHmac, randomUUID } from "crypto";
+import { createHmac } from "crypto";
 
-type ServerOssUploadDirectory =
+type DeleteOwnOssObjectDirectory =
   | "avatars"
   | "clothes"
   | "pants"
@@ -8,18 +8,7 @@ type ServerOssUploadDirectory =
   | "books"
   | "hobby"
   | "cosmetic"
-  | "skincare"
-  | "ai-outfits";
-
-type UploadPublicBufferOptions = {
-  body: ArrayBuffer | Buffer;
-  contentType: string;
-  directory: ServerOssUploadDirectory;
-  fileName: string;
-  userId: string;
-};
-
-type DeleteOwnOssObjectDirectory = ServerOssUploadDirectory;
+  | "skincare";
 
 function getOssConfig() {
   const accessKeyId = process.env.ALIYUN_OSS_ACCESS_KEY_ID?.trim() ?? "";
@@ -41,38 +30,6 @@ function getOssConfig() {
     host: endpoint || `https://${bucket}.${region}.aliyuncs.com`,
     publicBaseUrl: publicBaseUrl.replace(/\/$/, ""),
   };
-}
-
-function createImageObjectKey(
-  userId: string,
-  fileName: string,
-  directory: ServerOssUploadDirectory,
-) {
-  const extension = fileName.includes(".")
-    ? fileName.split(".").pop()?.toLowerCase()
-    : "png";
-
-  return `${directory}/${userId}/${Date.now()}-${randomUUID()}.${extension || "png"}`;
-}
-
-function createPolicy(objectKey: string, maxFileSize: number) {
-  const expiration = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
-  return Buffer.from(
-    JSON.stringify({
-      conditions: [
-        ["eq", "$key", objectKey],
-        ["starts-with", "$Content-Type", "image/"],
-        ["eq", "$x-oss-object-acl", "public-read"],
-        ["content-length-range", 1, maxFileSize],
-      ],
-      expiration,
-    }),
-  ).toString("base64");
-}
-
-function signPolicy(policy: string, accessKeySecret: string) {
-  return createHmac("sha1", accessKeySecret).update(policy).digest("base64");
 }
 
 function signOssRequest(stringToSign: string, accessKeySecret: string) {
@@ -113,55 +70,6 @@ function isOwnAllowedObjectKey(
   return allowedDirectories.some((directory) =>
     key.startsWith(`${directory}/${userId}/`),
   );
-}
-
-export async function uploadPublicBufferToOss({
-  body,
-  contentType,
-  directory,
-  fileName,
-  userId,
-}: UploadPublicBufferOptions) {
-  if (!contentType.startsWith("image/")) {
-    throw new Error("只支持上传图片结果");
-  }
-
-  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
-  const maxFileSize = 10 * 1024 * 1024;
-
-  if (buffer.byteLength > maxFileSize) {
-    throw new Error("生成图片大小不能超过 10MB");
-  }
-
-  const ossConfig = getOssConfig();
-  const key = createImageObjectKey(userId, fileName, directory);
-  const policy = createPolicy(key, maxFileSize);
-  const signature = signPolicy(policy, ossConfig.accessKeySecret);
-  const formData = new FormData();
-
-  formData.append("Content-Type", contentType);
-  formData.append("OSSAccessKeyId", ossConfig.accessKeyId);
-  formData.append("Signature", signature);
-  formData.append("key", key);
-  formData.append("policy", policy);
-  formData.append("success_action_status", "204");
-  formData.append("x-oss-object-acl", "public-read");
-  formData.append(
-    "file",
-    new Blob([new Uint8Array(buffer)], { type: contentType }),
-    fileName,
-  );
-
-  const response = await fetch(ossConfig.host, {
-    body: formData,
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    throw new Error("生成图片转存 OSS 失败");
-  }
-
-  return `${ossConfig.publicBaseUrl}/${encodeURI(key)}`;
 }
 
 export async function deleteOwnOssObject(
