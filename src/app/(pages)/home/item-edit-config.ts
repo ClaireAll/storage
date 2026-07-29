@@ -1,4 +1,5 @@
 import {
+  blogCategoryOptions,
   cosmeticCategoryOptions,
   hobbyCategoryOptions,
   skincareCategoryOptions,
@@ -15,6 +16,7 @@ export type ItemCategoryConfig = {
   hasPrice?: boolean;
   hasCount?: boolean;
   hasBookCategory?: boolean;
+  hasUrl?: boolean;
   itemCategoryOptions?: ItemCategoryOption[];
   itemLabel: string;
   namePlaceholder?: string;
@@ -25,7 +27,8 @@ export type ItemCategoryConfig = {
     | "books"
     | "hobby"
     | "cosmetic"
-    | "skincare";
+    | "skincare"
+    | "blog";
 };
 
 export const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
@@ -58,6 +61,20 @@ export const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
     itemLabel: "图书",
     namePlaceholder: "三体",
     uploadDirectory: "books",
+  },
+  "/home/blog": {
+    apiPath: "/api/blog",
+    hasBookFile: false,
+    hasColor: false,
+    hasDate: false,
+    hasImage: false,
+    hasPrice: false,
+    hasSeason: false,
+    hasUrl: true,
+    itemCategoryOptions: blogCategoryOptions,
+    itemLabel: "笔记",
+    namePlaceholder: "读书摘录",
+    uploadDirectory: "blog",
   },
   "/home/hobby": {
     apiPath: "/api/hobby",

@@ -336,6 +336,7 @@ export default function HomePage({
                   hasImage={selectedItemCategory?.hasImage}
                   hasPrice={selectedItemCategory?.hasPrice}
                   hasSeason={selectedItemCategory?.hasSeason}
+                  hasUrl={selectedItemCategory?.hasUrl}
                   itemCategoryOptions={
                     selectedItemCategory?.itemCategoryOptions
                   }

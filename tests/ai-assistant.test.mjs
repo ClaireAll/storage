@@ -14,6 +14,10 @@ const layoutSource = readSource("../src/app/layout.tsx");
 const homeViewSource = readSource("../src/app/(pages)/home/home-view.tsx");
 const assistantSource = readSource("../src/app/(pages)/common/ai-assistant.tsx");
 const routeSource = readSource("../src/app/api/ai/chat/route.ts");
+const registrySource = readSource("../src/app/api/ai/tools/registry.ts");
+const inventoryToolsSource = readSource(
+  "../src/app/api/ai/tools/inventory-tools.ts",
+);
 const outfitRouteSource = readSource("../src/app/api/ai/outfit-image/route.ts");
 const wanxiangSource = readSource("../src/app/api/ai/wanxiang.ts");
 const ossPolicySource = readSource("../src/app/api/oss/policy/route.ts");
@@ -72,19 +76,23 @@ test("AI chat route calls DeepSeek v4 flash with server-side API key", () => {
   assert.match(routeSource, /NextResponse\.json/);
 });
 
-test("AI chat route exposes inventory list tools to DeepSeek", () => {
-  assert.match(routeSource, /tools/);
-  assert.match(routeSource, /get_inventory_list/);
+test("AI chat route uses the read-only inventory tool registry", () => {
+  assert.match(routeSource, /aiToolDefinitions/);
+  assert.match(routeSource, /executeAiTool/);
   assert.match(routeSource, /tool_calls/);
-  assert.match(routeSource, /executeInventoryTool/);
-  assert.match(routeSource, /listItems/);
-  assert.match(routeSource, /createClient/);
   assert.match(routeSource, /tool_call_id/);
+  assert.doesNotMatch(routeSource, /function executeInventoryTool/);
+  assert.match(registrySource, /get_inventory_list/);
+  assert.match(registrySource, /search_inventory_items/);
+  assert.match(registrySource, /find_incomplete_items/);
+  assert.match(registrySource, /summarize_inventory/);
+  assert.match(registrySource, /recommend_outfit/);
+  assert.match(inventoryToolsSource, /listItems/);
 });
 
 test("AI chat route exposes Wanxiang outfit image generation to DeepSeek", () => {
-  assert.match(routeSource, /generate_outfit_image/);
-  assert.match(routeSource, /executeWanxiangTool/);
+  assert.match(registrySource, /generate_outfit_image/);
+  assert.match(registrySource, /executeWanxiangTool/);
   assert.match(routeSource, /maxToolRounds/);
   assert.match(routeSource, /generatedImages/);
   assert.match(routeSource, /images:\s*generatedImages/);
@@ -186,20 +194,34 @@ test("AI assistant copies theme variables from the current app shell", () => {
 
 test("AI assistant exposes visible inventory capabilities", () => {
   assert.match(assistantSource, /assistantCapabilities/);
-  assert.match(assistantSource, /查看图书列表/);
-  assert.match(assistantSource, /查看护肤品列表/);
+  assert.match(assistantSource, /缺图物品/);
+  assert.match(assistantSource, /低库存护肤/);
+  assert.match(assistantSource, /夏季衣服/);
   assert.match(assistantSource, /setDraft\(capability\.prompt\)/);
 });
 
-test("AI assistant exposes Wanxiang outfit image capability", () => {
-  assert.match(assistantSource, /生成搭配效果图/);
+test("AI assistant keeps Wanxiang image generation as an explicit tool", () => {
+  assert.match(registrySource, /generateWanxiangOutfitImage/);
+  assert.match(registrySource, /generate_outfit_image/);
+  assert.match(assistantSource, /先不要生成图片/);
 });
 
-test("AI assistant renders generated outfit images returned from chat", () => {
+test("AI assistant renders structured responses and generated outfit images", () => {
   assert.match(assistantSource, /images\?: string\[\]/);
+  assert.match(assistantSource, /items\?: AssistantItem\[\]/);
+  assert.match(assistantSource, /sections\?: AssistantSection\[\]/);
+  assert.match(assistantSource, /suggestions\?: string\[\]/);
   assert.match(assistantSource, /result\.images/);
+  assert.match(assistantSource, /result\.items/);
+  assert.match(assistantSource, /result\.sections/);
+  assert.match(assistantSource, /result\.suggestions/);
   assert.match(assistantSource, /ai-assistant-generated-images/);
   assert.match(assistantSource, /ai-assistant-generated-image/);
+  assert.match(assistantSource, /ai-assistant-items/);
+  assert.match(assistantSource, /ai-assistant-sections/);
+  assert.match(assistantSource, /ai-assistant-suggestions/);
   assert.match(styleSource, /ai-assistant-generated-images/);
+  assert.match(styleSource, /ai-assistant-items/);
+  assert.match(styleSource, /ai-assistant-suggestions/);
   assert.match(styleSource, /object-fit:\s*cover/);
 });

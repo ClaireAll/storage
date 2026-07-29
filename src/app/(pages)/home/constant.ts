@@ -35,6 +35,10 @@ export const skincareCategoryOptions: ItemCategoryOption[] = [
   { label: "眼霜", value: 2 },
 ];
 
+export const blogCategoryOptions: ItemCategoryOption[] = [
+  { label: "笔记", value: 1 },
+];
+
 export function getCategoryLabels(options: ItemCategoryOption[]) {
   return Object.fromEntries(
     options.map(({ label, value }) => [value, label]),
@@ -49,6 +53,7 @@ export const cosmeticCategoryLabels = getCategoryLabels(
 export const skincareCategoryLabels = getCategoryLabels(
   skincareCategoryOptions,
 );
+export const blogCategoryLabels = getCategoryLabels(blogCategoryOptions);
 
 export const homeCategories: HomeCategory[] = [
   {
@@ -85,6 +90,11 @@ export const homeCategories: HomeCategory[] = [
     href: "/home/skincare",
     iconClassName: "icon-skincare",
     label: "护肤品",
+  },
+  {
+    href: "/home/blog",
+    iconClassName: "icon-blog",
+    label: "笔记",
   },
 ];
 

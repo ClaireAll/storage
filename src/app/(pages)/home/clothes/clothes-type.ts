@@ -20,4 +20,6 @@ export type ClothesItem = {
   category?: number;
   /** 图书下载文件地址。 */
   download_url?: string;
+  /** 外部链接地址。 */
+  url?: string;
 };

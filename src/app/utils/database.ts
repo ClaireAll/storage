@@ -25,7 +25,8 @@ export type ItemCategory =
   | "books"
   | "hobby"
   | "cosmetic"
-  | "skincare";
+  | "skincare"
+  | "blog";
 
 export type ItemWriteValues = {
   b_id?: string | number;
@@ -41,6 +42,7 @@ export type ItemWriteValues = {
   price?: number;
   season?: string;
   timeStamp?: string;
+  url?: string;
 };
 
 type ItemCategoryConfig = {
@@ -89,6 +91,12 @@ const itemCategoryConfigs: Record<ItemCategory, ItemCategoryConfig> = {
     idColumn: "s_id",
     selectFields: "s_id,name,timeStamp,price,pic_url,count,category",
     table: "skincare",
+  },
+  blog: {
+    hasTimeStamp: false,
+    idColumn: "b_id",
+    selectFields: "b_id,name,category,url",
+    table: "blog",
   },
 };
 

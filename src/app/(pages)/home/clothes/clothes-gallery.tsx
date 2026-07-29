@@ -8,6 +8,7 @@ import {
   DownloadOutlined,
   EditOutlined,
   FilterOutlined,
+  LinkOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import {
@@ -642,6 +643,19 @@ export function ClothesGallery({
                   </Typography.Text>
                 ) : null}
                 <span className="clothes-gallery-detail-action-cell">
+                  {item.url ? (
+                    <Button
+                      aria-label={`打开 ${item.name}`}
+                      className="clothes-gallery-detail-download-button"
+                      href={item.url}
+                      icon={<LinkOutlined />}
+                      rel="noreferrer"
+                      shape="circle"
+                      size="small"
+                      target="_blank"
+                      type="text"
+                    />
+                  ) : null}
                   {item.download_url ? (
                     <Button
                       aria-label={`下载 ${item.name}`}
@@ -771,6 +785,19 @@ function ClothesImageCard({
           className="clothes-gallery-card-download-button clothes-gallery-card-edit-button"
           href={item.download_url}
           icon={<DownloadOutlined />}
+          rel="noreferrer"
+          shape="circle"
+          size="small"
+          target="_blank"
+          type="primary"
+        />
+      ) : null}
+      {item.url ? (
+        <Button
+          aria-label={`打开 ${item.name}`}
+          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button"
+          href={item.url}
+          icon={<LinkOutlined />}
           rel="noreferrer"
           shape="circle"
           size="small"

@@ -12,33 +12,52 @@ import { useEffect, useMemo, useRef, useState } from "react";
 type ChatMessage = {
   content: string;
   images?: string[];
+  items?: AssistantItem[];
   role: "assistant" | "user";
+  sections?: AssistantSection[];
+  suggestions?: string[];
+};
+
+type AssistantSection = {
+  content: string;
+  title: string;
+};
+
+type AssistantItem = {
+  category: string;
+  categoryLabel: string;
+  id: string;
+  imageUrl?: string;
+  name: string;
+  price?: number;
+  subtitle?: string;
+  url?: string;
 };
 
 const initialMessages: ChatMessage[] = [
   {
     content:
-      "你好，我是 DeepSeek 助手。我可以帮你查询衣服、图书、爱好、化妆品、护肤品等库存列表，也可以调用万相生成搭配效果图。",
+      "你好，我是 DeepSeek 库存助手。我可以查询、汇总和推荐你的库存内容；需要效果图时，也可以显式调用万相生成搭配图。",
     role: "assistant",
   },
 ];
 const assistantCapabilities = [
   {
-    label: "查看图书列表",
-    prompt: "请获取我的图书列表，并按名称、分类和价格整理。",
+    label: "缺图物品",
+    prompt: "找出所有缺少图片的物品。",
   },
   {
-    label: "查看护肤品列表",
-    prompt: "请获取我的护肤品列表，并按名称、数量和价格整理。",
+    label: "低库存护肤",
+    prompt: "护肤品里哪些数量小于 2？",
   },
   {
-    label: "查看化妆品列表",
-    prompt: "请获取我的化妆品列表，并按名称、数量和价格整理。",
+    label: "夏季衣服",
+    prompt: "我有哪些夏天能穿的衣服？",
   },
   {
-    label: "生成搭配效果图",
+    label: "日常搭配",
     prompt:
-      "请从我的衣服和裤子库存里选择一套适合日常出门的搭配，并调用万相生成一张搭配效果图。",
+      "帮我从衣服和裤子里推荐一套日常搭配，先不要生成图片。",
   },
 ];
 
@@ -145,8 +164,11 @@ export function AiAssistant() {
       });
       const result = (await response.json()) as {
         images?: string[];
+        items?: AssistantItem[];
         message?: string;
         reply?: string;
+        sections?: AssistantSection[];
+        suggestions?: string[];
       };
 
       if (!response.ok) {
@@ -158,7 +180,10 @@ export function AiAssistant() {
         {
           content: result.reply?.trim() || "我暂时没有生成可用回复。",
           images: result.images?.filter((image) => /^https?:\/\//i.test(image)),
+          items: result.items,
           role: "assistant",
+          sections: result.sections,
+          suggestions: result.suggestions,
         },
       ]);
     } catch (requestError) {
@@ -176,6 +201,10 @@ export function AiAssistant() {
       event.preventDefault();
       void sendMessage();
     }
+  }
+
+  function applySuggestion(suggestion: string) {
+    setDraft(suggestion);
   }
 
   return (
@@ -242,6 +271,63 @@ export function AiAssistant() {
                   key={`${message.role}-${index}-${message.content.slice(0, 12)}`}
                 >
                   <Typography.Text>{message.content}</Typography.Text>
+                  {message.sections?.length ? (
+                    <div className="ai-assistant-sections">
+                      {message.sections.map((section) => (
+                        <div
+                          className="ai-assistant-section"
+                          key={`${section.title}-${section.content.slice(0, 12)}`}
+                        >
+                          <Typography.Text strong>
+                            {section.title}
+                          </Typography.Text>
+                          <Typography.Text>{section.content}</Typography.Text>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {message.items?.length ? (
+                    <div className="ai-assistant-items">
+                      {message.items.map((item) => (
+                        <a
+                          className="ai-assistant-item"
+                          href={item.url}
+                          key={`${item.category}-${item.id}-${item.name}`}
+                          rel="noreferrer"
+                          target={item.url ? "_blank" : undefined}
+                        >
+                          {item.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              alt={item.name}
+                              className="ai-assistant-item-image"
+                              src={item.imageUrl}
+                            />
+                          ) : (
+                            <span className="ai-assistant-item-placeholder">
+                              {item.name.slice(0, 1)}
+                            </span>
+                          )}
+                          <span className="ai-assistant-item-body">
+                            <Typography.Text className="ai-assistant-item-name">
+                              {item.name}
+                            </Typography.Text>
+                            <Typography.Text
+                              className="ai-assistant-item-meta"
+                              type="secondary"
+                            >
+                              {item.subtitle ??
+                                `${item.categoryLabel}${
+                                  typeof item.price === "number"
+                                    ? ` · ¥${item.price.toFixed(2)}`
+                                    : ""
+                                }`}
+                            </Typography.Text>
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                   {message.images?.length ? (
                     <div className="ai-assistant-generated-images">
                       {message.images.map((image) => (
@@ -258,6 +344,21 @@ export function AiAssistant() {
                             src={image}
                           />
                         </a>
+                      ))}
+                    </div>
+                  ) : null}
+                  {message.suggestions?.length ? (
+                    <div className="ai-assistant-suggestions">
+                      {message.suggestions.map((suggestion) => (
+                        <Button
+                          className="ai-assistant-suggestion"
+                          key={suggestion}
+                          onClick={() => applySuggestion(suggestion)}
+                          size="small"
+                          type="default"
+                        >
+                          {suggestion}
+                        </Button>
                       ))}
                     </div>
                   ) : null}

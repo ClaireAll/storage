@@ -54,6 +54,8 @@ type ClothesCreateModalProps = {
   hasSeason?: boolean;
   /** 是否展示数量字段。 */
   hasCount?: boolean;
+  /** 是否展示链接字段。 */
+  hasUrl?: boolean;
   /** 文章推荐名称，用于表单文案。 */
   itemLabel?: string;
   /** 名称输入框示例。 */
@@ -70,7 +72,8 @@ type ClothesCreateModalProps = {
     | "books"
     | "hobby"
     | "cosmetic"
-    | "skincare";
+    | "skincare"
+    | "blog";
   categoryOptions?: { label: string; value: string }[];
   itemCategoryOptions?: ItemCategoryOption[];
   showCategorySelect?: boolean;
@@ -94,7 +97,14 @@ type ClothesCreateFormValues = {
   price?: number;
   /** 季节。 */
   season?: string[];
+  /** 外部链接。 */
+  url?: string;
 };
+
+type UploadableDirectory = Exclude<
+  ClothesCreateModalProps["uploadDirectory"],
+  "blog"
+>;
 
 const seasons = ["春", "夏", "秋", "冬"];
 const formControlWidthClassName = "w-[200px] max-w-full";
@@ -123,6 +133,7 @@ export function ItemEditDialog({
   hasImage = true,
   hasPrice = true,
   hasSeason = true,
+  hasUrl = false,
   itemCategoryOptions,
   itemLabel = "衣服",
   namePlaceholder,
@@ -188,6 +199,7 @@ export function ItemEditDialog({
       : itemLabel === "日用品"
         ? "牙膏"
         : "白色短袖");
+  const modalWidth = hasImage ? 608 : 360;
 
   /** 释放本地图片预览地址。 */
   function revokePreviewObjectUrl() {
@@ -250,6 +262,7 @@ export function ItemEditDialog({
           ? dayjs(nextEditingClothes.timeStamp)
           : dayjs()
         : undefined,
+      url: hasUrl ? (nextEditingClothes?.url ?? "") : undefined,
     });
   }
 
@@ -509,7 +522,7 @@ export function ItemEditDialog({
 
       if (croppedFile) {
         picUrl = await uploadImageToOss(croppedFile, {
-          directory: uploadDirectory,
+          directory: uploadDirectory as UploadableDirectory,
         });
       }
 
@@ -529,6 +542,7 @@ export function ItemEditDialog({
         price?: number;
         season?: string;
         timeStamp?: string;
+        url?: string;
       } = {
         name: clothesName,
       };
@@ -569,6 +583,10 @@ export function ItemEditDialog({
 
       if (hasCount) {
         clothesPayload.count = Math.floor(itemCount);
+      }
+
+      if (hasUrl) {
+        clothesPayload.url = values.url?.trim() ?? "";
       }
 
       if (currentEditingClothes) {
@@ -676,7 +694,7 @@ export function ItemEditDialog({
             : `添加${hasSelectedCategory ? itemLabel : ""}`}
         </div>
       }
-      width={608}
+      width={modalWidth}
     >
       <div
         className={
@@ -729,6 +747,7 @@ export function ItemEditDialog({
           hasPrice={hasPrice}
           hasSeason={hasSeason}
           hasSelectedCategory={hasSelectedCategory}
+          hasUrl={hasUrl}
           isEditing={isEditing}
           itemLabel={itemLabel}
           itemCategoryOptions={itemCategoryOptions}
@@ -765,7 +784,11 @@ export function ItemEditDialog({
               {imageError}
             </Typography.Text>
           ) : null}
-          <div className="flex justify-between gap-3">
+          <div
+            className={
+              isEditing ? "flex justify-between gap-3" : "flex justify-end gap-3"
+            }
+          >
             {isEditing ? (
               <Button
                 danger
@@ -812,6 +835,7 @@ type ItemEditFormProps = {
   hasPrice: boolean;
   hasSeason: boolean;
   hasSelectedCategory: boolean;
+  hasUrl: boolean;
   isEditing: boolean;
   itemCategoryOptions?: { label: string; value: number }[];
   itemLabel: string;
@@ -843,6 +867,7 @@ export function ItemEditForm({
   hasPrice,
   hasSeason,
   hasSelectedCategory,
+  hasUrl,
   isEditing,
   itemCategoryOptions,
   itemLabel,
@@ -942,6 +967,23 @@ export function ItemEditForm({
               onFocus={focusPriceInput}
               precision={2}
               prefix="¥"
+            />
+          </Form.Item>
+        ) : null}
+
+        {hasUrl ? (
+          <Form.Item
+            label="链接"
+            name="url"
+            rules={[
+              { message: "请输入链接", required: true },
+              { type: "url", message: "请输入有效链接" },
+            ]}
+          >
+            <Input
+              autoComplete="off"
+              className={formControlWidthClassName}
+              placeholder="https://example.com"
             />
           </Form.Item>
         ) : null}
