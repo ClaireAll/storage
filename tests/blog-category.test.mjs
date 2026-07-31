@@ -150,7 +150,10 @@ test("shared dialog and gallery support blog urls", () => {
 });
 
 test("blog dialog uses the compact no-image modal layout", () => {
-  assert.match(modalSource, /const modalWidth = hasImage \? 608 : 360/);
+  assert.match(
+    modalSource,
+    /const modalWidth = hasImage \? \(hasMultipleImages \? 960 : 608\) : 360/,
+  );
   assert.match(modalSource, /width=\{modalWidth\}/);
   assert.match(
     modalSource,

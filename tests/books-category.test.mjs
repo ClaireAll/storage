@@ -101,10 +101,15 @@ test("item edit dialog exposes book category dropdown options", () => {
 });
 
 test("books can be saved without a cover image and show name placeholders", () => {
-  assert.match(dialogSource, /const shouldRequireImage = hasImage && !hasBookCategory/);
+  assert.match(
+    dialogSource,
+    /const shouldRequireImage =\s*hasImage && !hasBookCategory && !hasMultipleImages/,
+  );
   assert.match(dialogSource, /shouldRequireImage[\s\S]*!shouldUploadNewImage[\s\S]*!currentEditingClothes\?\.pic_url/);
   assert.doesNotMatch(apiSource, /请上传图书图片/);
-  assert.match(gallerySource, /hasImage = Boolean\(item\.pic_url\)/);
+  assert.match(gallerySource, /const itemImageUrls = getItemImageUrls\(item\)/);
+  assert.match(gallerySource, /const coverImageUrl = itemImageUrls\[0\]/);
+  assert.match(gallerySource, /const hasImage = Boolean\(coverImageUrl\)/);
   assert.match(gallerySource, /clothes-gallery-card-placeholder/);
   assert.match(gallerySource, /renderHighlightedClothesName\(item\.name, highlightIndexes\)/);
 });

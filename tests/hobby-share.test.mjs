@@ -248,6 +248,11 @@ test("public hobby share uses Swiper coverflow with a fixed centered Flame Wrap 
   const flameOverlayBlock = cssBlock(styles, ".hobby-share-flame-overlay");
   const imageFrameBlock = cssBlock(styles, ".hobby-share-image-frame");
   const imageBlock = cssBlock(styles, ".hobby-share-image");
+  const navButtonBlock = cssBlock(styles, ".hobby-share-nav-button");
+  const navFocusBlock = cssBlock(styles, ".hobby-share-nav-button:focus-visible");
+  const navHoverBlock = cssBlock(styles, ".hobby-share-nav-button:hover");
+  const navPrevBlock = cssBlock(styles, ".hobby-share-nav-button-prev");
+  const navNextBlock = cssBlock(styles, ".hobby-share-nav-button-next");
 
   assert.match(packageJson, /"swiper":/);
   assert.match(page, /from "swiper\/react"/);
@@ -266,6 +271,13 @@ test("public hobby share uses Swiper coverflow with a fixed centered Flame Wrap 
   assert.match(page, /setActiveIndex\(carouselSlides\[swiper\.activeIndex\]\?\.sourceIndex \?\? 0\)/);
   assert.match(page, /window\.setInterval\(\(\) => \{/);
   assert.match(page, /swiper\.slideNext\(\)/);
+  assert.match(page, /function moveCarousel\(direction: "next" \| "prev"\)/);
+  assert.match(page, /swiper\.slidePrev\(\)/);
+  assert.match(page, /aria-label="爱好图片切换"/);
+  assert.match(page, /aria-label="上一张爱好图片"/);
+  assert.match(page, /aria-label="下一张爱好图片"/);
+  assert.match(page, /onClick=\{\(\) => moveCarousel\("prev"\)\}/);
+  assert.match(page, /onClick=\{\(\) => moveCarousel\("next"\)\}/);
   assert.match(page, /normalizeCarouselPosition\(swiper, resolution\.slides\.length\)/);
   assert.doesNotMatch(page, /rewind=/);
   assert.match(page, /swiper\/css\/effect-coverflow/);
@@ -293,6 +305,16 @@ test("public hobby share uses Swiper coverflow with a fixed centered Flame Wrap 
   assert.match(imageBlock, /mask-image:/);
   assert.match(imageBlock, /object-fit: contain;/);
   assert.match(imageBlock, /width: 100%;/);
+  assert.match(styles, /--hobby-share-nav-bg: rgb\(18 23 33 \/ 72%\);/);
+  assert.match(navButtonBlock, /background: var\(--hobby-share-nav-bg\);/);
+  assert.match(navButtonBlock, /color: var\(--hobby-share-nav-text\);/);
+  assert.match(navHoverBlock, /background: var\(--hobby-share-nav-hover-bg\);/);
+  assert.match(navFocusBlock, /outline: 2px solid var\(--hobby-share-nav-focus\);/);
+  assert.doesNotMatch(`${navButtonBlock}\n${navHoverBlock}\n${navFocusBlock}`, /hobby-share-color/);
+  assert.match(navButtonBlock, /pointer-events: auto;/);
+  assert.match(styles, /\.hobby-share-nav-button:focus-visible \{/);
+  assert.match(navPrevBlock, /left: max/);
+  assert.match(navNextBlock, /right: max/);
   assert.doesNotMatch(staticWrapBlock, /border:/);
   assert.doesNotMatch(cardBlock, /hobby-share-color/);
   assert.doesNotMatch(imageFrameBlock, /hobby-share-color/);
@@ -569,7 +591,7 @@ test("non-ready share states do not receive inline theme snapshot variables", ()
   assert.match(view, /data-theme-mode=\{theme\?\.mode\}/);
   assert.match(
     styles,
-    /\.hobby-share-page \{[\s\S]*?--hobby-share-bg: #[\da-f]{6};[\s\S]*?--hobby-share-color: #[\da-f]{6};[\s\S]*?--hobby-share-text: #[\da-f]{6};/i,
+    /\.hobby-share-page \{[\s\S]*?--hobby-share-bg: #[\da-f]{6};[\s\S]*?--hobby-share-color: var\(--hobby-share-text\);[\s\S]*?--hobby-share-text: #[\da-f]{6};/i,
   );
 });
 

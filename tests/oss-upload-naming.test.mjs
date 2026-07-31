@@ -24,7 +24,9 @@ const profileSource = readFileSync(
 
 test("image uploads can request a business file name", () => {
   assert.match(ossSource, /fileName\?:\s*string/);
-  assert.match(ossSource, /fileName:\s*opts\.fileName \?\? file\.name/);
+  assert.match(ossSource, /const fileName = opts\.fileName \?\? file\.name/);
+  assert.match(ossSource, /hasNonAsciiText\(fileName\)/);
+  assert.match(ossSource, /fallbackFormData\.append\("fileName", fileName\)/);
   assert.match(
     dialogSource,
     /fileName:\s*createNamedImageFileName\(clothesName,\s*croppedFile\.name\)/,

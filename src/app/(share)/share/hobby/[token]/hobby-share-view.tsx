@@ -11,6 +11,7 @@ import type {
 } from "@/app/api/share/hobby/share-types";
 import { normalizeHobbyShareResolution } from "@/app/api/share/hobby/share-utils";
 import { FlameWrap } from "@/components/canvasui/FlameWrap";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import type { CSSProperties, FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Swiper as SwiperInstance } from "swiper";
@@ -287,6 +288,21 @@ export function HobbyShareView({
     });
   }
 
+  function moveCarousel(direction: "next" | "prev") {
+    const swiper = swiperRef.current;
+
+    if (!swiper || swiper.destroyed || swiper.animating) {
+      return;
+    }
+
+    if (direction === "prev") {
+      swiper.slidePrev();
+      return;
+    }
+
+    swiper.slideNext();
+  }
+
   let content;
 
   if (
@@ -380,6 +396,32 @@ export function HobbyShareView({
             );
           })}
         </Swiper>
+        {resolution.slides.length > 1 ? (
+          <div
+            aria-label="爱好图片切换"
+            className="hobby-share-nav"
+            role="group"
+          >
+            <button
+              aria-label="上一张爱好图片"
+              className="hobby-share-nav-button hobby-share-nav-button-prev"
+              onClick={() => moveCarousel("prev")}
+              title="上一张"
+              type="button"
+            >
+              <LeftOutlined aria-hidden="true" />
+            </button>
+            <button
+              aria-label="下一张爱好图片"
+              className="hobby-share-nav-button hobby-share-nav-button-next"
+              onClick={() => moveCarousel("next")}
+              title="下一张"
+              type="button"
+            >
+              <RightOutlined aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
         {activeSlide && !prefersReducedMotion ? (
           <div className="hobby-share-flame-overlay">
             <FlameWrap
