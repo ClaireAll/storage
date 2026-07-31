@@ -1,0 +1,554 @@
+.home-hobby-share-control {
+  display: inline-flex;
+}
+
+.home-hobby-share-portal-host {
+  flex: 0 0 0;
+  height: 0;
+  pointer-events: none;
+  position: relative;
+  width: 0;
+  z-index: 2147483500;
+}
+
+.home-hobby-share-portal-host > .ant-modal-root {
+  pointer-events: none;
+}
+
+.home-hobby-share-portal-host .ant-modal-mask,
+.home-hobby-share-portal-host .ant-modal-wrap {
+  pointer-events: auto;
+}
+
+.home-hobby-share-trigger.ant-btn-primary {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  min-width: 32px;
+  padding: 0;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 120ms ease;
+  width: 32px;
+}
+
+.home-hobby-share-trigger.ant-btn-primary:active {
+  transform: scale(0.96);
+}
+
+.hobby-share-dialog .ant-modal-content {
+  background: color-mix(in srgb, var(--home-theme-bg) 94%, #ffffff 6%);
+  color: var(--home-theme-text);
+}
+
+.hobby-share-dialog .ant-modal-header {
+  background: transparent;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 24%,
+    transparent
+  );
+}
+
+.hobby-share-dialog .ant-modal-title,
+.hobby-share-dialog .ant-form-item-label > label,
+.hobby-share-dialog .ant-modal-close {
+  color: var(--home-theme-text);
+}
+
+.hobby-share-dialog .ant-input,
+.hobby-share-dialog .ant-select-selector {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-bg) 88%,
+    #ffffff 12%
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 34%,
+    transparent
+  ) !important;
+  color: var(--home-theme-text) !important;
+}
+
+.hobby-share-dialog .ant-input::placeholder {
+  color: color-mix(in srgb, var(--home-theme-text) 46%, transparent);
+}
+
+.hobby-share-dialog .ant-select-selection-item,
+.hobby-share-dialog .ant-input-affix-wrapper input {
+  color: var(--home-theme-text) !important;
+}
+
+.hobby-share-result {
+  display: grid;
+  gap: 12px;
+}
+
+.hobby-share-expiry {
+  color: color-mix(in srgb, var(--home-theme-text) 72%, transparent);
+  margin: 0;
+}
+
+.hobby-share-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.hobby-share-actions .ant-btn-primary {
+  background: var(--home-theme-color);
+  border-color: var(--home-theme-color);
+}
+
+.hobby-share-existing {
+  border-top: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 24%, transparent);
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.hobby-share-existing-header {
+  align-items: center;
+  color: var(--home-theme-text);
+  display: flex;
+  font-size: 13px;
+  font-weight: 600;
+  justify-content: space-between;
+}
+
+.hobby-share-existing-header span:last-child {
+  color: color-mix(in srgb, var(--home-theme-text) 58%, transparent);
+  font-weight: 500;
+}
+
+.hobby-share-existing-state {
+  align-items: center;
+  color: color-mix(in srgb, var(--home-theme-text) 68%, transparent);
+  display: flex;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.hobby-share-existing-list {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.hobby-share-existing-item {
+  align-items: center;
+  background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
+  border: 1px solid color-mix(in srgb, var(--home-theme-color) 22%, transparent);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 58px;
+  padding: 8px 10px;
+}
+
+.hobby-share-existing-info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hobby-share-existing-token {
+  color: var(--home-theme-text);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hobby-share-existing-meta {
+  align-items: center;
+  color: color-mix(in srgb, var(--home-theme-text) 62%, transparent);
+  display: inline-flex;
+  font-size: 12px;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hobby-share-existing-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.hobby-share-existing-actions .ant-btn {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  height: 30px;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 120ms ease;
+  width: 30px;
+}
+
+.hobby-share-existing-actions .ant-btn:active {
+  transform: scale(0.96);
+}
+
+.hobby-share-page {
+  --hobby-share-bg: #f5f5f5;
+  --hobby-share-card-height: calc(var(--hobby-share-swiper-height) - 192px);
+  --hobby-share-card-width: calc(var(--hobby-share-slide-width) - 48px);
+  --hobby-share-color: #0d6efd;
+  --hobby-share-slide-padding: 108px 24px 84px;
+  --hobby-share-slide-width: min(62vw, 380px);
+  --hobby-share-swiper-height: min(78dvh, 620px);
+  --hobby-share-text: #252833;
+  align-items: center;
+  background: var(--hobby-share-bg);
+  color: var(--hobby-share-text);
+  display: flex;
+  isolation: isolate;
+  justify-content: center;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: 32px 0;
+  position: relative;
+}
+
+.hobby-share-page[data-theme-mode="light"],
+.hobby-share-page[data-theme-mode="system"] {
+  --hobby-share-bg: var(--hobby-share-light-bg);
+  --hobby-share-color: var(--hobby-share-light-color);
+  --hobby-share-text: var(--hobby-share-light-text);
+}
+
+.hobby-share-page[data-theme-mode="dark"] {
+  --hobby-share-bg: var(--hobby-share-dark-bg);
+  --hobby-share-color: var(--hobby-share-dark-color);
+  --hobby-share-text: var(--hobby-share-dark-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  .hobby-share-page[data-theme-mode="system"] {
+    --hobby-share-bg: var(--hobby-share-dark-bg);
+    --hobby-share-color: var(--hobby-share-dark-color);
+    --hobby-share-text: var(--hobby-share-dark-text);
+  }
+}
+
+.hobby-share-page > .theme-geometry-texture,
+.hobby-share-page > .theme-meteor-lines {
+  z-index: 0;
+}
+
+.hobby-share-page > .theme-meteor-lines {
+  position: absolute;
+}
+
+.hobby-share-gallery {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  justify-content: center;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.hobby-share-swiper {
+  height: var(--hobby-share-swiper-height);
+  max-width: calc(100vw - 8px);
+  overflow: visible;
+  width: min(100vw, 970px);
+}
+
+.hobby-share-swiper .swiper-wrapper,
+.hobby-share-swiper .swiper-slide {
+  overflow: visible;
+}
+
+.hobby-share-swiper .swiper-slide {
+  align-items: stretch;
+  border-radius: 24px;
+  box-sizing: border-box;
+  display: flex;
+  height: 100%;
+  opacity: 0;
+  padding: var(--hobby-share-slide-padding);
+  pointer-events: none;
+  transition: opacity 360ms ease;
+  width: var(--hobby-share-slide-width);
+}
+
+.hobby-share-swiper .swiper-slide-active,
+.hobby-share-swiper .swiper-slide-next,
+.hobby-share-swiper .swiper-slide-prev {
+  opacity: 1;
+}
+
+.hobby-share-flame-wrap,
+.hobby-share-static-wrap {
+  border-radius: 24px;
+  overflow: visible;
+  width: 100%;
+}
+
+.hobby-share-flame-wrap {
+  height: 100%;
+}
+
+.hobby-share-static-wrap {
+  flex: 1 1 auto;
+}
+
+.hobby-share-flame-overlay {
+  border-radius: 24px;
+  box-sizing: border-box;
+  height: var(--hobby-share-card-height);
+  left: 50%;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  top: 108px;
+  transform: translateX(-50%);
+  width: var(--hobby-share-card-width);
+  z-index: 5;
+}
+
+.hobby-share-flame-target {
+  border-radius: inherit;
+  height: 100%;
+  width: 100%;
+}
+
+.hobby-share-static-wrap {
+  overflow: hidden;
+}
+
+.hobby-share-card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hobby-share-bg) 58%, #05070b 42%) 0%,
+    color-mix(in srgb, var(--hobby-share-bg) 42%, #05070b 58%) 100%
+  );
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 42px rgb(255 255 255 / 4%),
+    0 22px 58px rgb(0 0 0 / 52%);
+  color: var(--hobby-share-text);
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.hobby-share-image-viewport {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+}
+
+.hobby-share-image-frame {
+  align-items: center;
+  border-radius: inherit;
+  display: flex;
+  filter: none;
+  height: 100%;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.hobby-share-image-frame::after {
+  border-radius: inherit;
+  box-shadow: inset 0 0 30px 8px rgb(0 0 0 / 22%);
+  content: "";
+  inset: -2px;
+  pointer-events: none;
+  position: absolute;
+}
+
+.hobby-share-image {
+  display: block;
+  height: 100%;
+  mask-image: radial-gradient(
+    ellipse at center,
+    #000000 78%,
+    rgb(0 0 0 / 96%) 86%,
+    rgb(0 0 0 / 68%) 96%,
+    transparent 100%
+  );
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    #000000 78%,
+    rgb(0 0 0 / 96%) 86%,
+    rgb(0 0 0 / 68%) 96%,
+    transparent 100%
+  );
+  width: 100%;
+}
+
+.hobby-share-title {
+  align-items: center;
+  color: var(--hobby-share-text);
+  display: flex;
+  font-size: clamp(18px, 2.8vw, 26px);
+  font-weight: 700;
+  justify-content: center;
+  line-height: 1.32;
+  margin: 0;
+  max-width: min(78vw, 560px);
+  min-height: 42px;
+  position: relative;
+  text-align: center;
+  text-shadow: 0 2px 18px
+    color-mix(in srgb, var(--hobby-share-bg) 70%, transparent);
+  z-index: 2;
+}
+
+.hobby-share-title span {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.hobby-share-image-error {
+  color: var(--hobby-share-text);
+  margin: 0;
+}
+
+.hobby-share-access,
+.hobby-share-status {
+  background: color-mix(in srgb, var(--hobby-share-bg) 92%, #ffffff 8%);
+  border: 1px solid
+    color-mix(in srgb, var(--hobby-share-color) 42%, transparent);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  max-width: 380px;
+  padding: 28px;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.hobby-share-access h1,
+.hobby-share-status h1 {
+  font-size: 22px;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.hobby-share-access label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hobby-share-access input {
+  background: var(--hobby-share-bg);
+  border: 1px solid
+    color-mix(in srgb, var(--hobby-share-color) 48%, transparent);
+  border-radius: 6px;
+  color: var(--hobby-share-text);
+  font: inherit;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.hobby-share-access input:focus-visible,
+.hobby-share-access button:focus-visible {
+  outline: 2px solid var(--hobby-share-color);
+  outline-offset: 2px;
+}
+
+.hobby-share-access button {
+  background: var(--hobby-share-color);
+  border: 0;
+  border-radius: 6px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  min-height: 42px;
+  padding: 8px 14px;
+}
+
+.hobby-share-access button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.hobby-share-status-error {
+  color: #c9372c;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .hobby-share-page {
+    --hobby-share-card-height: calc(var(--hobby-share-swiper-height) - 164px);
+    --hobby-share-card-width: calc(var(--hobby-share-slide-width) - 36px);
+    --hobby-share-slide-padding: 92px 18px 72px;
+    --hobby-share-slide-width: min(64vw, 320px);
+    --hobby-share-swiper-height: min(78dvh, 560px);
+    padding: 20px 0;
+  }
+
+  .hobby-share-swiper {
+    width: min(100vw, 560px);
+  }
+
+  .hobby-share-swiper .swiper-slide {
+    padding: var(--hobby-share-slide-padding);
+    width: var(--hobby-share-slide-width);
+  }
+
+  .hobby-share-flame-overlay {
+    top: 92px;
+  }
+
+  .hobby-share-title {
+    font-size: 16px;
+    min-height: 38px;
+  }
+
+  .hobby-share-access,
+  .hobby-share-status {
+    padding: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hobby-share-swiper,
+  .hobby-share-swiper * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

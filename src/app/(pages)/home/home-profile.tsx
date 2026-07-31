@@ -31,6 +31,12 @@ type ProfileFormValues = {
   password?: string;
 };
 
+function createAvatarFileName(userName: string) {
+  const safeName = userName.trim() || "avatar";
+
+  return `${safeName}.png`;
+}
+
 /** 个人资料编辑器状态和行为。 */
 export type HomeProfileEditor = ReturnType<typeof useHomeProfile>;
 
@@ -113,7 +119,9 @@ export function useHomeProfile(user: HomeUser) {
 
     try {
       const avatarUrl = pendingAvatarFile
-        ? await uploadImageToOss(pendingAvatarFile)
+        ? await uploadImageToOss(pendingAvatarFile, {
+            fileName: createAvatarFileName(values.name),
+          })
         : values.avatar;
       const nextProfile = await reqPost<HomeUser>("/api/users/profile", {
         data: {
@@ -211,20 +219,24 @@ export function HomeProfileButton({
   return (
     <button
       aria-label="编辑个人资料"
-      className="group relative rounded-full border-0 bg-transparent p-0"
+      className="home-profile-trigger group relative size-8 rounded-full border-0 bg-transparent p-0"
       onClick={openProfileModal}
       type="button"
     >
       <Avatar
         alt={profile.name ?? "用户头像"}
         className={cn(
-          "size-16! text-white! text-[44px]! leading-[64px]! shrink-0",
+          "home-profile-avatar size-8! text-white! text-[24px]! leading-[32px]! shrink-0",
           {
             "text-[#141414]!": isDark,
             "text-white!": !isDark,
           },
         )}
-        icon={<i className="iconfont icon-avatar text-[64px]!" />}
+        icon={
+          headerAvatarUrl ? undefined : (
+            <i className="iconfont icon-avatar text-[32px]!" />
+          )
+        }
         key={headerAvatarUrl ?? "default-header-avatar"}
         src={headerAvatarUrl}
         style={{
@@ -232,7 +244,7 @@ export function HomeProfileButton({
         }}
       />
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
-        <EditOutlined className="text-xl" />
+        <EditOutlined className="text-xs" />
       </span>
     </button>
   );

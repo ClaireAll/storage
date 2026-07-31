@@ -232,6 +232,7 @@ export function matchClothesNameSearch(
 export function extractAverageColor(imageUrl: string) {
   return new Promise<string>((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = "anonymous";
 
     image.onload = () => {
       const canvas = document.createElement("canvas");
@@ -273,6 +274,7 @@ export function createCroppedImageFile({
 }: ImageCropOptions) {
   return new Promise<File>((resolve, reject) => {
     const image = new Image();
+    image.crossOrigin = "anonymous";
 
     image.onload = () => {
       const canvas = document.createElement("canvas");

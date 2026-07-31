@@ -38,16 +38,72 @@ type OssUploadDirectory =
   | "cosmetic"
   | "skincare";
 type OssUploadKind = "image" | "file";
+const uploadTimeoutMs = 30_000;
+
+function hasNonAsciiText(value: string) {
+  return /[^\x00-\x7F]/.test(value);
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), uploadTimeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
 
 async function uploadToOss(
   file: File,
-  opts: { directory?: OssUploadDirectory; kind?: OssUploadKind } = {},
+  opts: {
+    directory?: OssUploadDirectory;
+    fileName?: string;
+    kind?: OssUploadKind;
+    replaceFileUrl?: string;
+  } = {},
 ) {
+  const directory = opts.directory ?? "avatars";
+  const fileName = opts.fileName ?? file.name;
+  const kind = opts.kind ?? "image";
+  const replaceFileUrl = opts.replaceFileUrl ?? "";
+
+  async function uploadWithServerFallback() {
+    const fallbackFormData = new FormData();
+
+    fallbackFormData.append("directory", directory);
+    fallbackFormData.append("file", file);
+    fallbackFormData.append("fileName", fileName);
+    fallbackFormData.append("kind", kind);
+    fallbackFormData.append("replaceFileUrl", replaceFileUrl);
+
+    const fallbackResponse = await fetchWithTimeout("/api/oss/upload", {
+      body: fallbackFormData,
+      method: "POST",
+    });
+
+    if (!fallbackResponse.ok) {
+      throw new Error("文件上传 OSS 失败");
+    }
+
+    const fallbackResult = (await fallbackResponse.json()) as { url: string };
+
+    return fallbackResult.url;
+  }
+
+  if (replaceFileUrl || hasNonAsciiText(fileName)) {
+    return uploadWithServerFallback();
+  }
+
   const policy = await reqPost<OssPolicyResponse>("/api/oss/policy", {
     data: {
-      directory: opts.directory ?? "avatars",
-      fileName: file.name,
-      kind: opts.kind ?? "image",
+      directory,
+      fileName,
+      kind,
     },
   });
   const formData = new FormData();
@@ -58,13 +114,13 @@ async function uploadToOss(
 
   formData.append("file", file);
 
-  const response = await fetch(policy.host, {
+  const response = await fetchWithTimeout(policy.host, {
     body: formData,
     method: "POST",
-  });
+  }).catch(() => null);
 
-  if (!response.ok) {
-    throw new Error("文件上传 OSS 失败");
+  if (!response?.ok) {
+    return uploadWithServerFallback();
   }
 
   return policy.url;
@@ -73,7 +129,11 @@ async function uploadToOss(
 /** 将图片直传到阿里云 OSS，参数 file 为用户选择的本地图片文件。 */
 export async function uploadImageToOss(
   file: File,
-  opts: { directory?: OssUploadDirectory } = {},
+  opts: {
+    directory?: OssUploadDirectory;
+    fileName?: string;
+    replaceFileUrl?: string;
+  } = {},
 ) {
   validateImageFile(file);
 
@@ -82,7 +142,7 @@ export async function uploadImageToOss(
 
 export async function uploadFileToOss(
   file: File,
-  opts: { directory?: OssUploadDirectory } = {},
+  opts: { directory?: OssUploadDirectory; fileName?: string } = {},
 ) {
   validateUploadFile(file);
 

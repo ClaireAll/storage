@@ -29,6 +29,181 @@
   outline: none;
 }
 
+.clothes-create-divider {
+  align-self: stretch;
+  background: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 30%,
+    transparent
+  );
+}
+
+.clothes-multi-image-preview {
+  background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
+  border-color: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 30%,
+    transparent
+  );
+}
+
+.clothes-multi-image-preview.is-empty {
+  color: var(--clothes-create-theme-color);
+  cursor: pointer;
+}
+
+.clothes-multi-image-preview.is-drag-over,
+.clothes-multi-image-preview.is-paste-ready,
+.clothes-multi-image-uploader:focus-visible .clothes-multi-image-preview.is-empty {
+  background: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 12%,
+    transparent
+  );
+  border-color: var(--clothes-create-theme-color);
+  color: var(--clothes-create-theme-color);
+}
+
+.clothes-multi-image-uploader:focus-visible {
+  outline: none;
+}
+
+.clothes-multi-image-cover-badge,
+.clothes-multi-image-thumb-cover {
+  background: color-mix(
+    in srgb,
+    var(--clothes-create-theme-color) 68%,
+    transparent
+  );
+  color: rgb(255 255 255 / 94%);
+}
+
+.clothes-multi-image-cover-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.clothes-multi-image-preview-toolbar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding: 10px;
+  background: rgb(0 0 0 / 54%);
+}
+
+.clothes-multi-image-preview-toolbar .ant-btn {
+  color: rgb(255 255 255 / 84%);
+}
+
+.clothes-multi-image-empty {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--clothes-create-theme-color) !important;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.clothes-multi-image-empty .anticon {
+  color: var(--clothes-create-theme-color) !important;
+}
+
+.clothes-multi-image-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.clothes-multi-image-thumb,
+.clothes-multi-image-add {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 6%);
+  color: var(--clothes-create-theme-color);
+  cursor: pointer;
+}
+
+.clothes-multi-image-thumb.is-active {
+  border-color: var(--clothes-create-theme-color);
+  box-shadow: 0 0 0 1px var(--clothes-create-theme-color);
+}
+
+.clothes-multi-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.clothes-multi-image-thumb-cover {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 11px;
+}
+
+.clothes-multi-image-thumb-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 58%);
+  color: rgb(255 255 255 / 88%);
+}
+
+.clothes-multi-image-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  font-size: 22px;
+}
+
+:where(.ant-image-preview-root) .ant-image-preview-close {
+  top: 28px;
+  right: max(28px, calc((100vw - min(86vw, 960px)) / 2));
+}
+
+:where(.ant-image-preview-root) .ant-image-preview-switch-left {
+  left: max(28px, calc((100vw - min(86vw, 960px)) / 2));
+}
+
+:where(.ant-image-preview-root) .ant-image-preview-switch-right {
+  right: max(28px, calc((100vw - min(86vw, 960px)) / 2));
+}
+
+:where(.ant-image-preview-root) .ant-image-preview-close,
+:where(.ant-image-preview-root) .ant-image-preview-switch-left,
+:where(.ant-image-preview-root) .ant-image-preview-switch-right {
+  background: rgb(0 0 0 / 52%);
+  color: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(8px);
+}
+
 .theme-dark .clothes-create-color-picker {
   background: #141414;
   border-color: rgb(255 255 255 / 18%);
@@ -357,6 +532,11 @@
   padding: 2px 8px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.clothes-gallery-card-image-count {
+  right: 10px;
+  left: auto;
 }
 
 .clothes-gallery-card-edit-button .anticon {

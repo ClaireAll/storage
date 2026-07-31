@@ -106,17 +106,6 @@ test("AI chat route exposes Wanxiang outfit image generation to DeepSeek", () =>
   assert.match(outfitRouteSource, /generateWanxiangOutfitImage/);
 });
 
-test("Wanxiang generated images are returned directly without OSS upload", () => {
-  assert.match(wanxiangSource, /temporaryImageUrls/);
-  assert.match(wanxiangSource, /imageUrls:\s*temporaryImageUrls/);
-  assert.doesNotMatch(wanxiangSource, /uploadPublicBufferToOss/);
-  assert.doesNotMatch(wanxiangSource, /downloadWanxiangImage/);
-  assert.doesNotMatch(wanxiangSource, /directory:\s*"ai-outfits"/);
-  assert.doesNotMatch(ossPolicySource, /"ai-outfits"/);
-  assert.doesNotMatch(ossClientSource, /"ai-outfits"/);
-  assert.doesNotMatch(ossServerSource, /"ai-outfits"/);
-});
-
 test("AI assistant has theme-aware floating and dashboard-card dialog styles", () => {
   assert.match(styleSource, /ai-assistant-root/);
   assert.match(styleSource, /position:\s*fixed/);

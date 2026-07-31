@@ -1,4 +1,4 @@
-import { createHmac, randomUUID } from "crypto";
+import { createHmac } from "crypto";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
 
@@ -49,19 +49,6 @@ type OssUploadDirectory =
   | "skincare";
 type OssUploadKind = "image" | "file";
 
-/** 根据当前用户、业务目录和文件名生成图片在 OSS 中的对象 Key。 */
-function createImageObjectKey(
-  userId: string,
-  fileName: string,
-  directory: OssUploadDirectory,
-) {
-  const extension = fileName.includes(".")
-    ? fileName.split(".").pop()?.toLowerCase()
-    : "png";
-
-  return `${directory}/${userId}/${Date.now()}-${randomUUID()}.${extension || "png"}`;
-}
-
 function sanitizeOssFileName(fileName: string) {
   return fileName
     .trim()
@@ -69,6 +56,87 @@ function sanitizeOssFileName(fileName: string) {
     .replace(/\s+/g, " ")
     .replace(/^\.+/, "")
     .slice(0, 120);
+}
+
+function splitSafeFileName(fileName: string, fallbackBaseName: string) {
+  const safeFileName = sanitizeOssFileName(fileName);
+  const dotIndex = safeFileName.lastIndexOf(".");
+  const rawBaseName =
+    dotIndex > 0 ? safeFileName.slice(0, dotIndex) : safeFileName;
+  const rawExtension = dotIndex > 0 ? safeFileName.slice(dotIndex + 1) : "";
+  const baseName = rawBaseName.trim() || fallbackBaseName;
+  const extension = (rawExtension.trim() || "png").toLowerCase();
+
+  return { baseName, extension };
+}
+
+function createCandidateFileName(
+  baseName: string,
+  extension: string,
+  index: number,
+) {
+  return index === 1
+    ? `${baseName}.${extension}`
+    : `${baseName}_${index}.${extension}`;
+}
+
+async function objectExists(objectKey: string, ossConfig: ReturnType<typeof getOssConfig>) {
+  const date = new Date().toUTCString();
+  const resource = `/${ossConfig.bucket}/${objectKey}`;
+  const signature = createHmac("sha1", ossConfig.accessKeySecret)
+    .update(`HEAD\n\n\n${date}\n${resource}`)
+    .digest("base64");
+  const response = await fetch(`${ossConfig.host}/${encodeURI(objectKey)}`, {
+    headers: {
+      Authorization: `OSS ${ossConfig.accessKeyId}:${signature}`,
+      Date: date,
+    },
+    method: "HEAD",
+  });
+
+  if (response.status === 404) {
+    return false;
+  }
+
+  if (!response.ok) {
+    throw new Error("检查 OSS 文件是否存在失败");
+  }
+
+  return true;
+}
+
+async function createUniqueObjectKey(
+  directory: OssUploadDirectory,
+  userId: string,
+  fileName: string,
+  ossConfig: ReturnType<typeof getOssConfig>,
+) {
+  const { baseName, extension } = splitSafeFileName(fileName, "image");
+
+  for (let index = 1; index <= 999; index += 1) {
+    const candidateFileName = createCandidateFileName(
+      baseName,
+      extension,
+      index,
+    );
+    const candidateKey = `${directory}/${userId}/${candidateFileName}`;
+
+    if (!(await objectExists(candidateKey, ossConfig))) {
+      return candidateKey;
+    }
+  }
+
+  throw new Error("同名 OSS 文件过多，请更换名称后重试");
+}
+
+/** 根据当前用户、业务目录和文件名生成图片在 OSS 中的对象 Key。 */
+async function createImageObjectKey(
+  userId: string,
+  fileName: string,
+  directory: OssUploadDirectory,
+  ossConfig: ReturnType<typeof getOssConfig>,
+) {
+  return createUniqueObjectKey(directory, userId, fileName, ossConfig);
 }
 
 function createFileObjectKey(
@@ -149,7 +217,12 @@ export async function POST(request: Request) {
     const key =
       kind === "file"
         ? createFileObjectKey(session.user.id, fileName, directory)
-        : createImageObjectKey(session.user.id, fileName, directory);
+        : await createImageObjectKey(
+            session.user.id,
+            fileName,
+            directory,
+            ossConfig,
+          );
     const policy = createPolicy(key, kind);
     const signature = signPolicy(policy, ossConfig.accessKeySecret);
     const result: OssPolicyResponse = {

@@ -2,6 +2,7 @@
 
 import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-modal";
 import type { ClothesItem } from "@/app/(pages)/home/clothes/clothes-type";
+import { HobbyShareControl } from "@/app/(pages)/home/share/hobby-share-control";
 import { AiAssistant } from "@/app/(pages)/common/ai-assistant";
 import { HomeDashboard } from "@/app/(pages)/home/home-dashboard";
 import {
@@ -86,6 +87,8 @@ export default function HomePage({
   const [, startCategoryTransition] = useTransition();
   const [isClothesCreateModalOpen, setIsClothesCreateModalOpen] =
     useState(false);
+  const [hobbySharePortalHost, setHobbySharePortalHost] =
+    useState<HTMLDivElement | null>(null);
   const [editingClothes, setEditingClothes] = useState<ClothesItem | null>(
     null,
   );
@@ -260,6 +263,8 @@ export default function HomePage({
                     "--home-theme-bg": activePalette.bg,
                     "--home-theme-color": activePalette.color,
                     "--home-theme-text": activePalette.text,
+                    "--home-header-bg": homeHeaderBackground,
+                    "--home-header-border": homeBorderColor,
                     color: activePalette.text,
                   } as CSSProperties
                 }
@@ -270,20 +275,16 @@ export default function HomePage({
                   variant="shared"
                 />
                 <header
-                  className="flex shrink-0 items-center justify-between gap-4 border-b px-8 py-2 max-md:flex-col max-md:items-start max-md:p-5"
-                  style={{
-                    backgroundColor: homeHeaderBackground,
-                    borderBottomColor: homeBorderColor,
-                  }}
+                  className="home-brand-header flex h-10 shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3"
                 >
-                  <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 items-center gap-2.5">
                     <HomeProfileButton
                       editor={profileEditor}
                       isDark={isDark}
                       palette={activePalette}
                     />
                     <span
-                      className="flex h-16 items-center font-['Dancing_Script',cursive] text-[38px] leading-none"
+                      className="home-brand-name flex h-10 items-center font-['Dancing_Script',cursive] text-[28px] leading-none"
                       style={{
                         color: activePalette.color,
                       }}
@@ -292,6 +293,7 @@ export default function HomePage({
                     </span>
                   </div>
                   <Space>
+                    <HobbyShareControl portalHost={hobbySharePortalHost} />
                     <ThemeControl />
                   </Space>
                 </header>
@@ -334,6 +336,7 @@ export default function HomePage({
                   hasCount={selectedItemCategory?.hasCount}
                   hasDate={selectedItemCategory?.hasDate}
                   hasImage={selectedItemCategory?.hasImage}
+                  hasMultipleImages={selectedItemCategory?.hasMultipleImages}
                   hasPrice={selectedItemCategory?.hasPrice}
                   hasSeason={selectedItemCategory?.hasSeason}
                   hasUrl={selectedItemCategory?.hasUrl}
@@ -352,6 +355,10 @@ export default function HomePage({
                   uploadDirectory={
                     selectedItemCategory?.uploadDirectory ?? "clothes"
                   }
+                />
+                <div
+                  className="home-hobby-share-portal-host"
+                  ref={setHobbySharePortalHost}
                 />
               </Layout>
             </HomeContentActionsContext.Provider>

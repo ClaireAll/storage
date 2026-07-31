@@ -16,6 +16,7 @@ import {
   Checkbox,
   DatePicker,
   Empty,
+  Image,
   Input,
   InputNumber,
   Pagination,
@@ -95,6 +96,14 @@ function getItemCategoryLabel(
   return category ? (categoryLabels?.[category] ?? `分类 ${category}`) : "";
 }
 
+function getItemImageUrls(item: ClothesItem) {
+  if (item.pic_urls?.length) {
+    return item.pic_urls;
+  }
+
+  return item.pic_url ? [item.pic_url] : [];
+}
+
 function isPurchaseSortRule(sortRule: ClothesSortRule) {
   return sortRule === "purchase-asc" || sortRule === "purchase-desc";
 }
@@ -123,7 +132,11 @@ function getEffectiveSortRule({
   }
 
   if (!hasSeason && isSeasonSortRule(sortRule)) {
-    return hasDate ? defaultSortRule : hasPrice ? defaultNoDateSortRule : sortRule;
+    return hasDate
+      ? defaultSortRule
+      : hasPrice
+        ? defaultNoDateSortRule
+        : sortRule;
   }
 
   return sortRule;
@@ -215,6 +228,8 @@ export function ClothesGallery({
 
     return true;
   });
+  const hasAdvancedControls =
+    hasSeason || hasDate || hasPrice || availableSortOptions.length > 0;
   const filteredClothes = useMemo(
     () =>
       clothes.filter((item) => {
@@ -315,19 +330,20 @@ export function ClothesGallery({
     safePage * pageSize,
   );
   const hasAdvancedFilter =
-    (hasSeason &&
+    hasAdvancedControls &&
+    ((hasSeason &&
       selectedSeason.length > 0 &&
       selectedSeason.length < seasons.length) ||
-    (hasPrice && priceRange.some((value) => value !== null)) ||
-    (hasDate && timeRange.some(Boolean)) ||
-    effectiveSortRule !== defaultEffectiveSortRule;
+      (hasPrice && priceRange.some((value) => value !== null)) ||
+      (hasDate && timeRange.some(Boolean)) ||
+      effectiveSortRule !== defaultEffectiveSortRule);
   const hasFilter = Boolean(normalizedKeyword) || hasAdvancedFilter;
   const canResetFilters = hasFilter;
   const isFilterButtonActive = filtersExpanded || hasFilter;
-  const shouldShowFilterDetails = filtersExpanded;
+  const shouldShowFilterDetails = hasAdvancedControls && filtersExpanded;
   const emptyDescription = hasFilter
     ? `没有匹配的${itemLabel}`
-    : `还没有${itemLabel}文章推荐`;
+    : `还没有${itemLabel}推荐`;
 
   /** 搜索衣服名称，参数 nextKeyword 为输入框最新值。 */
   function searchClothes(nextKeyword: string) {
@@ -445,6 +461,7 @@ export function ClothesGallery({
                 "is-active": isFilterButtonActive,
               },
             )}
+            hidden={!hasAdvancedControls}
             icon={<FilterOutlined />}
             onClick={toggleAdvancedFilters}
           >
@@ -543,21 +560,24 @@ export function ClothesGallery({
                 />
               </div>
             ) : null}
-            <Select<ClothesSortRule>
-              className="clothes-gallery-sort-select theme-texture-select"
-              getPopupContainer={(triggerNode) =>
-                triggerNode.closest(".clothes-gallery-filters") ?? document.body
-              }
-              classNames={{
-                popup: {
-                  root: "clothes-gallery-sort-popup theme-texture-select-popup",
-                },
-              }}
-              onChange={changeSortRule}
-              options={availableSortOptions}
-              popupMatchSelectWidth={false}
-              value={effectiveSortRule}
-            />
+            {availableSortOptions.length ? (
+              <Select<ClothesSortRule>
+                className="clothes-gallery-sort-select theme-texture-select"
+                getPopupContainer={(triggerNode) =>
+                  triggerNode.closest(".clothes-gallery-filters") ??
+                  document.body
+                }
+                classNames={{
+                  popup: {
+                    root: "clothes-gallery-sort-popup theme-texture-select-popup",
+                  },
+                }}
+                onChange={changeSortRule}
+                options={availableSortOptions}
+                popupMatchSelectWidth={false}
+                value={effectiveSortRule}
+              />
+            ) : null}
             <Button
               className="clothes-gallery-reset-button"
               disabled={!canResetFilters}
@@ -686,7 +706,8 @@ export function ClothesGallery({
                 onClick={openClothesCreateModal}
                 type="button"
               >
-                添加第一{itemLabel === "裤子" ? "条" : "件"}{itemLabel}
+                添加第一{itemLabel === "裤子" ? "条" : "件"}
+                {itemLabel}
               </button>
             ) : null}
           </Empty>
@@ -737,7 +758,17 @@ function ClothesImageCard({
   /** 是否展示数量。 */
   showCount: boolean;
 }) {
-  const hasImage = Boolean(item.pic_url);
+  const itemImageUrls = getItemImageUrls(item);
+  const coverImageUrl = itemImageUrls[0];
+  const hasImage = Boolean(coverImageUrl);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+
+  function openImagePreview(event: React.MouseEvent<HTMLElement>) {
+    event.stopPropagation();
+    setPreviewIndex(0);
+    setPreviewOpen(true);
+  }
 
   return (
     <article
@@ -752,8 +783,18 @@ function ClothesImageCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt={item.name}
-            className="absolute inset-0 block h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.2]"
-            src={item.pic_url}
+            className="absolute inset-0 block h-full w-full cursor-zoom-in object-cover transition-transform duration-300 ease-out group-hover:scale-[1.2]"
+            onClick={(event) => openImagePreview(event)}
+            src={coverImageUrl}
+          />
+          <Image.PreviewGroup
+            items={itemImageUrls}
+            preview={{
+              current: previewIndex,
+              onChange: (current) => setPreviewIndex(current),
+              onOpenChange: (open) => setPreviewOpen(open),
+              open: previewOpen,
+            }}
           />
           <div className="absolute inset-x-0 bottom-0 flex min-h-11 max-w-full items-end bg-[linear-gradient(180deg,transparent,rgb(0_0_0/64%))] p-2.5">
             <Typography.Text
@@ -777,6 +818,11 @@ function ClothesImageCard({
       {showCount ? (
         <span className="clothes-gallery-card-count-badge">
           x{item.count ?? 1}
+        </span>
+      ) : null}
+      {itemImageUrls.length > 1 ? (
+        <span className="clothes-gallery-card-count-badge clothes-gallery-card-image-count">
+          {itemImageUrls.length}
         </span>
       ) : null}
       {item.download_url ? (

@@ -12,6 +12,8 @@ export type ClothesItem = {
   color?: string;
   /** 文章推荐图片地址。 */
   pic_url?: string;
+  /** 多图分类的图片地址数组，第一张作为封面。 */
+  pic_urls?: string[];
   /** 所属季节。 */
   season?: string;
   /** 文章推荐数量。 */

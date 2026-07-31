@@ -2,7 +2,12 @@
 
 import { uploadFileToOss, uploadImageToOss } from "@/utils/oss";
 import { reqDelete, reqPost, reqPut } from "@/utils/request";
-import { DeleteOutlined, UploadOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  PlusOutlined,
+  StarOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
 import type { FormInstance } from "antd";
 import {
   App,
@@ -48,6 +53,8 @@ type ClothesCreateModalProps = {
   hasDate?: boolean;
   /** 是否展示图片上传区域。 */
   hasImage?: boolean;
+  /** 是否允许同一条记录管理多张图片。 */
+  hasMultipleImages?: boolean;
   /** 是否展示价格字段。 */
   hasPrice?: boolean;
   /** 是否展示季节字段。 */
@@ -106,6 +113,13 @@ type UploadableDirectory = Exclude<
   "blog"
 >;
 
+type ImageDraft = {
+  file?: File;
+  id: string;
+  sourceFileName: string;
+  url: string;
+};
+
 const seasons = ["春", "夏", "秋", "冬"];
 const formControlWidthClassName = "w-[200px] max-w-full";
 const fallbackColor = "#8b8b8b";
@@ -120,6 +134,37 @@ function getFileNameFromUrl(fileUrl: string) {
   }
 }
 
+function createNamedImageFileName(itemName: string, sourceFileName: string) {
+  const extension = sourceFileName.includes(".")
+    ? sourceFileName.split(".").pop()
+    : "png";
+
+  return `${itemName.trim() || "image"}.${extension || "png"}`;
+}
+
+function getItemImageUrls(item?: ClothesItem | null) {
+  if (item?.pic_urls?.length) {
+    return item.pic_urls;
+  }
+
+  return item?.pic_url ? [item.pic_url] : [];
+}
+
+function getClipboardImageFiles(clipboardData: DataTransfer) {
+  const itemFiles = Array.from(clipboardData.items ?? [])
+    .filter((item) => item.type.startsWith("image/"))
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => Boolean(file));
+
+  if (itemFiles.length) {
+    return itemFiles;
+  }
+
+  return Array.from(clipboardData.files ?? []).filter((file) =>
+    file.type.startsWith("image/"),
+  );
+}
+
 /** 添加衣服弹窗。 */
 export function ItemEditDialog({
   apiPath,
@@ -131,6 +176,7 @@ export function ItemEditDialog({
   hasCount = false,
   hasDate = true,
   hasImage = true,
+  hasMultipleImages = false,
   hasPrice = true,
   hasSeason = true,
   hasUrl = false,
@@ -155,11 +201,14 @@ export function ItemEditDialog({
   const [color, setColor] = useState("");
   const [cropSourceUrl, setCropSourceUrl] = useState("");
   const [imageError, setImageError] = useState("");
+  const [isCropImageReady, setIsCropImageReady] = useState(false);
   const [isDragOverUpload, setIsDragOverUpload] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCropping, setIsCropping] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadPasteReady, setIsUploadPasteReady] = useState(false);
+  const [imageDrafts, setImageDrafts] = useState<ImageDraft[]>([]);
+  const [selectedImageDraftId, setSelectedImageDraftId] = useState("");
   const [nameDraft, setNameDraft] = useState("");
   const [nameError, setNameError] = useState("");
   const [sourceFileName, setSourceFileName] = useState("");
@@ -199,7 +248,10 @@ export function ItemEditDialog({
       : itemLabel === "日用品"
         ? "牙膏"
         : "白色短袖");
-  const modalWidth = hasImage ? 608 : 360;
+  const modalWidth = hasImage ? (hasMultipleImages ? 960 : 608) : 360;
+  const selectedImageDraft = imageDrafts.find(
+    (draft) => draft.id === selectedImageDraftId,
+  );
 
   /** 释放本地图片预览地址。 */
   function revokePreviewObjectUrl() {
@@ -217,10 +269,19 @@ export function ItemEditDialog({
     }
   }
 
+  function revokeImageDraftObjectUrls() {
+    imageDrafts.forEach((draft) => {
+      if (draft.file) {
+        URL.revokeObjectURL(draft.url);
+      }
+    });
+  }
+
   /** 重置弹窗中的临时表单状态。 */
   function resetDraft(nextEditingClothes: ClothesItem | null = null) {
     revokePreviewObjectUrl();
     revokeSourceObjectUrl();
+    revokeImageDraftObjectUrls();
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -228,7 +289,19 @@ export function ItemEditDialog({
     resetCrop();
     setCropSourceUrl("");
     setImageError("");
-    setIsCropping(false);
+    setIsCropImageReady(false);
+    const nextImageDrafts = getItemImageUrls(nextEditingClothes).map(
+      (url, index) => ({
+        id: `saved-${index}-${url}`,
+        sourceFileName: getFileNameFromUrl(url) || `${uploadDirectory}.jpg`,
+        url,
+      }),
+    );
+
+    setImageDrafts(nextImageDrafts);
+    setSelectedImageDraftId(nextImageDrafts[0]?.id ?? "");
+    setCropSourceUrl(hasMultipleImages ? (nextImageDrafts[0]?.url ?? "") : "");
+    setIsCropping(hasMultipleImages && Boolean(nextImageDrafts[0]));
     setIsUploadPasteReady(false);
     setNameDraft(nextEditingClothes?.name ?? "");
     setNameError("");
@@ -276,31 +349,83 @@ export function ItemEditDialog({
     () => () => {
       revokePreviewObjectUrl();
       revokeSourceObjectUrl();
+      revokeImageDraftObjectUrls();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  useEffect(() => {
+    if (!open || !hasMultipleImages) {
+      return;
+    }
+
+    function pasteDocumentImage(event: ClipboardEvent) {
+      if (!event.clipboardData) {
+        return;
+      }
+
+      const imageFiles = getClipboardImageFiles(event.clipboardData);
+
+      if (!imageFiles.length) {
+        return;
+      }
+
+      event.preventDefault();
+      handleImageChange(imageFiles);
+    }
+
+    document.addEventListener("paste", pasteDocumentImage, true);
+
+    return () => {
+      document.removeEventListener("paste", pasteDocumentImage, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMultipleImages, open]);
 
   /** 选择衣服图片后创建预览，并尝试提取主色，参数 files 为用户选择、拖拽或粘贴的文件列表。 */
   async function handleImageChange(files: ArrayLike<File> | null) {
     setIsDragOverUpload(false);
     setIsUploadPasteReady(false);
 
-    const file = files?.[0];
+    const imageFiles = Array.from(files ?? []).filter((item) =>
+      item.type.startsWith("image/"),
+    );
+    const file = imageFiles[0];
 
-    if (!file) {
+    if (!file || !imageFiles.length) {
+      setImageError("请选择图片文件");
       return;
     }
 
     fileInputRef.current?.blur();
     uploadAreaRef.current?.blur();
 
-    if (!file.type.startsWith("image/")) {
-      setImageError("请选择图片文件");
+    if (imageFiles.some((imageFile) => imageFile.size > 5 * 1024 * 1024)) {
+      setImageError("图片大小不能超过 5MB");
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setImageError("图片大小不能超过 5MB");
+    if (hasMultipleImages) {
+      const nextDrafts = imageFiles.map((imageFile) => {
+        const objectUrl = URL.createObjectURL(imageFile);
+
+        return {
+          file: imageFile,
+          id: `${imageFile.name}-${imageFile.lastModified}-${objectUrl}`,
+          sourceFileName: imageFile.name,
+          url: objectUrl,
+        };
+      });
+
+      setImageDrafts((currentDrafts) => [...currentDrafts, ...nextDrafts]);
+      const firstDraft = nextDrafts[0];
+
+      resetCrop();
+      setCropSourceUrl(firstDraft?.url ?? "");
+      setIsCropping(Boolean(firstDraft));
+      setSelectedImageDraftId(firstDraft?.id ?? "");
+      setImageError("");
       return;
     }
 
@@ -357,9 +482,7 @@ export function ItemEditDialog({
 
   /** 在上传区粘贴图片时读取剪贴板图片并进入裁剪流程。 */
   function pasteUpload(event: React.ClipboardEvent<HTMLElement>) {
-    const imageFiles = Array.from(event.clipboardData.files).filter((file) =>
-      file.type.startsWith("image/"),
-    );
+    const imageFiles = getClipboardImageFiles(event.clipboardData);
 
     if (!imageFiles.length) {
       return;
@@ -415,6 +538,65 @@ export function ItemEditDialog({
     }
   }
 
+  function startMultiImageCrop(draft?: ImageDraft) {
+    resetCrop();
+    setCropSourceUrl(draft?.url ?? "");
+    setIsCropImageReady(false);
+    setIsCropping(Boolean(draft));
+  }
+
+  function prepareNewImageDraft() {
+    setSelectedImageDraftId("");
+    startMultiImageCrop();
+    setImageError("");
+    setIsUploadPasteReady(true);
+
+    window.requestAnimationFrame(() => {
+      uploadAreaRef.current?.focus();
+    });
+  }
+
+  function selectImageDraft(draftId: string) {
+    const draft = imageDrafts.find((item) => item.id === draftId);
+
+    setSelectedImageDraftId(draftId);
+    startMultiImageCrop(draft);
+  }
+
+  function setImageDraftAsCover(draftId: string) {
+    const nextSelectedDraft = imageDrafts.find((item) => item.id === draftId);
+
+    setImageDrafts((currentDrafts) => {
+      const draft = currentDrafts.find((item) => item.id === draftId);
+
+      if (!draft) {
+        return currentDrafts;
+      }
+
+      return [draft, ...currentDrafts.filter((item) => item.id !== draftId)];
+    });
+    setSelectedImageDraftId(draftId);
+    startMultiImageCrop(nextSelectedDraft);
+  }
+
+  function removeImageDraft(draftId: string) {
+    setImageDrafts((currentDrafts) => {
+      const nextDrafts = currentDrafts.filter((draft) => draft.id !== draftId);
+      const removedDraft = currentDrafts.find((draft) => draft.id === draftId);
+
+      if (removedDraft?.file) {
+        URL.revokeObjectURL(removedDraft.url);
+      }
+
+      if (selectedImageDraftId === draftId) {
+        setSelectedImageDraftId(nextDrafts[0]?.id ?? "");
+        startMultiImageCrop(nextDrafts[0]);
+      }
+
+      return nextDrafts;
+    });
+  }
+
   function chooseBookFile(files: ArrayLike<File> | null) {
     const file = files?.[0];
 
@@ -453,7 +635,8 @@ export function ItemEditDialog({
     const itemCount = Number(values.count ?? 0);
     const shouldUploadNewImage =
       Boolean(currentCropSourceUrl) && Boolean(sourceObjectUrlRef.current);
-    const shouldRequireImage = hasImage && !hasBookCategory;
+    const shouldRequireImage =
+      hasImage && !hasBookCategory && !hasMultipleImages;
 
     if (!hasSelectedCategory) {
       setNameError("请先选择分类");
@@ -491,6 +674,9 @@ export function ItemEditDialog({
     try {
       let clothesColor = color;
       let picUrl = hasImage ? (currentEditingClothes?.pic_url ?? "") : "";
+      let picUrls = hasMultipleImages
+        ? imageDrafts.filter((draft) => !draft.file).map((draft) => draft.url)
+        : [];
       let downloadUrl = currentEditingClothes?.download_url ?? "";
       let croppedFile: File | null = null;
 
@@ -518,12 +704,60 @@ export function ItemEditDialog({
         return;
       }
 
-      closeModal();
+      if (!hasMultipleImages) {
+        closeModal();
+      }
 
       if (croppedFile) {
         picUrl = await uploadImageToOss(croppedFile, {
           directory: uploadDirectory as UploadableDirectory,
+          fileName: createNamedImageFileName(clothesName, croppedFile.name),
         });
+      }
+
+      if (hasMultipleImages) {
+        const nextPicUrls: string[] = [];
+
+        for (const draft of imageDrafts) {
+          const shouldCropSelectedDraft =
+            draft.id === selectedImageDraft?.id &&
+            cropSourceUrl === draft.url &&
+            isCropping;
+
+          if (!draft.file && !shouldCropSelectedDraft) {
+            nextPicUrls.push(draft.url);
+            continue;
+          }
+
+          const uploadFile = shouldCropSelectedDraft
+            ? await createCroppedImageFile({
+                cropOffsetX,
+                cropOffsetY,
+                cropScale,
+                imageUrl: draft.url,
+                sourceFileName: draft.sourceFileName,
+              })
+            : draft.file;
+
+          if (!uploadFile) {
+            continue;
+          }
+
+          nextPicUrls.push(
+            await uploadImageToOss(uploadFile, {
+              directory: uploadDirectory as UploadableDirectory,
+              fileName: createNamedImageFileName(
+                clothesName,
+                uploadFile.name || draft.sourceFileName,
+              ),
+              replaceFileUrl:
+                shouldCropSelectedDraft && !draft.file ? draft.url : undefined,
+            }),
+          );
+        }
+
+        picUrls = nextPicUrls;
+        closeModal();
       }
 
       if (hasBookFile && bookFile) {
@@ -539,6 +773,7 @@ export function ItemEditDialog({
         download_url?: string;
         name: string;
         pic_url?: string;
+        pic_urls?: string[];
         price?: number;
         season?: string;
         timeStamp?: string;
@@ -547,7 +782,9 @@ export function ItemEditDialog({
         name: clothesName,
       };
 
-      if (hasImage) {
+      if (hasMultipleImages) {
+        clothesPayload.pic_urls = picUrls;
+      } else if (hasImage) {
         clothesPayload.pic_url = picUrl;
       }
 
@@ -699,7 +936,9 @@ export function ItemEditDialog({
       <div
         className={
           hasImage
-            ? "grid grid-cols-[260px_276px] gap-x-6 gap-y-2 pt-4 max-sm:grid-cols-1"
+            ? hasMultipleImages
+              ? "grid grid-cols-[minmax(0,1.1fr)_1px_minmax(300px,0.9fr)] gap-x-8 gap-y-4 pt-4 max-sm:grid-cols-1"
+              : "grid grid-cols-[260px_276px] gap-x-6 gap-y-2 pt-4 max-sm:grid-cols-1"
             : "grid grid-cols-[276px] gap-y-2 pt-4"
         }
       >
@@ -716,6 +955,9 @@ export function ItemEditDialog({
             focusUploadForPaste={focusUploadForPaste}
             getCropImageStyle={getCropImageStyle}
             handleImageChange={handleImageChange}
+            hasMultipleImages={hasMultipleImages}
+            imageDrafts={imageDrafts}
+            isCropImageReady={isCropImageReady}
             isCropping={isCropping}
             isDragOverUpload={isDragOverUpload}
             isUploadPasteReady={isUploadPasteReady}
@@ -723,13 +965,21 @@ export function ItemEditDialog({
             keyDownUpload={keyDownUpload}
             openUploadFilePicker={openUploadFilePicker}
             pasteUpload={pasteUpload}
+            prepareNewImageDraft={prepareNewImageDraft}
+            removeImageDraft={removeImageDraft}
+            selectedImageDraft={selectedImageDraft}
+            selectImageDraft={selectImageDraft}
             setCropImageAspectRatio={setCropImageAspectRatio}
+            setIsCropImageReady={setIsCropImageReady}
+            setImageDraftAsCover={setImageDraftAsCover}
             setIsUploadPasteReady={setIsUploadPasteReady}
             startDragCrop={startDragCrop}
             stopDragCrop={stopDragCrop}
             uploadAreaRef={uploadAreaRef}
           />
         ) : null}
+
+        {hasMultipleImages ? <span className="clothes-create-divider" /> : null}
 
         <ItemEditForm
           categoryOptions={categoryOptions}
@@ -765,11 +1015,13 @@ export function ItemEditDialog({
         <div
           className={
             hasImage
-              ? "col-span-full grid grid-cols-[260px_276px] items-center gap-x-6 gap-y-2 max-sm:grid-cols-1"
+              ? hasMultipleImages
+                ? "col-span-full grid grid-cols-[minmax(0,1.1fr)_1px_minmax(300px,0.9fr)] items-center gap-x-8 gap-y-2 max-sm:grid-cols-1"
+                : "col-span-full grid grid-cols-[260px_276px] items-center gap-x-6 gap-y-2 max-sm:grid-cols-1"
               : "col-span-full grid gap-y-2"
           }
         >
-          {hasImage ? (
+          {hasImage && !hasMultipleImages ? (
             <ImageToolbar
               changeCropScale={changeCropScale}
               cropScale={cropScale}
@@ -778,6 +1030,25 @@ export function ItemEditDialog({
               imageError={imageError}
               isCropping={isCropping}
             />
+          ) : hasMultipleImages ? (
+            imageError ? (
+              <Typography.Text className="text-xs" type="danger">
+                {imageError}
+              </Typography.Text>
+            ) : hasMultipleImages && selectedImageDraft && cropSourceUrl && isCropping ? (
+              <ImageToolbar
+                changeCropScale={changeCropScale}
+                cropScale={cropScale}
+                cropSourceUrl={cropSourceUrl}
+                fileInputRef={fileInputRef}
+                imageError={imageError}
+                isCropping={isCropping}
+              />
+            ) : (
+              <Typography.Text className="text-xs" type="secondary">
+                共 {imageDrafts.length} 张图片
+              </Typography.Text>
+            )
           ) : null}
           {!hasImage && imageError ? (
             <Typography.Text className="text-xs" type="danger">
@@ -1105,6 +1376,9 @@ type ImageUploaderProps = {
   focusUploadForPaste: (event: React.MouseEvent<HTMLDivElement>) => void;
   getCropImageStyle: () => React.CSSProperties;
   handleImageChange: (files: ArrayLike<File> | null) => void;
+  hasMultipleImages: boolean;
+  imageDrafts: ImageDraft[];
+  isCropImageReady: boolean;
   isCropping: boolean;
   isDragOverUpload: boolean;
   isUploadPasteReady: boolean;
@@ -1112,7 +1386,13 @@ type ImageUploaderProps = {
   keyDownUpload: (event: React.KeyboardEvent<HTMLDivElement>) => void;
   openUploadFilePicker: (event: React.MouseEvent<HTMLDivElement>) => void;
   pasteUpload: (event: React.ClipboardEvent<HTMLElement>) => void;
+  prepareNewImageDraft: () => void;
+  removeImageDraft: (draftId: string) => void;
+  selectedImageDraft?: ImageDraft;
+  selectImageDraft: (draftId: string) => void;
   setCropImageAspectRatio: (aspectRatio: number) => void;
+  setIsCropImageReady: (isReady: boolean) => void;
+  setImageDraftAsCover: (draftId: string) => void;
   setIsUploadPasteReady: (isReady: boolean) => void;
   startDragCrop: (event: React.PointerEvent<HTMLDivElement>) => void;
   stopDragCrop: (event: React.PointerEvent<HTMLDivElement>) => void;
@@ -1131,6 +1411,9 @@ export function ImageUploader({
   focusUploadForPaste,
   getCropImageStyle,
   handleImageChange,
+  hasMultipleImages,
+  imageDrafts,
+  isCropImageReady,
   isCropping,
   isDragOverUpload,
   isUploadPasteReady,
@@ -1138,12 +1421,189 @@ export function ImageUploader({
   keyDownUpload,
   openUploadFilePicker,
   pasteUpload,
+  prepareNewImageDraft,
+  removeImageDraft,
+  selectedImageDraft,
+  selectImageDraft,
   setCropImageAspectRatio,
+  setIsCropImageReady,
+  setImageDraftAsCover,
   setIsUploadPasteReady,
   startDragCrop,
   stopDragCrop,
   uploadAreaRef,
 }: ImageUploaderProps) {
+  const selectedImageDraftIndex = selectedImageDraft
+    ? imageDrafts.findIndex((draft) => draft.id === selectedImageDraft.id)
+    : -1;
+  const isSelectedImageCover = selectedImageDraftIndex === 0;
+
+  if (hasMultipleImages) {
+    return (
+      <div
+        className="clothes-multi-image-uploader space-y-3"
+        onClick={() => uploadAreaRef.current?.focus()}
+        onDragLeave={dragLeaveUpload}
+        onDragOver={dragOverUpload}
+        onDrop={dropUpload}
+        onKeyDown={keyDownUpload}
+        onPaste={pasteUpload}
+        ref={uploadAreaRef}
+        role="button"
+        tabIndex={0}
+      >
+        <div
+          className={`clothes-multi-image-preview relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border ${
+            !selectedImageDraft ? "is-empty border-dashed" : ""
+          } ${isDragOverUpload ? "is-drag-over" : ""} ${
+            isUploadPasteReady ? "is-paste-ready" : ""
+          }`}
+          onClick={focusUploadForPaste}
+          onDoubleClick={openUploadFilePicker}
+          onPaste={pasteUpload}
+        >
+          {selectedImageDraft && cropSourceUrl && isCropping ? (
+            <>
+              <div
+                className="clothes-multi-image-crop relative size-full cursor-grab touch-none overflow-hidden active:cursor-grabbing"
+                onPointerCancel={stopDragCrop}
+                onPointerDown={startDragCrop}
+                onPointerMove={dragCrop}
+                onPointerUp={stopDragCrop}
+                ref={cropFrameRef}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  alt={`${itemLabel}调整预览`}
+                  className={
+                    isCropImageReady
+                      ? "pointer-events-none absolute left-1/2 top-1/2 max-h-none max-w-none select-none"
+                      : "pointer-events-none size-full object-cover select-none"
+                  }
+                  key={cropSourceUrl}
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+
+                    if (image.naturalWidth && image.naturalHeight) {
+                      setCropImageAspectRatio(
+                        image.naturalWidth / image.naturalHeight,
+                      );
+                      setIsCropImageReady(true);
+                    }
+                  }}
+                  src={cropSourceUrl}
+                  style={isCropImageReady ? getCropImageStyle() : undefined}
+                />
+                <span className="pointer-events-none absolute inset-0 border-2 border-white/80 shadow-[inset_0_0_0_9999px_rgb(0_0_0/12%)]" />
+              </div>
+              <span className="clothes-multi-image-cover-badge">封面</span>
+              <div className="clothes-multi-image-preview-toolbar">
+                {!isSelectedImageCover ? (
+                  <Button
+                    icon={<StarOutlined />}
+                    onClick={() => setImageDraftAsCover(selectedImageDraft.id)}
+                    size="small"
+                    type="text"
+                  >
+                    设为封面
+                  </Button>
+                ) : null}
+                <Button
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeImageDraft(selectedImageDraft.id)}
+                  size="small"
+                  type="text"
+                >
+                  删除
+                </Button>
+              </div>
+            </>
+          ) : selectedImageDraft ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                alt={`${itemLabel}封面预览`}
+                className="size-full object-cover"
+                src={selectedImageDraft.url}
+              />
+              <span className="clothes-multi-image-cover-badge">封面</span>
+              <div className="clothes-multi-image-preview-toolbar">
+                {!isSelectedImageCover ? (
+                  <Button
+                    icon={<StarOutlined />}
+                    onClick={() => setImageDraftAsCover(selectedImageDraft.id)}
+                    size="small"
+                    type="text"
+                  >
+                    设为封面
+                  </Button>
+                ) : null}
+                <Button
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeImageDraft(selectedImageDraft.id)}
+                  size="small"
+                  type="text"
+                >
+                  删除
+                </Button>
+              </div>
+            </>
+          ) : (
+            <button
+              className="clothes-multi-image-empty"
+              type="button"
+            >
+              <PlusOutlined className="text-2xl" />
+              双击 / 拖拽 / 粘贴上传
+            </button>
+          )}
+        </div>
+        <div className="clothes-multi-image-strip">
+          {imageDrafts.map((draft, index) => (
+            <button
+              className={`clothes-multi-image-thumb ${
+                draft.id === selectedImageDraft?.id ? "is-active" : ""
+              }`}
+              key={draft.id}
+              onClick={() => selectImageDraft(draft.id)}
+              type="button"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt={`${itemLabel}图片 ${index + 1}`} src={draft.url} />
+              {index === 0 ? (
+                <span className="clothes-multi-image-thumb-cover">封面</span>
+              ) : null}
+              <span
+                className="clothes-multi-image-thumb-delete"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removeImageDraft(draft.id);
+                }}
+              >
+                <DeleteOutlined />
+              </span>
+            </button>
+          ))}
+          <button
+            className="clothes-multi-image-add"
+            onClick={prepareNewImageDraft}
+            type="button"
+          >
+            <PlusOutlined />
+          </button>
+        </div>
+        <input
+          accept="image/*"
+          className="hidden"
+          multiple
+          onChange={(event) => handleImageChange(event.target.files)}
+          ref={fileInputRef}
+          type="file"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="w-full">

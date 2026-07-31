@@ -57,7 +57,11 @@ pnpm dev
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
+
+`SUPABASE_SERVICE_ROLE_KEY` 仅供服务端创建爱好分享快照时调用高权限
+RPC，不能添加 `NEXT_PUBLIC_` 前缀，也不能传给浏览器组件。
 
 浏览器组件使用：
 
@@ -239,6 +243,7 @@ ALIYUN_OSS_PUBLIC_BASE_URL=
 - `src/utils/oss.ts`：浏览器侧 OSS 上传工具，负责获取 policy 并提交图片文件。
 - `src/utils/supabase/client.ts`：浏览器组件使用的 Supabase client。
 - `src/utils/supabase/server.ts`：服务端组件、Route Handler 使用的 Supabase client。
+- `src/utils/supabase/admin.ts`：仅供服务端高权限 RPC 使用的 Supabase service-role client。
 - `src/utils/supabase/middleware.ts`：Supabase session 刷新和同步中间件工具。
 
 约定：

@@ -12,6 +12,7 @@ export type ItemCategoryConfig = {
   hasBookFile?: boolean;
   hasDate?: boolean;
   hasImage?: boolean;
+  hasMultipleImages?: boolean;
   hasSeason?: boolean;
   hasPrice?: boolean;
   hasCount?: boolean;
@@ -79,6 +80,7 @@ export const itemCategoryConfigs: Record<string, ItemCategoryConfig> = {
   "/home/hobby": {
     apiPath: "/api/hobby",
     hasColor: false,
+    hasMultipleImages: true,
     hasSeason: false,
     itemCategoryOptions: hobbyCategoryOptions,
     itemLabel: "爱好",

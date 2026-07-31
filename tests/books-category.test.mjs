@@ -51,7 +51,7 @@ test("books category uses the refreshed iconfont class", () => {
   assert.match(constantSource, /href:\s*"\/home\/books"[\s\S]*iconClassName:\s*"icon-book"/);
   assert.doesNotMatch(constantSource, /BookOutlined/);
   assert.match(globalsSource, /href="\/iconfont\/iconfont\.css"/);
-  assert.match(globalsSource, /src="\/iconfont\/iconfont\.js"/);
+  assert.match(globalsSource, /<IconfontScriptLoader \/>/);
   assert.doesNotMatch(globalsSource, /at\.alicdn\.com/);
 });
 

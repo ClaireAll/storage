@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import type { AnimationEvent } from "react";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { randomFloat } from "./theme-utils";
 import type { ThemeTexture } from "./types";
@@ -55,6 +56,8 @@ const defaultTextureDetail: ThemeTextureChangeDetail = {
 let latestThemeTextureDetail = defaultTextureDetail;
 
 export function SharedThemeTexture() {
+  const pathname = usePathname();
+  const isHobbyShareRoute = pathname.startsWith("/share/hobby/");
   const [textureDetail, setTextureDetail] = useState(
     () => latestThemeTextureDetail,
   );
@@ -80,6 +83,10 @@ export function SharedThemeTexture() {
       window.removeEventListener(themeTextureChangeEvent, handleTextureChange);
     };
   }, []);
+
+  if (isHobbyShareRoute) {
+    return null;
+  }
 
   return (
     <div

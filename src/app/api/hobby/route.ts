@@ -6,7 +6,7 @@ import {
   getItemPicture,
   updateItem,
 } from "@/app/utils/database";
-import { deleteOwnOssObject } from "@/utils/oss-server";
+import { deleteOwnOssObject, renameOwnOssObject } from "@/utils/oss-server";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
@@ -14,7 +14,7 @@ import { auth } from "../../../../auth";
 type HobbyCreatePayload = {
   category?: number;
   name?: string;
-  pic_url?: string;
+  pic_urls?: string[] | string;
   price?: number;
   timeStamp?: string;
 };
@@ -43,6 +43,20 @@ function getHobbyId(payload: HobbyUpdatePayload | HobbyDeletePayload) {
       : "";
 }
 
+function parseHobbyImageUrls(value: HobbyCreatePayload["pic_urls"]) {
+  if (Array.isArray(value)) {
+    return value
+      .map((url) => (typeof url === "string" ? url.trim() : ""))
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value.trim() ? [value.trim()] : [];
+  }
+
+  return [];
+}
+
 function parseHobbyValues(payload: HobbyCreatePayload) {
   const price =
     typeof payload.price === "number" && Number.isFinite(payload.price)
@@ -56,16 +70,48 @@ function parseHobbyValues(payload: HobbyCreatePayload) {
   return {
     category,
     name: payload.name?.trim() ?? "",
-    picUrl: payload.pic_url?.trim() ?? "",
+    picUrls: parseHobbyImageUrls(payload.pic_urls),
     price,
     timeStamp: payload.timeStamp?.trim() ?? "",
   };
 }
 
+async function renameKeptHobbyImages({
+  currentImageUrls,
+  nextImageUrls,
+  nextName,
+  userId,
+}: {
+  currentImageUrls: string[];
+  nextImageUrls: string[];
+  nextName: string;
+  userId: string;
+}) {
+  const currentImageUrlSet = new Set(currentImageUrls);
+  const renamedImageUrls: string[] = [];
+
+  for (const pictureUrl of nextImageUrls) {
+    if (!currentImageUrlSet.has(pictureUrl)) {
+      renamedImageUrls.push(pictureUrl);
+      continue;
+    }
+
+    renamedImageUrls.push(
+      await renameOwnOssObject({
+        allowedDirectories: ["hobby"],
+        fileUrl: pictureUrl,
+        nextBaseName: nextName,
+        userId,
+      }),
+    );
+  }
+
+  return renamedImageUrls;
+}
+
 function validateHobbyValues({
   category,
   name,
-  picUrl,
   price,
   timeStamp,
 }: ReturnType<typeof parseHobbyValues>) {
@@ -79,10 +125,6 @@ function validateHobbyValues({
 
   if (category === null || !supportedHobbyCategories.includes(category)) {
     return "请选择爱好分类";
-  }
-
-  if (!picUrl) {
-    return "请上传爱好图片";
   }
 
   if (price === null || price < 0) {
@@ -111,7 +153,7 @@ export async function POST(request: Request) {
     category: values.category ?? supportedHobbyCategories[0],
     h_id: randomUUID(),
     name: values.name,
-    pic_url: values.picUrl,
+    pic_urls: values.picUrls,
     price: values.price ?? 0,
     timeStamp: values.timeStamp,
   });
@@ -144,6 +186,53 @@ export async function PUT(request: Request) {
   }
 
   const supabase = await createClient();
+  const { data: currentHobby, error: currentHobbyError } =
+    await getItemPicture(supabase, "hobby", session.user.id, hobbyId);
+
+  if (currentHobbyError) {
+    return NextResponse.json(
+      { message: currentHobbyError.message },
+      { status: 500 },
+    );
+  }
+
+  try {
+    const nextPictureUrlSet = new Set(values.picUrls);
+    const removedPictureUrls = (currentHobby?.pic_urls ?? []).filter(
+      (pictureUrl) => !nextPictureUrlSet.has(pictureUrl),
+    );
+
+    for (const pictureUrl of removedPictureUrls) {
+      await deleteOwnOssObject(pictureUrl, session.user.id, ["hobby"]);
+    }
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "删除图片失败" },
+      { status: 500 },
+    );
+  }
+
+  let nextPicUrls = values.picUrls;
+
+  if (currentHobby?.name && currentHobby.name !== values.name) {
+    try {
+      nextPicUrls = await renameKeptHobbyImages({
+        currentImageUrls: currentHobby.pic_urls ?? [],
+        nextImageUrls: values.picUrls,
+        nextName: values.name,
+        userId: session.user.id,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          message:
+            error instanceof Error ? error.message : "重命名爱好图片失败",
+        },
+        { status: 500 },
+      );
+    }
+  }
+
   const { data, error } = await updateItem(
     supabase,
     "hobby",
@@ -152,7 +241,7 @@ export async function PUT(request: Request) {
     {
       category: values.category ?? supportedHobbyCategories[0],
       name: values.name,
-      pic_url: values.picUrl,
+      pic_urls: nextPicUrls,
       price: values.price ?? 0,
       timeStamp: values.timeStamp,
     },
@@ -195,10 +284,10 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    if (currentHobby.pic_url) {
-      await deleteOwnOssObject(currentHobby.pic_url, session.user.id, [
-        "hobby",
-      ]);
+    const currentPictureUrls = currentHobby.pic_urls ?? [];
+
+    for (const pictureUrl of currentPictureUrls) {
+      await deleteOwnOssObject(pictureUrl, session.user.id, ["hobby"]);
     }
   } catch (error) {
     return NextResponse.json(
