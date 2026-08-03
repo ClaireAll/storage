@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-03 18:29:40 +08:00
+
+- 修正 Codex 日报真实入库表名：默认表、迁移文件、测试和 23:59 自动化统一改为 `codex_log`，避免继续写入旧的 `codex_daily_reports` 命名。
+- 对齐当前 Supabase 实际字段：输入仍兼容 `assistant_summa`，入库统一写入 `assistant_summary`；已手动执行一次 2026-08-03 日报入库并反查确认共 44 条记录。
+
 ## 2026-08-03 18:11:42 +08:00
 
 - 新增 Codex 日报入库脚本：支持从自动化生成的摘要 JSON 中读取当天任务摘要，按仓库路径推断分类，并写入 `codex_daily_reports` 表的 `assistant_summa` 等字段。

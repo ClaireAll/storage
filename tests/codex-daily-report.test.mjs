@@ -11,14 +11,24 @@ function readSource(path) {
 }
 
 const scriptSource = readSource("../scripts/import-codex-daily-reports.mjs");
+const migrationSource = readSource(
+  "../supabase/migrations/20260803_create_codex_log.sql",
+);
 
 test("codex daily report script uses the approved report table columns", () => {
-  assert.match(scriptSource, /DEFAULT_REPORT_TABLE = "codex_daily_reports"/);
-  assert.match(scriptSource, /assistant_summa/);
+  assert.match(scriptSource, /DEFAULT_REPORT_TABLE = "codex_log"/);
+  assert.match(scriptSource, /assistant_summary/);
   assert.match(scriptSource, /thread_title/);
   assert.match(scriptSource, /user_tasks/);
   assert.doesNotMatch(scriptSource, /thread_ref/);
   assert.doesNotMatch(scriptSource, /original_text/);
+});
+
+test("codex daily report migration targets the actual codex log table", () => {
+  assert.match(migrationSource, /create table if not exists public\.codex_log/);
+  assert.match(migrationSource, /codex_log_id_date_idx/);
+  assert.match(migrationSource, /codex_log_select_own/);
+  assert.doesNotMatch(migrationSource, /codex_daily_reports/);
 });
 
 test("codex daily report category resolver follows the repository mapping", async () => {
@@ -61,7 +71,7 @@ test("codex daily report normalization trims summaries and skips empty records",
     ),
     [
       {
-        assistant_summa: "已完成自动化设计",
+        assistant_summary: "已完成自动化设计",
         category: 4,
         date: "2026-08-03",
         thread_title: "Storage",
@@ -100,7 +110,7 @@ test("codex daily report persistence replaces only the same user's same-day rows
     date: "2026-08-03",
     entries: [
       {
-        assistant_summa: "已写入",
+        assistant_summary: "已写入",
         date: "2026-08-03",
         thread_title: "Storage",
         user_tasks: "日报",
@@ -108,19 +118,19 @@ test("codex daily report persistence replaces only the same user's same-day rows
     ],
     ownerId: "user-1",
     supabase,
-    table: "codex_daily_reports",
+    table: "codex_log",
   });
 
   assert.deepEqual(calls, [
-    ["delete", "codex_daily_reports"],
+    ["delete", "codex_log"],
     ["delete.eq", "id", "user-1"],
     ["delete.eq", "date", "2026-08-03"],
     [
       "insert",
-      "codex_daily_reports",
+      "codex_log",
       [
         {
-          assistant_summa: "已写入",
+          assistant_summary: "已写入",
           category: 10000,
           date: "2026-08-03",
           id: "user-1",

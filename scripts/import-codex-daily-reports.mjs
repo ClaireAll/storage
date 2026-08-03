@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
-export const DEFAULT_REPORT_TABLE = "codex_daily_reports";
+export const DEFAULT_REPORT_TABLE = "codex_log";
 export const DEFAULT_REPORT_CATEGORY = 10000;
 
 const reportCategories = [
@@ -112,7 +112,7 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
       );
 
       return {
-        assistant_summa: assistantSumma,
+        assistant_summary: assistantSumma,
         category:
           typeof entry.category === "number" && Number.isInteger(entry.category)
             ? entry.category
@@ -125,7 +125,7 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
         user_tasks: userTasks,
       };
     })
-    .filter((entry) => entry.user_tasks || entry.assistant_summa);
+    .filter((entry) => entry.user_tasks || entry.assistant_summary);
 }
 
 export async function saveCodexDailyReports({
@@ -140,7 +140,7 @@ export async function saveCodexDailyReports({
   }
 
   const normalizedEntries = entries.map((entry) => ({
-    assistant_summa: toText(entry.assistant_summa),
+    assistant_summary: toText(entry.assistant_summary ?? entry.assistant_summa),
     category: toCategory(entry.category),
     date: entry.date || date,
     id: ownerId,
