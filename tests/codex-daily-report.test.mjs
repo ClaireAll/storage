@@ -85,6 +85,38 @@ test("codex daily report normalization trims summaries and skips empty records",
   );
 });
 
+test("codex daily report estimates token counts when usage is unavailable", async () => {
+  const {
+    estimateCodexLogTokenCount,
+    normalizeCodexDailyReportEntries,
+  } = await import(
+    new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
+  );
+  const entry = {
+    assistant_summary: "补充数据库里的 token_count 估算值，并同步定时任务描述。",
+    thread_title: "Storage",
+    user_tasks: "接受估算，现在补充一下数据库里的估算值。",
+  };
+  const estimatedTokenCount = estimateCodexLogTokenCount(entry);
+
+  assert.equal(Number.isInteger(estimatedTokenCount), true);
+  assert.ok(estimatedTokenCount >= 800);
+  assert.deepEqual(
+    normalizeCodexDailyReportEntries([entry], "2026-08-04"),
+    [
+      {
+        assistant_summary:
+          "补充数据库里的 token_count 估算值，并同步定时任务描述。",
+        category: 4,
+        date: "2026-08-04",
+        thread_title: "Storage",
+        token_count: estimatedTokenCount,
+        user_tasks: "接受估算，现在补充一下数据库里的估算值。",
+      },
+    ],
+  );
+});
+
 test("codex daily report persistence replaces only the same user's same-day rows", async () => {
   const { saveCodexDailyReports } = await import(
     new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)

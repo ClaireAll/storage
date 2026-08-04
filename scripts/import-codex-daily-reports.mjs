@@ -76,11 +76,19 @@ function toCategory(value) {
     : DEFAULT_REPORT_CATEGORY;
 }
 
-function toTokenCount(value) {
+function toExplicitTokenCount(value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value === "string" && !value.trim()) {
+    return null;
+  }
+
   const numericValue =
     typeof value === "number"
       ? value
-      : typeof value === "string" && value.trim()
+      : typeof value === "string"
         ? Number(value.trim())
         : 0;
 
@@ -89,6 +97,44 @@ function toTokenCount(value) {
   }
 
   return Math.max(0, Math.trunc(numericValue));
+}
+
+export function estimateCodexLogTokenCount({
+  assistant_summary = "",
+  assistant_summa = "",
+  thread_title = "",
+  user_tasks = "",
+} = {}) {
+  const text = [thread_title, user_tasks, assistant_summary || assistant_summa]
+    .map(toText)
+    .filter(Boolean)
+    .join("\n");
+
+  if (!text) {
+    return 0;
+  }
+
+  const compactText = text.replace(/\s/g, "");
+  const cjkCount = text.match(/[\u3400-\u9fff]/g)?.length ?? 0;
+  const latinSegments = text.match(/[A-Za-z0-9_./:-]+/g) ?? [];
+  const latinCharCount = latinSegments.join("").length;
+  const symbolCount = Math.max(
+    0,
+    Array.from(compactText).length - cjkCount - latinCharCount,
+  );
+  const visibleTokenEstimate = Math.ceil(
+    cjkCount * 1.1 + latinSegments.length * 1.3 + symbolCount * 0.5,
+  );
+
+  return Math.max(800, Math.ceil(visibleTokenEstimate * 8 + 600));
+}
+
+function resolveTokenCount(entry) {
+  const explicitTokenCount = toExplicitTokenCount(
+    entry.token_count ?? entry.tokenCount ?? entry.tokens,
+  );
+
+  return explicitTokenCount ?? estimateCodexLogTokenCount(entry);
 }
 
 export function resolveCodexReportCategory({ cwd = "", title = "" } = {}) {
@@ -137,9 +183,12 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
               }),
         date,
         thread_title: threadTitle || "未命名任务",
-        token_count: toTokenCount(
-          entry.token_count ?? entry.tokenCount ?? entry.tokens,
-        ),
+        token_count: resolveTokenCount({
+          ...entry,
+          assistant_summary: assistantSumma,
+          thread_title: threadTitle,
+          user_tasks: userTasks,
+        }),
         user_tasks: userTasks,
       };
     })
@@ -157,17 +206,28 @@ export async function saveCodexDailyReports({
     throw new Error("缺少日报所属用户 id");
   }
 
-  const normalizedEntries = entries.map((entry) => ({
-    assistant_summary: toText(entry.assistant_summary ?? entry.assistant_summa),
-    category: toCategory(entry.category),
-    date: entry.date || date,
-    id: ownerId,
-    thread_title: toText(entry.thread_title) || "未命名任务",
-    token_count: toTokenCount(
-      entry.token_count ?? entry.tokenCount ?? entry.tokens,
-    ),
-    user_tasks: toText(entry.user_tasks),
-  }));
+  const normalizedEntries = entries.map((entry) => {
+    const assistantSummary = toText(
+      entry.assistant_summary ?? entry.assistant_summa,
+    );
+    const threadTitle = toText(entry.thread_title) || "未命名任务";
+    const userTasks = toText(entry.user_tasks);
+
+    return {
+      assistant_summary: assistantSummary,
+      category: toCategory(entry.category),
+      date: entry.date || date,
+      id: ownerId,
+      thread_title: threadTitle,
+      token_count: resolveTokenCount({
+        ...entry,
+        assistant_summary: assistantSummary,
+        thread_title: threadTitle,
+        user_tasks: userTasks,
+      }),
+      user_tasks: userTasks,
+    };
+  });
 
   if (normalizedEntries.length === 0) {
     return { inserted: 0 };

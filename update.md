@@ -1,5 +1,11 @@
 # 版本更新
 
+## 2026-08-04 10:12:50 +08:00
+
+- Codex 日报 `token_count` 改为可自动估算：当 entries 未提供真实 token usage 时，导入脚本会根据 `thread_title`、`user_tasks` 和 `assistant_summary` 的文本量生成保守估算值；明确传入的 `token_count`、`tokenCount` 或 `tokens` 仍优先作为真实值写入。
+- 更新 23:59 自动化描述：真实 usage 不可读取时不再写 `0`，而是使用同一套文本估算规则，并在语义上视为估算值。
+- 回填 2026-08-03 已有 44 条日报记录的估算 token：反查确认 `token_count` 无 0 值，总计 44,176，单条范围 864 到 1,224。
+
 ## 2026-08-04 09:56:04 +08:00
 
 - Codex 日报入库补充 `token_count` 字段：导入脚本支持 `token_count`、`tokenCount` 和 `tokens` 输入，统一归一化为非负整数，缺省为 `0`。
