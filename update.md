@@ -1,5 +1,11 @@
 # 版本更新
 
+## 2026-08-04 10:31:18 +08:00
+
+- 修正 Codex 日报 token 口径：导入脚本新增 `token_basis`、`raw_turn_text`、`source_text` 等临时估算来源，优先使用原始 turn 内容或显式 `token_count`，仅在最后兜底时才用压缩后的日报摘要估算。
+- 更新 23:59 自动化描述：按上海日期过滤当天 completed turn，读取本地 usage 日志时按 `turn_id` 取最后值或最大值，避免把同一个 turn 的多条刷新日志重复相加。
+- 重新导入 2026-08-03 Codex 日报：旧的 44 条历史混入记录已替换为 7 条当天可读 completed turn，真实 usage 总计 1,057,100 tokens。
+
 ## 2026-08-04 10:12:50 +08:00
 
 - Codex 日报 `token_count` 改为可自动估算：当 entries 未提供真实 token usage 时，导入脚本会根据 `thread_title`、`user_tasks` 和 `assistant_summary` 的文本量生成保守估算值；明确传入的 `token_count`、`tokenCount` 或 `tokens` 仍优先作为真实值写入。

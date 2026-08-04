@@ -99,16 +99,57 @@ function toExplicitTokenCount(value) {
   return Math.max(0, Math.trunc(numericValue));
 }
 
+function getTokenEstimateSource(entry = {}) {
+  const rawSource = toText(
+    entry.token_basis ??
+      entry.tokenBasis ??
+      entry.raw_turn_text ??
+      entry.rawTurnText ??
+      entry.source_text ??
+      entry.sourceText,
+  );
+
+  if (rawSource) {
+    return { kind: "raw", text: rawSource };
+  }
+
+  return {
+    kind: "summary",
+    text: [
+      entry.thread_title,
+      entry.user_tasks,
+      entry.assistant_summary || entry.assistant_summa,
+    ]
+      .map(toText)
+      .filter(Boolean)
+      .join("\n"),
+  };
+}
+
 export function estimateCodexLogTokenCount({
   assistant_summary = "",
   assistant_summa = "",
+  raw_turn_text = "",
+  rawTurnText = "",
+  source_text = "",
+  sourceText = "",
+  token_basis = "",
+  tokenBasis = "",
   thread_title = "",
   user_tasks = "",
 } = {}) {
-  const text = [thread_title, user_tasks, assistant_summary || assistant_summa]
-    .map(toText)
-    .filter(Boolean)
-    .join("\n");
+  const { kind, text } = getTokenEstimateSource({
+    assistant_summary,
+    assistant_summa,
+    raw_turn_text,
+    rawTurnText,
+    source_text,
+    sourceText,
+    thread_title,
+    token_basis,
+    tokenBasis,
+    user_tasks,
+  });
 
   if (!text) {
     return 0;
@@ -125,8 +166,9 @@ export function estimateCodexLogTokenCount({
   const visibleTokenEstimate = Math.ceil(
     cjkCount * 1.1 + latinSegments.length * 1.3 + symbolCount * 0.5,
   );
+  const contextMultiplier = kind === "raw" ? 2.4 : 8;
 
-  return Math.max(800, Math.ceil(visibleTokenEstimate * 8 + 600));
+  return Math.max(800, Math.ceil(visibleTokenEstimate * contextMultiplier + 600));
 }
 
 function resolveTokenCount(entry) {

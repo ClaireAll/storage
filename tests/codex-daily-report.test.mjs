@@ -117,6 +117,42 @@ test("codex daily report estimates token counts when usage is unavailable", asyn
   );
 });
 
+test("codex daily report estimates from raw turn text before summary fallback", async () => {
+  const {
+    estimateCodexLogTokenCount,
+    normalizeCodexDailyReportEntries,
+  } = await import(
+    new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
+  );
+  const entry = {
+    assistant_summary: "Compressed answer summary.",
+    thread_title: "Storage",
+    token_basis: "Original user prompt and assistant answer content. ".repeat(600),
+    user_tasks: "Compressed user task.",
+  };
+  const rawEstimate = estimateCodexLogTokenCount(entry);
+  const summaryEstimate = estimateCodexLogTokenCount({
+    assistant_summary: entry.assistant_summary,
+    thread_title: entry.thread_title,
+    user_tasks: entry.user_tasks,
+  });
+
+  assert.ok(rawEstimate > summaryEstimate);
+  assert.deepEqual(
+    normalizeCodexDailyReportEntries([entry], "2026-08-04"),
+    [
+      {
+        assistant_summary: "Compressed answer summary.",
+        category: 4,
+        date: "2026-08-04",
+        thread_title: "Storage",
+        token_count: rawEstimate,
+        user_tasks: "Compressed user task.",
+      },
+    ],
+  );
+});
+
 test("codex daily report persistence replaces only the same user's same-day rows", async () => {
   const { saveCodexDailyReports } = await import(
     new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
