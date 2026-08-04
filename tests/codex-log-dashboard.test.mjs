@@ -94,29 +94,65 @@ test("Codex dashboard summary prompt analyzes the user instead of Codex", () => 
 });
 
 test("Codex token metric makes the imported data source explicit", () => {
-  assert.match(dashboardSource, /label="入库Token"/);
-  assert.match(dashboardSource, /hint="来自 codex_log\.token_count/);
+  assert.match(utilsSource, /readCodexDesktopUsageTotals/);
+  assert.match(utilsSource, /threads/);
+  assert.match(utilsSource, /tokens_used/);
+  assert.match(utilsSource, /tokenSource:\s*desktopUsageTotals/);
+  assert.match(dashboardSource, /data\.stats\.tokenSource === "desktop"/);
+  assert.match(dashboardSource, /Codex 桌面 usage 聚合/);
 });
 
 test("Codex conversation table keeps overflow inside the table panel", () => {
-  assert.match(dashboardSource, /className="codex-log-table"/);
+  assert.match(dashboardSource, /className=\{cn\("codex-log-table"/);
   assert.match(dashboardSource, /tableLayout="fixed"/);
-  assert.match(dashboardSource, /scroll=\{\{ x: "max-content" \}\}/);
-  assert.match(homeStyleSource, /\.codex-log-table-panel[\s\S]*overflow: hidden/);
-  assert.match(homeStyleSource, /\.codex-log-dashboard \.ant-table-content[\s\S]*overflow: auto/);
+  assert.match(dashboardSource, /scroll=\{\{ x: 860, y: 300 \}\}/);
+  assert.match(dashboardSource, /showTotal:/);
+  assert.match(dashboardSource, /showSizeChanger:\s*true/);
+  assert.match(dashboardSource, /overflow-auto/);
 });
 
 test("Codex dashboard defines custom theme-aware scrollbars", () => {
-  assert.match(homeStyleSource, /scrollbar-color:/);
-  assert.match(homeStyleSource, /::-webkit-scrollbar/);
-  assert.match(homeStyleSource, /::-webkit-scrollbar-thumb/);
-  assert.match(homeStyleSource, /var\(--home-theme-color\)/);
+  assert.match(dashboardSource, /\[\&::\-webkit\-scrollbar\]/);
+  assert.match(dashboardSource, /\[\&::\-webkit\-scrollbar\-thumb\]/);
+  assert.match(dashboardSource, /\[scrollbar\-width:thin\]/);
+  assert.match(dashboardSource, /var\(--home-theme-color\)/);
 });
 
 test("high frequency and longest session panels do not render more links", () => {
-  assert.match(dashboardSource, /高频任务/);
   assert.match(dashboardSource, /最长会话/);
+  assert.doesNotMatch(dashboardSource, /高频任务/);
   assert.doesNotMatch(dashboardSource, /更多/);
+});
+
+test("Codex dashboard uses a three-column second row with longest session", () => {
+  assert.match(dashboardSource, /codex-log-analysis-grid/);
+  assert.match(dashboardSource, /grid-cols-\[minmax\(0,1\.2fr\)_minmax\(260px,0\.8fr\)_minmax\(260px,0\.8fr\)\]/);
+  assert.match(dashboardSource, /任务与Token趋势/);
+  assert.match(dashboardSource, /仓库占比/);
+  assert.match(dashboardSource, /最长会话/);
+});
+
+test("Codex dashboard places summary at the bottom in three columns", () => {
+  assert.match(dashboardSource, /<SummaryPanel date=\{data\.selectedDate\} \/>[\s\S]*<\/div>/);
+  assert.match(dashboardSource, /codex-log-summary-grid[\s\S]*grid-cols-3/);
+});
+
+test("Codex metric cards use inline Tailwind tones matching the provided icons", () => {
+  assert.match(dashboardSource, /tone="task"/);
+  assert.match(dashboardSource, /tone="store"/);
+  assert.match(dashboardSource, /tone="proportion"/);
+  assert.match(dashboardSource, /tone="token"/);
+  assert.match(dashboardSource, /icon\-task/);
+  assert.match(dashboardSource, /icon\-store/);
+  assert.match(dashboardSource, /icon\-proportion/);
+  assert.match(dashboardSource, /icon\-token/);
+  assert.match(dashboardSource, /metricToneClassNames\[tone\]\.card/);
+  assert.match(dashboardSource, /metricToneClassNames\[tone\]\.value/);
+  assert.match(dashboardSource, /#3b82f6/);
+  assert.match(dashboardSource, /#a78bfa/);
+  assert.match(dashboardSource, /#f59e0b/);
+  assert.match(dashboardSource, /#22c55e/);
+  assert.match(dashboardSource, /#18f83a/);
 });
 
 test("Codex dashboard styles are theme-aware for dark and light modes", () => {

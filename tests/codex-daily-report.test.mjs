@@ -153,6 +153,61 @@ test("codex daily report estimates from raw turn text before summary fallback", 
   );
 });
 
+test("codex daily report uses desktop thread usage before text estimates", async () => {
+  const {
+    applyCodexDesktopUsageTokenCounts,
+    normalizeCodexDailyReportEntries,
+  } = await import(
+    new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
+  );
+  const entries = [
+      {
+        assistant_summary: "完成页面布局调整。",
+        codex_thread_id: "thread-1",
+        thread_title: "Storage",
+        user_tasks: "调整 Codex 日报。",
+      },
+      {
+        assistant_summary: "补充测试。",
+        codex_thread_id: "thread-1",
+        thread_title: "Storage",
+        user_tasks: "继续调整 Codex 日报。",
+      },
+    ];
+
+  assert.deepEqual(
+    normalizeCodexDailyReportEntries(
+      applyCodexDesktopUsageTokenCounts(entries, [
+        {
+          cwd: "D:/Claire/storage",
+          id: "thread-1",
+          title: "Storage",
+          tokens_used: 91240000,
+        },
+      ]),
+      "2026-08-04",
+    ),
+    [
+      {
+        assistant_summary: "完成页面布局调整。",
+        category: 4,
+        date: "2026-08-04",
+        thread_title: "Storage",
+        token_count: 45620000,
+        user_tasks: "调整 Codex 日报。",
+      },
+      {
+        assistant_summary: "补充测试。",
+        category: 4,
+        date: "2026-08-04",
+        thread_title: "Storage",
+        token_count: 45620000,
+        user_tasks: "继续调整 Codex 日报。",
+      },
+    ],
+  );
+});
+
 test("codex daily report persistence appends new rows without deleting existing same-day rows", async () => {
   const { saveCodexDailyReports } = await import(
     new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
@@ -217,7 +272,7 @@ test("codex daily report persistence appends new rows without deleting existing 
     [
       "select",
       "codex_log",
-      "thread_title,user_tasks,assistant_summary",
+      "r_id,thread_title,user_tasks,assistant_summary,token_count",
     ],
     ["select.eq", "id", "user-1"],
     ["select.eq", "date", "2026-08-03"],
@@ -236,5 +291,83 @@ test("codex daily report persistence appends new rows without deleting existing 
         },
       ],
     ],
+  ]);
+});
+
+test("codex daily report persistence refreshes token counts for existing rows", async () => {
+  const { saveCodexDailyReports } = await import(
+    new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
+  );
+  const calls = [];
+  const supabase = {
+    from(table) {
+      const query = {
+        eq(column, value) {
+          calls.push(["eq", column, value]);
+          return this;
+        },
+      };
+
+      return {
+        select(columns) {
+          calls.push(["select", table, columns]);
+          return {
+            ...query,
+            then(resolve) {
+              return Promise.resolve({
+                data: [
+                  {
+                    assistant_summary: "旧总结",
+                    r_id: "row-1",
+                    thread_title: "Storage",
+                    token_count: 800,
+                    user_tasks: "日报",
+                  },
+                ],
+                error: null,
+              }).then(resolve);
+            },
+          };
+        },
+        update(row) {
+          calls.push(["update", table, row]);
+          return { ...query, error: null };
+        },
+        insert(rows) {
+          calls.push(["insert", table, rows]);
+          return { error: null };
+        },
+      };
+    },
+  };
+
+  const result = await saveCodexDailyReports({
+    date: "2026-08-04",
+    entries: [
+      {
+        assistant_summary: "旧总结",
+        date: "2026-08-04",
+        thread_title: "Storage",
+        token_count: 91240000,
+        user_tasks: "日报",
+      },
+    ],
+    ownerId: "user-1",
+    supabase,
+    table: "codex_log",
+  });
+
+  assert.equal(result.inserted, 0);
+  assert.equal(result.updated, 1);
+  assert.deepEqual(calls, [
+    [
+      "select",
+      "codex_log",
+      "r_id,thread_title,user_tasks,assistant_summary,token_count",
+    ],
+    ["eq", "id", "user-1"],
+    ["eq", "date", "2026-08-04"],
+    ["update", "codex_log", { token_count: 91240000 }],
+    ["eq", "r_id", "row-1"],
   ]);
 });

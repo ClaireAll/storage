@@ -1,3 +1,7 @@
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { DatabaseClient } from "@/app/utils/database";
 
 export type CodexLogRecord = {
@@ -43,9 +47,11 @@ export type CodexLogDashboardData = {
   repositoryDistribution: CodexLogRepositoryStat[];
   selectedDate: string;
   stats: {
+    databaseTokenTotal: number;
     estimatedRatio: number;
     repositoryCount: number;
     taskCount: number;
+    tokenSource: "database" | "desktop";
     tokenTotal: number;
   };
   trend: CodexLogTrendPoint[];
@@ -104,6 +110,78 @@ function toCleanText(value: string | null | undefined, fallback = "") {
 
 function toTokenCount(value: number | null | undefined) {
   return Number.isFinite(value) ? Math.max(0, Math.round(Number(value))) : 0;
+}
+
+function getDefaultCodexStatePath() {
+  return (
+    process.env.CODEX_STATE_DB_PATH?.trim() ||
+    join(process.env.CODEX_HOME?.trim() || join(homedir(), ".codex"), "state_5.sqlite")
+  );
+}
+
+function getSqliteExecutable() {
+  const candidates = [
+    process.env.CODEX_SQLITE3_PATH?.trim(),
+    "D:\\software\\adb\\platform-tools\\sqlite3.exe",
+    "sqlite3",
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
+  return candidates.find((candidate) => {
+    if (candidate === "sqlite3") {
+      return true;
+    }
+
+    return existsSync(candidate);
+  });
+}
+
+function parseCodexDesktopUsageTotals(output: string) {
+  const totals = new Map<string, number>();
+
+  output
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .forEach((line) => {
+      const [date = "", tokenTotal = "0"] = line.split("\t");
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        totals.set(date, toTokenCount(Number(tokenTotal)));
+      }
+    });
+
+  return totals;
+}
+
+export function readCodexDesktopUsageTotals(startDate: string, endDate: string) {
+  const statePath = getDefaultCodexStatePath();
+  const sqlite = getSqliteExecutable();
+
+  if (!sqlite || !existsSync(statePath)) {
+    return null;
+  }
+
+  const sql = [
+    ".mode tabs",
+    "select date(updated_at, 'unixepoch', 'localtime'), sum(tokens_used)",
+    "from threads",
+    "where tokens_used > 0",
+    `and date(updated_at, 'unixepoch', 'localtime') >= '${startDate}'`,
+    `and date(updated_at, 'unixepoch', 'localtime') <= '${endDate}'`,
+    "group by date(updated_at, 'unixepoch', 'localtime');",
+  ].join("\n");
+
+  try {
+    const output = execFileSync(sqlite, [statePath, sql], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const totals = parseCodexDesktopUsageTotals(output);
+
+    return totals.size ? totals : null;
+  } catch {
+    return null;
+  }
 }
 
 function getCategoryLabel(category: number | null | undefined) {
@@ -190,7 +268,11 @@ function buildRepositoryDistribution(records: CodexLogRecord[]) {
   );
 }
 
-function buildTrend(rows: CodexLogRow[], selectedDate: string) {
+function buildTrend(
+  rows: CodexLogRow[],
+  selectedDate: string,
+  desktopUsageTotals?: Map<string, number> | null,
+) {
   const dayMap = new Map<string, CodexLogTrendPoint>();
 
   for (let index = trendDayCount - 1; index >= 0; index -= 1) {
@@ -214,6 +296,16 @@ function buildTrend(rows: CodexLogRow[], selectedDate: string) {
     point.taskCount += 1;
     point.tokenTotal += toTokenCount(row.token_count);
   });
+
+  if (desktopUsageTotals) {
+    dayMap.forEach((point, date) => {
+      const desktopTokenTotal = desktopUsageTotals.get(date);
+
+      if (desktopTokenTotal !== undefined) {
+        point.tokenTotal = desktopTokenTotal;
+      }
+    });
+  }
 
   return Array.from(dayMap.values());
 }
@@ -256,9 +348,11 @@ function getEmptyDashboardData(selectedDate = getShanghaiToday()): CodexLogDashb
     repositoryDistribution: [],
     selectedDate,
     stats: {
+      databaseTokenTotal: 0,
       estimatedRatio: 0,
       repositoryCount: 0,
       taskCount: 0,
+      tokenSource: "database",
       tokenTotal: 0,
     },
     trend: buildTrend([], selectedDate),
@@ -326,6 +420,17 @@ export async function listCodexLogDashboard(
   const records = (dailyResult.data ?? []).map(mapCodexLogRow);
   const repositoryDistribution = buildRepositoryDistribution(records);
   const estimatedCount = records.filter((record) => record.isEstimated).length;
+  const databaseTokenTotal = records.reduce(
+    (total, record) => total + record.token_count,
+    0,
+  );
+  const desktopUsageTotals = readCodexDesktopUsageTotals(
+    trendStartDate,
+    selectedDate,
+  );
+  const desktopTokenTotal = desktopUsageTotals?.get(selectedDate);
+  const tokenSource: "database" | "desktop" =
+    desktopTokenTotal === undefined ? "database" : "desktop";
 
   return {
     availableDates: Array.from(
@@ -345,10 +450,12 @@ export async function listCodexLogDashboard(
     selectedDate,
     stats: {
       estimatedRatio: records.length ? Math.round((estimatedCount / records.length) * 100) : 0,
+      databaseTokenTotal,
       repositoryCount: repositoryDistribution.length,
       taskCount: records.length,
-      tokenTotal: records.reduce((total, record) => total + record.token_count, 0),
+      tokenSource: desktopUsageTotals && tokenSource === "desktop" ? "desktop" : "database",
+      tokenTotal: desktopTokenTotal ?? databaseTokenTotal,
     },
-    trend: buildTrend(trendResult.data ?? [], selectedDate),
+    trend: buildTrend(trendResult.data ?? [], selectedDate, desktopUsageTotals),
   };
 }

@@ -49,11 +49,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { cn } from "@/lib/utils";
 import type {
   CodexLogDashboardData,
   CodexLogRecord,
   CodexLogRepositoryStat,
-  CodexLogTaskStat,
   CodexLogTrendPoint,
 } from "./codex-log-utils";
 
@@ -121,6 +121,56 @@ const defaultPalette: ChartPalette = {
   muted: "rgba(107, 114, 128, 0.78)",
   surface: "#ffffff",
   text: "#111827",
+};
+const panelClassName =
+  "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-color)_26%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_90%,#ffffff_10%)] shadow-[inset_0_1px_0_rgb(255_255_255/5%)]";
+const scrollbarClassName =
+  "[scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--home-theme-color)_54%,transparent)_color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)] hover:[&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_72%,transparent)]";
+const tableScrollbarClassName =
+  "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto [&_.ant-table-content]:[scrollbar-width:thin] [&_.ant-table-body]:[scrollbar-width:thin] [&_.ant-table-content::-webkit-scrollbar]:h-2 [&_.ant-table-content::-webkit-scrollbar]:w-2 [&_.ant-table-body::-webkit-scrollbar]:h-2 [&_.ant-table-body::-webkit-scrollbar]:w-2 [&_.ant-table-content::-webkit-scrollbar-thumb]:rounded-full [&_.ant-table-body::-webkit-scrollbar-thumb]:rounded-full [&_.ant-table-content::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)] [&_.ant-table-body::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)]";
+const metricToneClassNames = {
+  codex: {
+    card: "!border-[color-mix(in_srgb,#18f83a_50%,transparent)] !bg-[color-mix(in_srgb,#18f83a_9%,var(--home-theme-bg)_91%)]",
+    help: "!text-[color-mix(in_srgb,#18f83a_76%,var(--home-theme-text)_24%)]",
+    icon: "!border-[color-mix(in_srgb,#18f83a_52%,transparent)] !bg-[color-mix(in_srgb,#18f83a_16%,transparent)] !text-[#18f83a]",
+    label: "!text-[color-mix(in_srgb,#18f83a_76%,var(--home-theme-text)_24%)]",
+    value: "!text-[color-mix(in_srgb,#18f83a_82%,var(--home-theme-text)_18%)]",
+  },
+  neutral: {
+    card: "!border-[color-mix(in_srgb,#6f7378_38%,transparent)] !bg-[color-mix(in_srgb,#6f7378_8%,var(--home-theme-bg)_92%)]",
+    help: "!text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]",
+    icon: "!border-[color-mix(in_srgb,#6f7378_38%,transparent)] !bg-[color-mix(in_srgb,#6f7378_14%,transparent)] !text-[#6f7378]",
+    label: "!text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]",
+    value: "!text-[color-mix(in_srgb,#6f7378_84%,var(--home-theme-text)_16%)]",
+  },
+  proportion: {
+    card: "!border-[color-mix(in_srgb,#f59e0b_48%,transparent)] !bg-[color-mix(in_srgb,#f59e0b_9%,var(--home-theme-bg)_91%)]",
+    help: "!text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]",
+    icon: "!border-[color-mix(in_srgb,#f59e0b_50%,transparent)] !bg-[color-mix(in_srgb,#f59e0b_16%,transparent)] !text-[#f59e0b]",
+    label: "!text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]",
+    value: "!text-[color-mix(in_srgb,#f59e0b_82%,var(--home-theme-text)_18%)]",
+  },
+  store: {
+    card: "!border-[color-mix(in_srgb,#a78bfa_48%,transparent)] !bg-[color-mix(in_srgb,#a78bfa_9%,var(--home-theme-bg)_91%)]",
+    help: "!text-[color-mix(in_srgb,#a78bfa_76%,var(--home-theme-text)_24%)]",
+    icon: "!border-[color-mix(in_srgb,#a78bfa_50%,transparent)] !bg-[color-mix(in_srgb,#a78bfa_16%,transparent)] !text-[#a78bfa]",
+    label: "!text-[color-mix(in_srgb,#a78bfa_76%,var(--home-theme-text)_24%)]",
+    value: "!text-[color-mix(in_srgb,#a78bfa_84%,var(--home-theme-text)_16%)]",
+  },
+  task: {
+    card: "!border-[color-mix(in_srgb,#3b82f6_48%,transparent)] !bg-[color-mix(in_srgb,#3b82f6_9%,var(--home-theme-bg)_91%)]",
+    help: "!text-[color-mix(in_srgb,#3b82f6_76%,var(--home-theme-text)_24%)]",
+    icon: "!border-[color-mix(in_srgb,#3b82f6_50%,transparent)] !bg-[color-mix(in_srgb,#3b82f6_16%,transparent)] !text-[#3b82f6]",
+    label: "!text-[color-mix(in_srgb,#3b82f6_76%,var(--home-theme-text)_24%)]",
+    value: "!text-[color-mix(in_srgb,#3b82f6_84%,var(--home-theme-text)_16%)]",
+  },
+  token: {
+    card: "!border-[color-mix(in_srgb,#22c55e_48%,transparent)] !bg-[color-mix(in_srgb,#22c55e_9%,var(--home-theme-bg)_91%)]",
+    help: "!text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]",
+    icon: "!border-[color-mix(in_srgb,#22c55e_50%,transparent)] !bg-[color-mix(in_srgb,#22c55e_16%,transparent)] !text-[#22c55e]",
+    label: "!text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]",
+    value: "!text-[color-mix(in_srgb,#22c55e_84%,var(--home-theme-text)_16%)]",
+  },
 };
 
 function formatNumber(value: number) {
@@ -210,9 +260,15 @@ function useChartPalette() {
   return palette;
 }
 
-function MetricIcon({ name }: { name: string }) {
+function MetricIcon({
+  name,
+  tone = "neutral",
+}: {
+  name: string;
+  tone?: keyof typeof metricToneClassNames;
+}) {
   return (
-    <span className="codex-log-metric-icon">
+    <span className={cn("codex-log-metric-icon", metricToneClassNames[tone].icon)}>
       <i aria-hidden className={`iconfont ${name}`} />
     </span>
   );
@@ -377,7 +433,7 @@ function buildRepositoryOption(
 
 function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
   return (
-    <div className="codex-log-panel-title">
+    <div className="codex-log-panel-title min-w-0 items-center gap-2">
       {icon}
       <Typography.Title level={5}>{title}</Typography.Title>
     </div>
@@ -387,11 +443,9 @@ function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
 function TaskList({
   emptyText,
   items,
-  mode,
 }: {
   emptyText: string;
-  items: CodexLogRecord[] | CodexLogTaskStat[];
-  mode: "frequency" | "token";
+  items: CodexLogRecord[];
 }) {
   if (!items.length) {
     return (
@@ -400,24 +454,15 @@ function TaskList({
   }
 
   return (
-    <div className="codex-log-rank-list">
+    <div className={cn("codex-log-rank-list", scrollbarClassName)}>
       {items.map((item, index) => {
-        const isTokenMode = mode === "token";
-        const title = isTokenMode
-          ? (item as CodexLogRecord).thread_title
-          : (item as CodexLogTaskStat).label;
-        const meta = isTokenMode
-          ? `${formatToken((item as CodexLogRecord).token_count)} Token`
-          : `${(item as CodexLogTaskStat).count} 次`;
-        const key = isTokenMode
-          ? (item as CodexLogRecord).key
-          : `${(item as CodexLogTaskStat).label}-${index}`;
-
         return (
-          <div className="codex-log-rank-item" key={key}>
+          <div className="codex-log-rank-item" key={item.key}>
             <span className="codex-log-rank-index">{index + 1}</span>
-            <span className="codex-log-rank-title">{title}</span>
-            <span className="codex-log-rank-meta">{meta}</span>
+            <span className="codex-log-rank-title">{item.thread_title}</span>
+            <span className="codex-log-rank-meta">
+              {formatToken(item.token_count)} Token
+            </span>
           </div>
         );
       })}
@@ -486,9 +531,17 @@ function SummaryPanel({ date }: { date: string }) {
   }, [loadSummary]);
 
   return (
-    <section className="codex-log-panel codex-log-summary-panel">
+    <section
+      className={cn(
+        "codex-log-panel codex-log-summary-panel min-w-0 p-3",
+        panelClassName,
+      )}
+    >
       <div className="codex-log-panel-header">
-        <PanelTitle icon={<MetricIcon name="icon-codex" />} title="总结" />
+        <PanelTitle
+          icon={<MetricIcon name="icon-codex" tone="codex" />}
+          title="总结"
+        />
         <Button
           icon={<ReloadOutlined />}
           loading={summaryState.status === "loading"}
@@ -504,7 +557,7 @@ function SummaryPanel({ date }: { date: string }) {
       ) : summaryState.status === "error" ? (
         <Typography.Text type="danger">{summaryState.error}</Typography.Text>
       ) : summaryState.status === "ready" ? (
-        <div className="codex-log-summary-grid">
+        <div className="codex-log-summary-grid grid grid-cols-1 gap-3 lg:grid-cols-3">
           <SummaryBlock label="总结" text={summaryState.result.summary} />
           <SummaryBlock label="成长" text={summaryState.result.growth} />
           <SummaryBlock label="不足" text={summaryState.result.shortage} />
@@ -516,7 +569,7 @@ function SummaryPanel({ date }: { date: string }) {
 
 function SummaryBlock({ label, text }: { label: string; text: string }) {
   return (
-    <div className="codex-log-summary-block">
+    <div className="codex-log-summary-block min-w-0 rounded-lg p-3">
       <span>{label}</span>
       <Typography.Paragraph>{text}</Typography.Paragraph>
     </div>
@@ -548,6 +601,10 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     ],
     [data.repositoryDistribution],
   );
+  const tokenHint =
+    data.stats.tokenSource === "desktop"
+      ? `使用 Codex 桌面 usage 聚合；入库估算为 ${formatToken(data.stats.databaseTokenTotal)} Token。`
+      : "未读取到本机 Codex 桌面 usage，当前使用 codex_log.token_count 入库值。";
   const filteredRecords = useMemo(() => {
     const lowerKeyword = keyword.trim().toLowerCase();
 
@@ -576,7 +633,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       onFilter: (value, record) =>
         getHourFilterValue(record.hour) === String(value),
       title: "时间",
-      width: 96,
+      width: 86,
     },
     {
       dataIndex: "thread_title",
@@ -587,19 +644,29 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </Space>
       ),
       title: "会话",
-      width: 220,
+      width: 180,
     },
     {
       dataIndex: "user_tasks",
-      ellipsis: true,
+      ellipsis: { showTitle: false },
+      render: (value: string) => (
+        <Typography.Text className="block max-w-[240px]" ellipsis={{ tooltip: value }}>
+          {value}
+        </Typography.Text>
+      ),
       title: "任务",
-      width: 360,
+      width: 260,
     },
     {
       dataIndex: "assistant_summary",
-      ellipsis: true,
+      ellipsis: { showTitle: false },
+      render: (value: string) => (
+        <Typography.Text className="block max-w-[260px]" ellipsis={{ tooltip: value }}>
+          {value}
+        </Typography.Text>
+      ),
       title: "回答简述",
-      width: 420,
+      width: 280,
     },
     {
       align: "right",
@@ -610,7 +677,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       render: (value: number) => formatToken(value),
       sorter: (left, right) => left.token_count - right.token_count,
       title: "Token",
-      width: 112,
+      width: 104,
     },
   ];
 
@@ -623,10 +690,15 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   }
 
   return (
-    <div className="codex-log-dashboard">
-      <div className="codex-log-toolbar">
+    <div
+      className={cn(
+        "codex-log-dashboard min-w-0 overflow-auto",
+        scrollbarClassName,
+      )}
+    >
+      <div className={cn("codex-log-toolbar", panelClassName, "p-3")}>
         <div className="codex-log-page-title">
-          <MetricIcon name="icon-codex" />
+          <MetricIcon name="icon-codex" tone="codex" />
           <div>
             <Typography.Title level={4}>Codex日报</Typography.Title>
             <Typography.Text type="secondary">
@@ -666,61 +738,65 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </Space>
       </div>
 
-      <section className="codex-log-metric-grid">
+      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon="icon-task"
           label="任务"
+          tone="task"
           value={formatNumber(data.stats.taskCount)}
         />
         <MetricCard
           icon="icon-store"
           label="仓库"
+          tone="store"
           value={formatNumber(data.stats.repositoryCount)}
         />
         <MetricCard
           icon="icon-proportion"
           label="估算占比"
+          tone="proportion"
           value={`${data.stats.estimatedRatio}%`}
         />
         <MetricCard
           icon="icon-token"
-          hint="来自 codex_log.token_count，是日报入库的任务估算值，不等于 Codex 桌面热力图总使用量。"
+          hint={tokenHint}
           label="入库Token"
+          tone="token"
           value={formatToken(data.stats.tokenTotal)}
         />
       </section>
 
-      <section className="codex-log-main-grid">
-        <section className="codex-log-panel codex-log-chart-panel">
+      <section className="codex-log-analysis-grid grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)_minmax(260px,0.8fr)]">
+        <section
+          className={cn(
+            "codex-log-panel codex-log-chart-panel min-w-0 p-3",
+            panelClassName,
+          )}
+        >
           <PanelTitle title="任务与Token趋势" />
           <CodexChart option={trendOption} />
         </section>
-        <section className="codex-log-panel codex-log-chart-panel">
+        <section
+          className={cn(
+            "codex-log-panel codex-log-chart-panel min-w-0 p-3",
+            panelClassName,
+          )}
+        >
           <PanelTitle title="仓库占比" />
           <CodexChart option={repositoryOption} />
         </section>
-      </section>
-
-      <section className="codex-log-side-grid">
-        <section className="codex-log-panel">
-          <PanelTitle title="高频任务" />
-          <TaskList
-            emptyText="暂无任务"
-            items={data.highFrequencyTasks}
-            mode="frequency"
-          />
-        </section>
-        <section className="codex-log-panel">
+        <section className={cn("codex-log-panel min-w-0 p-3", panelClassName)}>
           <PanelTitle title="最长会话" />
-          <TaskList
-            emptyText="暂无会话"
-            items={data.longestSessions}
-            mode="token"
-          />
+          <TaskList emptyText="暂无会话" items={data.longestSessions} />
         </section>
       </section>
 
-      <section className="codex-log-panel codex-log-table-panel">
+      <section
+        className={cn(
+          "codex-log-panel codex-log-table-panel min-w-0 overflow-hidden p-3",
+          panelClassName,
+        )}
+      >
         <div className="codex-log-panel-header">
           <PanelTitle title="会话记录" />
           <Typography.Text type="secondary">
@@ -728,15 +804,18 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           </Typography.Text>
         </div>
         <Table
-          className="codex-log-table"
+          className={cn("codex-log-table", "min-w-0", tableScrollbarClassName)}
           columns={columns}
           dataSource={filteredRecords}
           pagination={{
-            pageSize: 8,
-            showSizeChanger: false,
+            pageSize: 6,
+            pageSizeOptions: ["6", "8", "12"],
+            showSizeChanger: true,
+            showTotal: (total, range) =>
+              `共 ${formatNumber(total)} 条 · ${range[0]}-${range[1]}`,
           }}
           rowKey="key"
-          scroll={{ x: "max-content" }}
+          scroll={{ x: 860, y: 300 }}
           size="middle"
           tableLayout="fixed"
         />
@@ -750,29 +829,37 @@ function MetricCard({
   hint,
   icon,
   label,
+  tone,
   value,
 }: {
   hint?: string;
   icon: string;
   label: string;
+  tone: keyof typeof metricToneClassNames;
   value: string;
 }) {
   return (
-    <article className="codex-log-metric-card">
-      <MetricIcon name={icon} />
+    <article
+      className={cn(
+        "codex-log-metric-card min-w-0 rounded-lg p-3",
+        panelClassName,
+        metricToneClassNames[tone].card,
+      )}
+    >
+      <MetricIcon name={icon} tone={tone} />
       <div>
-        <span className="codex-log-metric-label">
+        <span className={cn("codex-log-metric-label", metricToneClassNames[tone].label)}>
           {label}
           {hint ? (
             <Tooltip title={hint}>
               <QuestionCircleOutlined
                 aria-label={`${label}说明`}
-                className="codex-log-metric-help"
+                className={cn("codex-log-metric-help", metricToneClassNames[tone].help)}
               />
             </Tooltip>
           ) : null}
         </span>
-        <strong>{value}</strong>
+        <strong className={metricToneClassNames[tone].value}>{value}</strong>
       </div>
     </article>
   );
