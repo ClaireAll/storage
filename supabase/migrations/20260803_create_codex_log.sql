@@ -5,6 +5,7 @@ create table if not exists public.codex_log (
   thread_title text,
   user_tasks text,
   assistant_summary text,
+  token_count int4 not null default 0,
   created_at timestamptz not null default now(),
   category int2 not null default 10000
 );

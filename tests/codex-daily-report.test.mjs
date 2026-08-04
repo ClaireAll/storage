@@ -18,6 +18,7 @@ const migrationSource = readSource(
 test("codex daily report script uses the approved report table columns", () => {
   assert.match(scriptSource, /DEFAULT_REPORT_TABLE = "codex_log"/);
   assert.match(scriptSource, /assistant_summary/);
+  assert.match(scriptSource, /token_count/);
   assert.match(scriptSource, /thread_title/);
   assert.match(scriptSource, /user_tasks/);
   assert.doesNotMatch(scriptSource, /thread_ref/);
@@ -26,6 +27,7 @@ test("codex daily report script uses the approved report table columns", () => {
 
 test("codex daily report migration targets the actual codex log table", () => {
   assert.match(migrationSource, /create table if not exists public\.codex_log/);
+  assert.match(migrationSource, /token_count int4/);
   assert.match(migrationSource, /codex_log_id_date_idx/);
   assert.match(migrationSource, /codex_log_select_own/);
   assert.doesNotMatch(migrationSource, /codex_daily_reports/);
@@ -59,6 +61,7 @@ test("codex daily report normalization trims summaries and skips empty records",
           assistant_summa: "  已完成自动化设计  ",
           cwd: "D:/Claire/storage",
           thread_title: " Storage ",
+          token_count: "1234",
           user_tasks: "  每天整理日报  ",
         },
         {
@@ -75,6 +78,7 @@ test("codex daily report normalization trims summaries and skips empty records",
         category: 4,
         date: "2026-08-03",
         thread_title: "Storage",
+        token_count: 1234,
         user_tasks: "每天整理日报",
       },
     ],
@@ -113,6 +117,7 @@ test("codex daily report persistence replaces only the same user's same-day rows
         assistant_summary: "已写入",
         date: "2026-08-03",
         thread_title: "Storage",
+        token_count: 88.8,
         user_tasks: "日报",
       },
     ],
@@ -135,6 +140,7 @@ test("codex daily report persistence replaces only the same user's same-day rows
           date: "2026-08-03",
           id: "user-1",
           thread_title: "Storage",
+          token_count: 88,
           user_tasks: "日报",
         },
       ],

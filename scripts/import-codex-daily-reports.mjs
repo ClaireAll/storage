@@ -76,6 +76,21 @@ function toCategory(value) {
     : DEFAULT_REPORT_CATEGORY;
 }
 
+function toTokenCount(value) {
+  const numericValue =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim()
+        ? Number(value.trim())
+        : 0;
+
+  if (!Number.isFinite(numericValue)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.trunc(numericValue));
+}
+
 export function resolveCodexReportCategory({ cwd = "", title = "" } = {}) {
   const target = `${cwd} ${title}`.toLowerCase().replaceAll("\\", "/");
   const matchedCategory = reportCategories.find(({ keywords }) =>
@@ -122,6 +137,9 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
               }),
         date,
         thread_title: threadTitle || "未命名任务",
+        token_count: toTokenCount(
+          entry.token_count ?? entry.tokenCount ?? entry.tokens,
+        ),
         user_tasks: userTasks,
       };
     })
@@ -145,6 +163,9 @@ export async function saveCodexDailyReports({
     date: entry.date || date,
     id: ownerId,
     thread_title: toText(entry.thread_title) || "未命名任务",
+    token_count: toTokenCount(
+      entry.token_count ?? entry.tokenCount ?? entry.tokens,
+    ),
     user_tasks: toText(entry.user_tasks),
   }));
 
