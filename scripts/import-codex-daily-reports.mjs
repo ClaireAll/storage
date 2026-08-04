@@ -76,6 +76,16 @@ function toCategory(value) {
     : DEFAULT_REPORT_CATEGORY;
 }
 
+function getCodexDailyReportFingerprint(entry) {
+  return [
+    entry.thread_title,
+    entry.user_tasks,
+    entry.assistant_summary,
+  ]
+    .map((value) => toText(value).replace(/\s+/g, " ").trim())
+    .join("\u0001");
+}
+
 function toExplicitTokenCount(value) {
   if (value === undefined || value === null) {
     return null;
@@ -275,25 +285,36 @@ export async function saveCodexDailyReports({
     return { inserted: 0 };
   }
 
-  const { error: deleteError } = await supabase
+  const { data: existingEntries, error: selectError } = await supabase
     .from(table)
-    .delete()
+    .select("thread_title,user_tasks,assistant_summary")
     .eq("id", ownerId)
     .eq("date", date);
 
-  if (deleteError) {
-    throw new Error(`清理当天日报失败：${deleteError.message}`);
+  if (selectError) {
+    throw new Error(`读取当天日报失败：${selectError.message}`);
+  }
+
+  const existingFingerprints = new Set(
+    (existingEntries ?? []).map(getCodexDailyReportFingerprint),
+  );
+  const rowsToInsert = normalizedEntries.filter(
+    (entry) => !existingFingerprints.has(getCodexDailyReportFingerprint(entry)),
+  );
+
+  if (rowsToInsert.length === 0) {
+    return { inserted: 0 };
   }
 
   const { error: insertError } = await supabase
     .from(table)
-    .insert(normalizedEntries);
+    .insert(rowsToInsert);
 
   if (insertError) {
-    throw new Error(`写入当天日报失败：${insertError.message}`);
+    throw new Error(`写入新增日报失败：${insertError.message}`);
   }
 
-  return { inserted: normalizedEntries.length };
+  return { inserted: rowsToInsert.length };
 }
 
 function readEntries(path) {

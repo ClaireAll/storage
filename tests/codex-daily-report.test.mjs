@@ -153,7 +153,7 @@ test("codex daily report estimates from raw turn text before summary fallback", 
   );
 });
 
-test("codex daily report persistence replaces only the same user's same-day rows", async () => {
+test("codex daily report persistence appends new rows without deleting existing same-day rows", async () => {
   const { saveCodexDailyReports } = await import(
     new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
   );
@@ -161,12 +161,24 @@ test("codex daily report persistence replaces only the same user's same-day rows
   const supabase = {
     from(table) {
       return {
-        delete() {
-          calls.push(["delete", table]);
+        select(columns) {
+          calls.push(["select", table, columns]);
           return {
             eq(column, value) {
-              calls.push(["delete.eq", column, value]);
+              calls.push(["select.eq", column, value]);
               return this;
+            },
+            then(resolve) {
+              return Promise.resolve({
+                data: [
+                  {
+                    assistant_summary: "已写入",
+                    thread_title: "Storage",
+                    user_tasks: "日报",
+                  },
+                ],
+                error: null,
+              }).then(resolve);
             },
           };
         },
@@ -188,6 +200,13 @@ test("codex daily report persistence replaces only the same user's same-day rows
         token_count: 88.8,
         user_tasks: "日报",
       },
+      {
+        assistant_summary: "新增",
+        date: "2026-08-03",
+        thread_title: "Storage",
+        token_count: 66,
+        user_tasks: "新任务",
+      },
     ],
     ownerId: "user-1",
     supabase,
@@ -195,21 +214,25 @@ test("codex daily report persistence replaces only the same user's same-day rows
   });
 
   assert.deepEqual(calls, [
-    ["delete", "codex_log"],
-    ["delete.eq", "id", "user-1"],
-    ["delete.eq", "date", "2026-08-03"],
+    [
+      "select",
+      "codex_log",
+      "thread_title,user_tasks,assistant_summary",
+    ],
+    ["select.eq", "id", "user-1"],
+    ["select.eq", "date", "2026-08-03"],
     [
       "insert",
       "codex_log",
       [
         {
-          assistant_summary: "已写入",
+          assistant_summary: "新增",
           category: 10000,
           date: "2026-08-03",
           id: "user-1",
           thread_title: "Storage",
-          token_count: 88,
-          user_tasks: "日报",
+          token_count: 66,
+          user_tasks: "新任务",
         },
       ],
     ],

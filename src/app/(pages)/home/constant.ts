@@ -96,6 +96,11 @@ export const homeCategories: HomeCategory[] = [
     iconClassName: "icon-blog",
     label: "笔记",
   },
+  {
+    href: "/home/codex-log",
+    iconClassName: "icon-codex",
+    label: "Codex日报",
+  },
 ];
 
 export const homeStats: HomeStat[] = [

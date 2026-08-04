@@ -787,3 +787,402 @@
     height: min(560px, calc(100dvh - 96px));
   }
 }
+
+.codex-log-dashboard {
+  color: var(--home-theme-text);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  width: 100%;
+}
+
+.codex-log-dashboard .ant-typography {
+  color: var(--home-theme-text);
+  margin: 0;
+}
+
+.codex-log-dashboard .ant-typography-secondary {
+  color: color-mix(
+    in srgb,
+    var(--home-theme-text) 58%,
+    transparent
+  ) !important;
+}
+
+.codex-log-toolbar {
+  align-items: center;
+  background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
+  border: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 24%, transparent);
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.codex-log-page-title {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.codex-log-page-title .ant-typography {
+  line-height: 1.1;
+}
+
+.codex-log-date-picker.ant-picker,
+.codex-log-repo-select.ant-select,
+.codex-log-search.ant-input-affix-wrapper {
+  min-width: 160px;
+}
+
+.codex-log-search.ant-input-affix-wrapper {
+  width: min(280px, 34vw);
+}
+
+.codex-log-dashboard .ant-picker,
+.codex-log-dashboard .ant-input-affix-wrapper,
+.codex-log-dashboard .ant-select-selector {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-bg) 92%,
+    var(--home-theme-text) 8%
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 34%,
+    transparent
+  ) !important;
+  color: var(--home-theme-text) !important;
+}
+
+.codex-log-dashboard .ant-picker-input > input,
+.codex-log-dashboard .ant-input,
+.codex-log-dashboard .ant-select-selection-item {
+  color: var(--home-theme-text) !important;
+}
+
+.codex-log-dashboard .ant-input::placeholder {
+  color: color-mix(
+    in srgb,
+    var(--home-theme-text) 42%,
+    transparent
+  ) !important;
+}
+
+.codex-log-metric-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.codex-log-metric-card,
+.codex-log-panel {
+  background: color-mix(in srgb, var(--home-theme-bg) 90%, #ffffff 10%);
+  border: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 26%, transparent);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.codex-log-metric-card {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  min-height: 78px;
+  padding: 14px;
+}
+
+.codex-log-metric-card > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.codex-log-metric-card span {
+  color: color-mix(in srgb, var(--home-theme-text) 62%, transparent);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.codex-log-metric-card strong {
+  color: var(--home-theme-text);
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.codex-log-metric-icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--home-theme-color) 13%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 32%, transparent);
+  border-radius: 8px;
+  color: var(--home-theme-color);
+  display: inline-flex;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.codex-log-metric-icon .iconfont {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.codex-log-main-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr) minmax(
+      280px,
+      0.9fr
+    );
+}
+
+.codex-log-side-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.codex-log-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px;
+}
+
+.codex-log-panel-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.codex-log-panel-title {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.codex-log-panel-title .codex-log-metric-icon {
+  height: 28px;
+  width: 28px;
+}
+
+.codex-log-panel-title .codex-log-metric-icon .iconfont {
+  font-size: 16px;
+}
+
+.codex-log-chart-panel {
+  min-height: 260px;
+}
+
+.codex-log-chart {
+  flex: 1;
+  min-height: 210px;
+  width: 100%;
+}
+
+.codex-log-summary-panel {
+  min-height: 260px;
+}
+
+.codex-log-summary-loading {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.codex-log-summary-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.codex-log-summary-block {
+  background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
+  border: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 18%, transparent);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.codex-log-summary-block > span {
+  color: var(--home-theme-color);
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.codex-log-summary-block .ant-typography {
+  color: color-mix(in srgb, var(--home-theme-text) 86%, transparent);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.codex-log-rank-list {
+  display: grid;
+  gap: 8px;
+}
+
+.codex-log-rank-item {
+  align-items: center;
+  background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
+  border: 1px solid
+    color-mix(in srgb, var(--home-theme-color) 18%, transparent);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.codex-log-rank-index {
+  align-items: center;
+  background: color-mix(in srgb, var(--home-theme-color) 18%, transparent);
+  border-radius: 7px;
+  color: var(--home-theme-color);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.codex-log-rank-title {
+  color: var(--home-theme-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex-log-rank-meta {
+  color: color-mix(in srgb, var(--home-theme-text) 58%, transparent);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.codex-log-table-panel {
+  min-height: 360px;
+}
+
+.codex-log-dashboard .ant-table-wrapper,
+.codex-log-dashboard .ant-spin-nested-loading,
+.codex-log-dashboard .ant-spin-container,
+.codex-log-dashboard .ant-table {
+  background: transparent;
+  color: var(--home-theme-text);
+}
+
+.codex-log-dashboard .ant-table-thead > tr > th {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-bg) 78%,
+    var(--home-theme-color) 22%
+  ) !important;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 24%,
+    transparent
+  ) !important;
+  color: var(--home-theme-text) !important;
+}
+
+.codex-log-dashboard .ant-table-tbody > tr > td {
+  background: transparent !important;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 16%,
+    transparent
+  ) !important;
+  color: var(--home-theme-text);
+}
+
+.codex-log-dashboard .ant-table-tbody > tr:hover > td {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-color) 12%,
+    transparent
+  ) !important;
+}
+
+.codex-log-title-cell {
+  min-width: 0;
+}
+
+.codex-log-title-cell > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex-log-dashboard .ant-tag {
+  background: color-mix(in srgb, var(--home-theme-color) 14%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-color) 30%,
+    transparent
+  );
+  color: var(--home-theme-color);
+}
+
+.codex-log-dashboard .ant-pagination-item,
+.codex-log-dashboard .ant-pagination-prev,
+.codex-log-dashboard .ant-pagination-next {
+  background: transparent;
+}
+
+.codex-log-dashboard .ant-pagination-item a,
+.codex-log-dashboard .ant-pagination-prev button,
+.codex-log-dashboard .ant-pagination-next button {
+  color: var(--home-theme-text) !important;
+}
+
+.theme-dark .codex-log-metric-card,
+.theme-dark .codex-log-panel,
+.theme-dark .codex-log-toolbar {
+  background: color-mix(in srgb, var(--home-theme-bg) 94%, #ffffff 6%);
+}
+
+@media (max-width: 1180px) {
+  .codex-log-main-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .codex-log-summary-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .codex-log-toolbar,
+  .codex-log-side-grid,
+  .codex-log-main-grid,
+  .codex-log-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .codex-log-toolbar {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .codex-log-search.ant-input-affix-wrapper,
+  .codex-log-date-picker.ant-picker,
+  .codex-log-repo-select.ant-select {
+    min-width: 0;
+    width: 100%;
+  }
+}

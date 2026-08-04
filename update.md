@@ -1,5 +1,11 @@
 # 版本更新
 
+## 2026-08-04 12:01:08 +08:00
+
+- 新增 `Codex日报` 分类与 `/home/codex-log` 仪表板：接入 `codex_log` 数据，展示任务、仓库、估算占比、Token、趋势图、仓库占比、高频任务、最长会话和会话记录表格。
+- 引入 ECharts 绘制日报趋势与仓库分布；表格移除“类型”列和“节选”文案，支持按时间段与 Token 区间筛选，并使用 `icon-task`、`icon-store`、`icon-proportion`、`icon-token`、`icon-codex`。
+- 新增 DeepSeek 日总结接口 `/api/codex-log/summary`，输出“总结 / 成长 / 不足”；日报导入脚本改为追加并去重，不再删除同日已有记录。
+
 ## 2026-08-04 10:51:19 +08:00
 
 - 修正 Codex 日报补 token 后只剩 7 条的问题：重新明确“日报行数由当天 completed turn 决定，token usage 只作为数值属性”，不能因为 usage 匹配失败丢弃记录。
