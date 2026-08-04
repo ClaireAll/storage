@@ -1,5 +1,11 @@
 # 版本更新
 
+## 2026-08-04 10:51:19 +08:00
+
+- 修正 Codex 日报补 token 后只剩 7 条的问题：重新明确“日报行数由当天 completed turn 决定，token usage 只作为数值属性”，不能因为 usage 匹配失败丢弃记录。
+- 更新 23:59 自动化描述：排除自动化自身线程和子代理线程，按 Asia/Shanghai 当天 completed turn 建 entries；真实 usage 只有在 `turn_id` 精确匹配时写入，否则通过 `token_basis` 估算。
+- 重新导入 2026-08-03 的 `codex_log`：数据库反查确认共 55 条，标题分布为 Storage 16、分析助手 15、todo 10、入口 8、review 4、learn 2；`token_count` 总计 1,117,774。
+
 ## 2026-08-04 10:31:18 +08:00
 
 - 修正 Codex 日报 token 口径：导入脚本新增 `token_basis`、`raw_turn_text`、`source_text` 等临时估算来源，优先使用原始 turn 内容或显式 `token_count`，仅在最后兜底时才用压缩后的日报摘要估算。
