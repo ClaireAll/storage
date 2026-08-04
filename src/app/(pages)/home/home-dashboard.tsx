@@ -15,8 +15,10 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
   type ReactNode,
 } from "react";
 import { homeCategories, homeStats } from "./constant";
@@ -43,6 +45,7 @@ const initialWeather: WeatherState = {
   description: "获取中",
   status: "loading",
 };
+const codexLogCategoryHref = "/home/codex-log";
 
 const homeDashboardCache: {
   hasInitializedKnowledge: boolean;
@@ -97,30 +100,91 @@ export function HomeDashboard({
   const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false);
   const [isCategorySidebarCollapsed, setIsCategorySidebarCollapsed] =
     useState(false);
+  const [isCodexLogFullscreen, setIsCodexLogFullscreen] = useState(false);
+  const categoryContentRef = useRef<HTMLDivElement>(null);
   const surfaceStyle = {
     backgroundColor: surfaceBackground,
     borderColor: surfaceBorderColor,
   } satisfies CSSProperties;
+  const refreshFullscreenLayout = useCallback(() => {
+    window.setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 80);
+  }, []);
+  const handleCodexLogFullscreenClick = useCallback(
+    async (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const element = categoryContentRef.current;
+
+      if (!element?.requestFullscreen) {
+        return;
+      }
+
+      if (document.fullscreenElement === element) {
+        await document.exitFullscreen?.();
+        return;
+      }
+
+      await element.requestFullscreen();
+      refreshFullscreenLayout();
+    },
+    [refreshFullscreenLayout],
+  );
   const menuItems = useMemo(
     () =>
       homeCategories
         .filter((category) => visibleCategoryHrefs.includes(category.href))
-        .map((category) => ({
-          className: cn("hover:scale-[1.1]", {
-            "scale-[1.1] font-bold": activeCategoryHref === category.href,
-          }),
-          icon: (
-            <CategoryIcon
-              Icon={category.Icon}
-              name={category.iconClassName}
-              mode="symbol"
-            />
-          ),
-          key: category.href,
-          label: category.label,
-          title: category.label,
-        })),
-    [activeCategoryHref, visibleCategoryHrefs],
+        .map((category) => {
+          const isCategoryActive = activeCategoryHref === category.href;
+          const shouldShowFullscreenButton =
+            category.href === codexLogCategoryHref &&
+            isCategoryActive &&
+            !isCategorySidebarCollapsed;
+
+          return {
+            className: cn("hover:scale-[1.1]", {
+              "scale-[1.1] font-bold": isCategoryActive,
+            }),
+            icon: (
+              <CategoryIcon
+                Icon={category.Icon}
+                name={category.iconClassName}
+                mode="symbol"
+              />
+            ),
+            key: category.href,
+            label: shouldShowFullscreenButton ? (
+              <span className="codex-log-fullscreen-menu-label">
+                <span className="codex-log-fullscreen-menu-text">
+                  {category.label}
+                </span>
+                <button
+                  aria-label="全屏预览Codex日报"
+                  className={cn("codex-log-fullscreen-button", {
+                    "is-active": isCodexLogFullscreen,
+                  })}
+                  onClick={handleCodexLogFullscreenClick}
+                  title={isCodexLogFullscreen ? "退出全屏" : "全屏"}
+                  type="button"
+                >
+                  <i aria-hidden className="iconfont icon-fullscreen" />
+                </button>
+              </span>
+            ) : (
+              category.label
+            ),
+            title: category.label,
+          };
+        }),
+    [
+      activeCategoryHref,
+      handleCodexLogFullscreenClick,
+      isCategorySidebarCollapsed,
+      isCodexLogFullscreen,
+      visibleCategoryHrefs,
+    ],
   );
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
   const weatherCascaderOptions = useMemo(
@@ -290,6 +354,21 @@ export function HomeDashboard({
       window.clearTimeout(timerId);
     };
   }, [refreshKnowledgeItems]);
+
+  useEffect(() => {
+    function handleFullscreenChange() {
+      setIsCodexLogFullscreen(
+        document.fullscreenElement === categoryContentRef.current,
+      );
+      refreshFullscreenLayout();
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, [refreshFullscreenLayout]);
 
   return (
     <main className="home-dashboard-main mx-auto flex min-h-0 w-full max-w-[1540px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
@@ -464,10 +543,14 @@ export function HomeDashboard({
         </aside>
 
         <Card
-          className="home-soft-shadow flex h-full min-h-0 overflow-hidden"
+          className={cn(
+            "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden",
+            isCodexLogFullscreen && "codex-log-dashboard-fullscreen",
+          )}
           classNames={{
             body: "flex h-full min-h-0 w-full p-4!",
           }}
+          ref={categoryContentRef}
           style={surfaceStyle}
         >
           {isCategoryContentLoading ? (

@@ -29,6 +29,9 @@ const summaryRouteSource = readSource(
 const homeStyleSource = readSource(
   "../src/app/(pages)/theme/styles/home.less",
 );
+const homeDashboardSource = readSource(
+  "../src/app/(pages)/home/home-dashboard.tsx",
+);
 
 test("home category list contains Codex daily report with provided icon", () => {
   assert.match(
@@ -97,4 +100,15 @@ test("Codex dashboard styles are theme-aware for dark and light modes", () => {
   assert.match(homeStyleSource, /var\(--home-theme-color\)/);
   assert.match(homeStyleSource, /\.theme-dark[\s\S]*codex-log/);
   assert.match(homeStyleSource, /color-mix/);
+});
+
+test("Codex daily report category can open the dashboard content in fullscreen", () => {
+  assert.match(homeDashboardSource, /codex-log-fullscreen-menu-label/);
+  assert.match(homeDashboardSource, /codex-log-fullscreen-button/);
+  assert.match(homeDashboardSource, /icon-fullscreen/);
+  assert.match(homeDashboardSource, /requestFullscreen\(\)/);
+  assert.match(homeDashboardSource, /stopPropagation\(\)/);
+  assert.match(homeDashboardSource, /aria-label="全屏预览Codex日报"/);
+  assert.match(homeStyleSource, /home-category-content-card:fullscreen/);
+  assert.match(homeStyleSource, /codex-log-dashboard-fullscreen/);
 });
