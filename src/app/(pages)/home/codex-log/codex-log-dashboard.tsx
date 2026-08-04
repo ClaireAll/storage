@@ -1,6 +1,27 @@
 "use client";
 
 import {
+  QuestionCircleOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  SyncOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  DatePicker,
+  Empty,
+  Input,
+  Select,
+  Space,
+  Spin,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  type TableColumnsType,
+} from "antd";
+import dayjs, { type Dayjs } from "dayjs";
+import {
   BarChart,
   LineChart,
   PieChart,
@@ -16,28 +37,9 @@ import {
   type LegendComponentOption,
   type TooltipComponentOption,
 } from "echarts/components";
-import * as echarts from "echarts/core";
 import type { ComposeOption } from "echarts/core";
+import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
-import {
-  Button,
-  DatePicker,
-  Empty,
-  Input,
-  Select,
-  Space,
-  Spin,
-  Table,
-  Tag,
-  Typography,
-  type TableColumnsType,
-} from "antd";
-import {
-  ReloadOutlined,
-  SearchOutlined,
-  SyncOutlined,
-} from "@ant-design/icons";
-import dayjs, { type Dayjs } from "dayjs";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
@@ -373,13 +375,7 @@ function buildRepositoryOption(
   };
 }
 
-function PanelTitle({
-  icon,
-  title,
-}: {
-  icon?: ReactNode;
-  title: string;
-}) {
+function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
   return (
     <div className="codex-log-panel-title">
       {icon}
@@ -398,7 +394,9 @@ function TaskList({
   mode: "frequency" | "token";
 }) {
   if (!items.length) {
-    return <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+    return (
+      <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    );
   }
 
   return (
@@ -432,45 +430,48 @@ function SummaryPanel({ date }: { date: string }) {
     status: "idle",
   });
 
-  const loadSummary = useCallback(async (signal?: AbortSignal) => {
-    setSummaryState({ status: "loading" });
+  const loadSummary = useCallback(
+    async (signal?: AbortSignal) => {
+      setSummaryState({ status: "loading" });
 
-    try {
-      const response = await fetch("/api/codex-log/summary", {
-        body: JSON.stringify({ date }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        signal,
-      });
-      const result = (await response.json().catch(() => ({}))) as
-        | (Partial<CodexDailySummary> & { message?: string })
-        | null;
+      try {
+        const response = await fetch("/api/codex-log/summary", {
+          body: JSON.stringify({ date }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          signal,
+        });
+        const result = (await response.json().catch(() => ({}))) as
+          | (Partial<CodexDailySummary> & { message?: string })
+          | null;
 
-      if (!response.ok) {
-        throw new Error(result?.message ?? "总结生成失败");
+        if (!response.ok) {
+          throw new Error(result?.message ?? "总结生成失败");
+        }
+
+        setSummaryState({
+          result: {
+            growth: result?.growth?.trim() || "暂无成长总结",
+            shortage: result?.shortage?.trim() || "暂无不足总结",
+            summary: result?.summary?.trim() || "暂无工作总结",
+          },
+          status: "ready",
+        });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        setSummaryState({
+          error: error instanceof Error ? error.message : "总结生成失败",
+          status: "error",
+        });
       }
-
-      setSummaryState({
-        result: {
-          growth: result?.growth?.trim() || "暂无成长总结",
-          shortage: result?.shortage?.trim() || "暂无不足总结",
-          summary: result?.summary?.trim() || "暂无工作总结",
-        },
-        status: "ready",
-      });
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-
-      setSummaryState({
-        error: error instanceof Error ? error.message : "总结生成失败",
-        status: "error",
-      });
-    }
-  }, [date]);
+    },
+    [date],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -592,11 +593,13 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       dataIndex: "user_tasks",
       ellipsis: true,
       title: "任务",
+      width: 360,
     },
     {
       dataIndex: "assistant_summary",
       ellipsis: true,
       title: "回答简述",
+      width: 420,
     },
     {
       align: "right",
@@ -681,7 +684,8 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         />
         <MetricCard
           icon="icon-token"
-          label="Token"
+          hint="来自 codex_log.token_count，是日报入库的任务估算值，不等于 Codex 桌面热力图总使用量。"
+          label="入库Token"
           value={formatToken(data.stats.tokenTotal)}
         />
       </section>
@@ -695,7 +699,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           <PanelTitle title="仓库占比" />
           <CodexChart option={repositoryOption} />
         </section>
-        <SummaryPanel date={data.selectedDate} />
       </section>
 
       <section className="codex-log-side-grid">
@@ -725,6 +728,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           </Typography.Text>
         </div>
         <Table
+          className="codex-log-table"
           columns={columns}
           dataSource={filteredRecords}
           pagination={{
@@ -732,19 +736,23 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             showSizeChanger: false,
           }}
           rowKey="key"
-          scroll={{ x: 920 }}
+          scroll={{ x: "max-content" }}
           size="middle"
+          tableLayout="fixed"
         />
       </section>
+      <SummaryPanel date={data.selectedDate} />
     </div>
   );
 }
 
 function MetricCard({
+  hint,
   icon,
   label,
   value,
 }: {
+  hint?: string;
   icon: string;
   label: string;
   value: string;
@@ -753,7 +761,17 @@ function MetricCard({
     <article className="codex-log-metric-card">
       <MetricIcon name={icon} />
       <div>
-        <span>{label}</span>
+        <span className="codex-log-metric-label">
+          {label}
+          {hint ? (
+            <Tooltip title={hint}>
+              <QuestionCircleOutlined
+                aria-label={`${label}说明`}
+                className="codex-log-metric-help"
+              />
+            </Tooltip>
+          ) : null}
+        </span>
         <strong>{value}</strong>
       </div>
     </article>

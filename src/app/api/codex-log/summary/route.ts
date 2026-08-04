@@ -85,12 +85,14 @@ function buildDailySummaryPrompt(date: string, rows: CodexLogSummaryRow[]) {
   });
 
   return [
-    `请基于 ${date} 的 Codex 会话日志，生成每日工作复盘。`,
+    `请基于 ${date} 的 Codex 会话日志，为用户本人生成每日工作复盘。`,
     "输出必须是 JSON，不要输出 Markdown，不要添加额外解释。",
     "JSON 字段固定为 summary、growth、shortage。",
-    "summary：概括今天完成了什么和主要推进方向。",
-    "growth：总结今天体现出的进步、方法或能力提升。",
-    "shortage：指出今天可以改进的不足，语气温和具体。",
+    "复盘对象是用户本人，Codex 只是工具或协作对象。",
+    "summary：从用户视角概括她今天完成了什么、推进了哪些方向。",
+    "growth：分析用户今天体现出的进步、方法意识或能力提升。",
+    "shortage：指出用户今天可以改进的不足，语气温和具体。",
+    "不要评价 Codex，不要把总结、成长、不足写成 Codex 的能力评价。",
     "",
     lines.join("\n\n"),
   ].join("\n");
@@ -150,7 +152,7 @@ export async function POST(request: Request) {
       messages: [
         {
           content:
-            "你是一个中文工作复盘助手，擅长把零散任务整理成清晰、温和、可行动的每日总结。",
+            "你是 Claire 的中文工作复盘助手。复盘对象是用户本人，Codex 只是工具或协作对象。请把零散任务整理成清晰、温和、可行动的每日总结。",
           role: "system",
         },
         {

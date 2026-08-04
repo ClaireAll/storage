@@ -87,6 +87,32 @@ test("Codex dashboard summary module calls DeepSeek and shows summary growth sho
   assert.match(summaryRouteSource, /shortage/);
 });
 
+test("Codex dashboard summary prompt analyzes the user instead of Codex", () => {
+  assert.match(summaryRouteSource, /复盘对象是用户本人/);
+  assert.match(summaryRouteSource, /Codex 只是工具或协作对象/);
+  assert.match(summaryRouteSource, /不要评价 Codex/);
+});
+
+test("Codex token metric makes the imported data source explicit", () => {
+  assert.match(dashboardSource, /label="入库Token"/);
+  assert.match(dashboardSource, /hint="来自 codex_log\.token_count/);
+});
+
+test("Codex conversation table keeps overflow inside the table panel", () => {
+  assert.match(dashboardSource, /className="codex-log-table"/);
+  assert.match(dashboardSource, /tableLayout="fixed"/);
+  assert.match(dashboardSource, /scroll=\{\{ x: "max-content" \}\}/);
+  assert.match(homeStyleSource, /\.codex-log-table-panel[\s\S]*overflow: hidden/);
+  assert.match(homeStyleSource, /\.codex-log-dashboard \.ant-table-content[\s\S]*overflow: auto/);
+});
+
+test("Codex dashboard defines custom theme-aware scrollbars", () => {
+  assert.match(homeStyleSource, /scrollbar-color:/);
+  assert.match(homeStyleSource, /::-webkit-scrollbar/);
+  assert.match(homeStyleSource, /::-webkit-scrollbar-thumb/);
+  assert.match(homeStyleSource, /var\(--home-theme-color\)/);
+});
+
 test("high frequency and longest session panels do not render more links", () => {
   assert.match(dashboardSource, /高频任务/);
   assert.match(dashboardSource, /最长会话/);
