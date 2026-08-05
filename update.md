@@ -1,5 +1,12 @@
 # 版本更新
 
+## 2026-08-05 10:02:21 +08:00
+
+- 优化 Codex 日报仪表板组件结构：新增 `DashboardPanel`、`ChartPanel`、`EChart` 公共区域组件，统一面板外壳、图表初始化和空状态展示。
+- 复用 Ant Design 展示组件：指标卡改用 `Card + Statistic`，最长会话改用 `List`，总结加载态改用 `Skeleton`，减少手写 DOM 结构。
+- 会话记录表格改为 Ant Design `Table.pagination` 托管分页，保留时间与 Token 筛选、表头排序、总行数展示和主题化滚动条。
+- 图表容器改用 `ResizeObserver` 自动 resize，提升全屏预览、窗口变化和布局切换时的 ECharts 尺寸稳定性。
+
 ## 2026-08-04 16:06:44 +08:00
 
 - Codex 日报 Token 统计改用 Codex 桌面 usage 聚合口径；入库脚本在每日追加新记录时也会刷新已存在记录的 `token_count`，不再删除历史数据。

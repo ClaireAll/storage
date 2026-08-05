@@ -106,14 +106,27 @@ test("Codex token metric makes the imported data source explicit", () => {
   assert.match(dashboardSource, /Codex 桌面 usage 聚合/);
 });
 
-test("Codex conversation table keeps overflow inside the table panel", () => {
+test("Codex conversation table uses Ant Design managed pagination", () => {
   assert.match(dashboardSource, /className=\{cn\("codex-log-table"/);
   assert.match(dashboardSource, /tableLayout="fixed"/);
   assert.match(dashboardSource, /scroll=\{\{ x: 848, y: 220 \}\}/);
-  assert.match(dashboardSource, /pagination=\{false\}/);
-  assert.match(dashboardSource, /<Pagination/);
+  assert.match(dashboardSource, /pagination=\{\{/);
+  assert.match(dashboardSource, /showTotal:/);
   assert.match(dashboardSource, /showSizeChanger/);
+  assert.doesNotMatch(dashboardSource, /dataSource=\{tablePageRecords\}/);
+  assert.doesNotMatch(dashboardSource, /<Pagination/);
   assert.match(dashboardSource, /overflow-auto/);
+});
+
+test("Codex dashboard reuses Ant Design display components", () => {
+  assert.match(dashboardSource, /\bCard\b/);
+  assert.match(dashboardSource, /\bStatistic\b/);
+  assert.match(dashboardSource, /\bList\b/);
+  assert.match(dashboardSource, /\bSkeleton\b/);
+  assert.match(dashboardSource, /function DashboardPanel/);
+  assert.match(dashboardSource, /function ChartPanel/);
+  assert.match(dashboardSource, /function EChart/);
+  assert.match(dashboardSource, /ResizeObserver/);
 });
 
 test("Codex dashboard defines custom theme-aware scrollbars", () => {

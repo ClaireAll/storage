@@ -12,12 +12,14 @@ import {
 } from "@ant-design/icons";
 import {
   Button,
+  Card,
   DatePicker,
   Empty,
   Input,
-  Pagination,
+  List,
   Select,
-  Spin,
+  Skeleton,
+  Statistic,
   Table,
   Tag,
   Tooltip,
@@ -400,30 +402,125 @@ function MetricIcon({
   );
 }
 
-function CodexChart({ option }: { option: ChartOption }) {
+function DashboardPanel({
+  children,
+  className,
+  extra,
+  icon,
+  title,
+}: {
+  children: ReactNode;
+  className?: string;
+  extra?: ReactNode;
+  icon?: ReactNode;
+  title?: string;
+}) {
+  return (
+    <Card
+      className={cn("codex-log-panel min-w-0", panelClassName, className)}
+    >
+      {title || extra ? (
+        <div className="codex-log-panel-header">
+          {title ? <PanelTitle icon={icon} title={title} /> : <span />}
+          {extra}
+        </div>
+      ) : null}
+      {children}
+    </Card>
+  );
+}
+
+function EChart({
+  empty,
+  emptyText = "暂无图表数据",
+  option,
+}: {
+  empty?: boolean;
+  emptyText?: string;
+  option: ChartOption;
+}) {
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const chartInstanceRef = useRef<echarts.ECharts | null>(null);
 
   useEffect(() => {
-    if (!chartRef.current) {
+    const element = chartRef.current;
+
+    if (!element) {
       return;
     }
 
-    const chart = echarts.init(chartRef.current);
-    chart.setOption(option);
+    const chart = echarts.init(element);
+    chartInstanceRef.current = chart;
 
     function resizeChart() {
       chart.resize();
     }
 
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(resizeChart);
+
+    resizeObserver?.observe(element);
     window.addEventListener("resize", resizeChart);
 
     return () => {
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", resizeChart);
+      chartInstanceRef.current = null;
       chart.dispose();
     };
-  }, [option]);
+  }, []);
 
-  return <div className="codex-log-chart" ref={chartRef} />;
+  useEffect(() => {
+    const chart = chartInstanceRef.current;
+
+    if (!chart) {
+      return;
+    }
+
+    if (empty) {
+      chart.clear();
+      return;
+    }
+
+    chart.setOption(option, true);
+    chart.resize();
+  }, [empty, option]);
+
+  return (
+    <div className="codex-log-chart-shell">
+      <div
+        className={cn("codex-log-chart", empty && "pointer-events-none opacity-0")}
+        ref={chartRef}
+      />
+      {empty ? (
+        <Empty
+          className="codex-log-chart-empty"
+          description={emptyText}
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ChartPanel({
+  empty,
+  emptyText,
+  option,
+  title,
+}: {
+  empty?: boolean;
+  emptyText?: string;
+  option: ChartOption;
+  title: string;
+}) {
+  return (
+    <DashboardPanel className="codex-log-chart-panel" title={title}>
+      <EChart empty={empty} emptyText={emptyText} option={option} />
+    </DashboardPanel>
+  );
 }
 
 function buildTrendOption(
@@ -573,28 +670,27 @@ function TaskList({
   emptyText: string;
   items: CodexLogRecord[];
 }) {
-  if (!items.length) {
-    return (
-      <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />
-    );
-  }
-
   return (
-    <div className={cn("codex-log-rank-list", scrollbarClassName)}>
-      {items.map((item, index) => {
-        return (
-          <div className="codex-log-rank-item" key={item.key}>
-            <span className="codex-log-rank-index">{index + 1}</span>
-            <span className="codex-log-rank-title" title={item.user_tasks}>
-              {item.user_tasks}
-            </span>
-            <span className="codex-log-rank-meta">
-              {formatToken(item.token_count)} Token
-            </span>
-          </div>
-        );
-      })}
-    </div>
+    <List<CodexLogRecord>
+      className={cn("codex-log-rank-list", scrollbarClassName)}
+      dataSource={items}
+      locale={{
+        emptyText: (
+          <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ),
+      }}
+      renderItem={(item, index) => (
+        <List.Item className="codex-log-rank-item">
+          <span className="codex-log-rank-index">{index + 1}</span>
+          <span className="codex-log-rank-title" title={item.user_tasks}>
+            {item.user_tasks}
+          </span>
+          <span className="codex-log-rank-meta">
+            {formatToken(item.token_count)} Token
+          </span>
+        </List.Item>
+      )}
+    />
   );
 }
 
@@ -659,17 +755,9 @@ function SummaryPanel({ date }: { date: string }) {
   }, [loadSummary]);
 
   return (
-    <section
-      className={cn(
-        "codex-log-panel codex-log-summary-panel min-w-0 p-3",
-        panelClassName,
-      )}
-    >
-      <div className="codex-log-panel-header">
-        <PanelTitle
-          icon={<MetricIcon name="icon-codex" tone="codex" />}
-          title="总结"
-        />
+    <DashboardPanel
+      className="codex-log-summary-panel"
+      extra={
         <Button
           icon={<ReloadOutlined />}
           loading={summaryState.status === "loading"}
@@ -677,10 +765,13 @@ function SummaryPanel({ date }: { date: string }) {
           size="small"
           type="text"
         />
-      </div>
+      }
+      icon={<MetricIcon name="icon-codex" tone="codex" />}
+      title="总结"
+    >
       {summaryState.status === "loading" ? (
         <div className="codex-log-summary-loading">
-          <Spin size="small" />
+          <Skeleton active paragraph={{ rows: 4 }} title={false} />
         </div>
       ) : summaryState.status === "error" ? (
         <Typography.Text type="danger">{summaryState.error}</Typography.Text>
@@ -691,7 +782,7 @@ function SummaryPanel({ date }: { date: string }) {
           <SummaryBlock label="不足" text={summaryState.result.shortage} />
         </div>
       ) : null}
-    </section>
+    </DashboardPanel>
   );
 }
 
@@ -801,13 +892,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const tableTotal = tableRecords.length;
   const maxTablePage = Math.max(1, Math.ceil(tableTotal / tablePageSize));
   const safeTablePage = Math.min(tablePage, maxTablePage);
-  const tableStartIndex = tableTotal ? (safeTablePage - 1) * tablePageSize : 0;
-  const tablePageRecords = tableRecords.slice(
-    tableStartIndex,
-    tableStartIndex + tablePageSize,
-  );
-  const tableRangeStart = tableTotal ? tableStartIndex + 1 : 0;
-  const tableRangeEnd = Math.min(tableStartIndex + tablePageSize, tableTotal);
   const columns: TableColumnsType<CodexLogRecord> = [
     {
       dataIndex: "time",
@@ -892,9 +976,10 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   }
 
   const handleTableChange: TableProps<CodexLogRecord>["onChange"] = (
-    _pagination,
+    pagination,
     filters,
     sorter,
+    extra,
   ) => {
     const nextSorter = Array.isArray(sorter) ? sorter[0] : sorter;
     const field = String(nextSorter.field ?? "");
@@ -903,7 +988,8 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       time: (filters.time ?? []).map(String),
       token_count: (filters.token_count ?? []).map(String),
     });
-    setTablePage(1);
+    setTablePage(extra.action === "paginate" ? (pagination.current ?? 1) : 1);
+    setTablePageSize(pagination.pageSize ?? tablePageSize);
 
     if (
       field === "assistant_summary" ||
@@ -1017,71 +1103,51 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       </section>
 
       <section className="codex-log-analysis-grid grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)_minmax(260px,0.8fr)]">
-        <section
-          className={cn(
-            "codex-log-panel codex-log-chart-panel min-w-0 p-3",
-            panelClassName,
-          )}
-        >
-          <PanelTitle title="任务与Token趋势" />
-          <CodexChart option={trendOption} />
-        </section>
-        <section
-          className={cn(
-            "codex-log-panel codex-log-chart-panel min-w-0 p-3",
-            panelClassName,
-          )}
-        >
-          <PanelTitle title="仓库占比" />
-          <CodexChart option={repositoryOption} />
-        </section>
-        <section className={cn("codex-log-panel min-w-0 p-3", panelClassName)}>
-          <PanelTitle title="最长会话" />
+        <ChartPanel
+          empty={!data.trend.length}
+          option={trendOption}
+          title="任务与Token趋势"
+        />
+        <ChartPanel
+          empty={!data.repositoryDistribution.length}
+          option={repositoryOption}
+          title="仓库占比"
+        />
+        <DashboardPanel title="最长会话">
           <TaskList emptyText="暂无会话" items={data.longestSessions} />
-        </section>
+        </DashboardPanel>
       </section>
 
-      <section
-        className={cn(
-          "codex-log-panel codex-log-table-panel min-w-0 p-3",
-          panelClassName,
-        )}
-      >
-        <div className="codex-log-panel-header">
-          <PanelTitle title="会话记录" />
+      <DashboardPanel
+        className="codex-log-table-panel"
+        extra={
           <Typography.Text type="secondary">
             {formatNumber(tableTotal)} 条
           </Typography.Text>
-        </div>
+        }
+        title="会话记录"
+      >
         <Table
           className={cn("codex-log-table", "min-w-0", tableScrollbarClassName)}
           columns={columns}
-          dataSource={tablePageRecords}
+          dataSource={tableRecords}
           onChange={handleTableChange}
-          pagination={false}
+          pagination={{
+            current: safeTablePage,
+            pageSize: tablePageSize,
+            pageSizeOptions: ["6", "8", "12"],
+            showSizeChanger: true,
+            showTotal: (total, range) =>
+              `共 ${formatNumber(total)} 条 · ${range[0]}-${range[1]}`,
+            total: tableTotal,
+          }}
           rowKey="key"
           scroll={{ x: 848, y: 220 }}
           showSorterTooltip={{ target: "sorter-icon" }}
           size="middle"
           tableLayout="fixed"
         />
-        <div className="codex-log-table-footer">
-          <Typography.Text className="codex-log-table-total" type="secondary">
-            共 {formatNumber(tableTotal)} 条 · {tableRangeStart}-{tableRangeEnd}
-          </Typography.Text>
-          <Pagination
-            current={safeTablePage}
-            onChange={(page, pageSize) => {
-              setTablePage(page);
-              setTablePageSize(pageSize);
-            }}
-            pageSize={tablePageSize}
-            pageSizeOptions={["6", "8", "12"]}
-            showSizeChanger
-            total={tableTotal}
-          />
-        </div>
-      </section>
+      </DashboardPanel>
       <SummaryPanel date={data.selectedDate} />
     </div>
   );
@@ -1103,9 +1169,9 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <article
+    <Card
       className={cn(
-        "codex-log-metric-card min-w-0 rounded-lg !border-[color-mix(in_srgb,var(--home-theme-text)_16%,transparent)] !bg-[color-mix(in_srgb,var(--home-theme-bg)_90%,#ffffff_10%)] px-5 py-4",
+        "codex-log-metric-card min-w-0 !border-[color-mix(in_srgb,var(--home-theme-text)_16%,transparent)] !bg-[color-mix(in_srgb,var(--home-theme-bg)_90%,#ffffff_10%)]",
         panelClassName,
         metricToneClassNames[tone].card,
       )}
@@ -1117,36 +1183,37 @@ function MetricCard({
         tone={tone}
       />
       <div className="min-w-0">
-        <span
+        <Statistic
           className={cn(
-            "codex-log-metric-label text-sm font-semibold leading-none",
-            metricToneClassNames[tone].label,
-          )}
-        >
-          {label}
-          {hint ? (
-            <Tooltip title={hint}>
-              <QuestionCircleOutlined
-                aria-label={`${label}说明`}
-                className={cn(
-                  "codex-log-metric-help",
-                  metricToneClassNames[tone].help,
-                )}
-              />
-            </Tooltip>
-          ) : null}
-        </span>
-        <strong
-          className={cn(
-            "block truncate text-[30px] font-bold leading-none tabular-nums",
+            "codex-log-metric-stat",
             metricToneClassNames[tone].value,
           )}
-        >
-          {value}
-        </strong>
+          title={
+            <span
+              className={cn(
+                "codex-log-metric-label text-sm font-semibold leading-none",
+                metricToneClassNames[tone].label,
+              )}
+            >
+              {label}
+              {hint ? (
+                <Tooltip title={hint}>
+                  <QuestionCircleOutlined
+                    aria-label={`${label}说明`}
+                    className={cn(
+                      "codex-log-metric-help",
+                      metricToneClassNames[tone].help,
+                    )}
+                  />
+                </Tooltip>
+              ) : null}
+            </span>
+          }
+          value={value}
+        />
         {delta ? <MetricDeltaLine delta={delta} /> : null}
       </div>
-    </article>
+    </Card>
   );
 }
 
