@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 
 function readSource(path) {
@@ -206,6 +208,131 @@ test("codex daily report uses desktop thread usage before text estimates", async
       },
     ],
   );
+});
+
+test("codex daily report parses sqlite json rows with multiline titles", async () => {
+  const { parseCodexDesktopUsageRows } = await import(
+    new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
+  );
+
+  assert.deepEqual(
+    parseCodexDesktopUsageRows(
+      JSON.stringify([
+        {
+          cwd: "\\\\?\\D:\\Claire\\storage",
+          id: "thread-1",
+          title: "第一行\n第二行",
+          tokens_used: 123456,
+        },
+      ]),
+    ),
+    [
+      {
+        cwd: "\\\\?\\D:\\Claire\\storage",
+        id: "thread-1",
+        title: "第一行\n第二行",
+        tokens_used: 123456,
+      },
+    ],
+  );
+});
+
+test("codex daily report reads session token count events by Shanghai date", async () => {
+  const { readCodexDesktopUsageThreads } = await import(
+    new URL("../scripts/import-codex-daily-reports.mjs", import.meta.url)
+  );
+  const tempRoot = mkdtempSync(join(tmpdir(), "codex-session-usage-"));
+  const threadId = "019f0000-0000-7000-8000-000000000001";
+  const sessionPath = join(
+    tempRoot,
+    `rollout-2026-08-03T09-00-00-${threadId}.jsonl`,
+  );
+
+  writeFileSync(
+    sessionPath,
+    [
+      JSON.stringify({
+        timestamp: "2026-08-03T01:00:00.000Z",
+        type: "session_meta",
+        payload: {
+          cwd: "D:/Claire/storage",
+          id: threadId,
+        },
+      }),
+      JSON.stringify({
+        timestamp: "2026-08-03T01:00:01.000Z",
+        type: "response_item",
+        payload: {
+          role: "user",
+          content: [{ text: "Storage task\nsecond line" }],
+        },
+      }),
+      JSON.stringify({
+        timestamp: "2026-08-03T01:00:02.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            last_token_usage: {
+              total_tokens: 1200,
+            },
+          },
+        },
+      }),
+      JSON.stringify({
+        timestamp: "2026-08-03T15:59:59.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            last_token_usage: {
+              total_tokens: 1800,
+            },
+          },
+        },
+      }),
+      JSON.stringify({
+        timestamp: "2026-08-04T16:00:00.000Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            last_token_usage: {
+              total_tokens: 9999,
+            },
+          },
+        },
+      }),
+    ].join("\n"),
+    "utf8",
+  );
+
+  try {
+    assert.deepEqual(
+      await readCodexDesktopUsageThreads({
+        date: "2026-08-03",
+        sessionsRoots: [tempRoot],
+        sqlitePath: "missing-sqlite",
+        statePath: "missing-state",
+      }),
+      [
+        {
+          cwd: "D:/Claire/storage",
+          id: threadId,
+          title: "Storage task",
+          tokens_used: 3000,
+        },
+      ],
+    );
+  } finally {
+    rmSync(tempRoot, { force: true, recursive: true });
+  }
+});
+
+test("codex daily report reads sqlite SQL through stdin", () => {
+  assert.match(scriptSource, /execFileSync\(sqlite,\s*\[targetStatePath\]/);
+  assert.match(scriptSource, /input:\s*sql/);
+  assert.doesNotMatch(scriptSource, /execFileSync\(sqlite,\s*\[targetStatePath,\s*sql\]/);
 });
 
 test("codex daily report persistence appends new rows without deleting existing same-day rows", async () => {

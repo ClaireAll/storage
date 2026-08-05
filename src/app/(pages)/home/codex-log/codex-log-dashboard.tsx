@@ -1,6 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  MinusOutlined,
   QuestionCircleOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -11,14 +15,15 @@ import {
   DatePicker,
   Empty,
   Input,
+  Pagination,
   Select,
-  Space,
   Spin,
   Table,
   Tag,
   Tooltip,
   Typography,
   type TableColumnsType,
+  type TableProps,
 } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import {
@@ -49,7 +54,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { cn } from "@/lib/utils";
 import type {
   CodexLogDashboardData,
   CodexLogRecord,
@@ -103,6 +107,26 @@ type ChartPalette = {
   text: string;
 };
 
+type MetricDelta = {
+  direction: "down" | "flat" | "up";
+  text: string;
+};
+
+type TableSorterState = {
+  field:
+    | "assistant_summary"
+    | "thread_title"
+    | "time"
+    | "token_count"
+    | "user_tasks";
+  order: "ascend" | "descend" | null;
+};
+
+type TableFilterState = {
+  time: string[];
+  token_count: string[];
+};
+
 const hourFilters = [
   { text: "上午", value: "morning" },
   { text: "下午", value: "afternoon" },
@@ -130,46 +154,46 @@ const tableScrollbarClassName =
   "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto [&_.ant-table-content]:[scrollbar-width:thin] [&_.ant-table-body]:[scrollbar-width:thin] [&_.ant-table-content::-webkit-scrollbar]:h-2 [&_.ant-table-content::-webkit-scrollbar]:w-2 [&_.ant-table-body::-webkit-scrollbar]:h-2 [&_.ant-table-body::-webkit-scrollbar]:w-2 [&_.ant-table-content::-webkit-scrollbar-thumb]:rounded-full [&_.ant-table-body::-webkit-scrollbar-thumb]:rounded-full [&_.ant-table-content::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)] [&_.ant-table-body::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)]";
 const metricToneClassNames = {
   codex: {
-    card: "!border-[color-mix(in_srgb,#18f83a_50%,transparent)] !bg-[color-mix(in_srgb,#18f83a_9%,var(--home-theme-bg)_91%)]",
+    card: "",
     help: "!text-[color-mix(in_srgb,#18f83a_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#18f83a_52%,transparent)] !bg-[color-mix(in_srgb,#18f83a_16%,transparent)] !text-[#18f83a]",
-    label: "!text-[color-mix(in_srgb,#18f83a_76%,var(--home-theme-text)_24%)]",
-    value: "!text-[color-mix(in_srgb,#18f83a_82%,var(--home-theme-text)_18%)]",
+    icon: "!border-[color-mix(in_srgb,#18f83a_50%,transparent)] !bg-[color-mix(in_srgb,#18f83a_14%,transparent)] !text-[#18f83a]",
+    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
+    value: "!text-[var(--home-theme-text)]",
   },
   neutral: {
-    card: "!border-[color-mix(in_srgb,#6f7378_38%,transparent)] !bg-[color-mix(in_srgb,#6f7378_8%,var(--home-theme-bg)_92%)]",
+    card: "",
     help: "!text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]",
-    icon: "!border-[color-mix(in_srgb,#6f7378_38%,transparent)] !bg-[color-mix(in_srgb,#6f7378_14%,transparent)] !text-[#6f7378]",
-    label: "!text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]",
-    value: "!text-[color-mix(in_srgb,#6f7378_84%,var(--home-theme-text)_16%)]",
+    icon: "!border-[color-mix(in_srgb,#6f7378_38%,transparent)] !bg-[color-mix(in_srgb,#6f7378_12%,transparent)] !text-[#6f7378]",
+    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
+    value: "!text-[var(--home-theme-text)]",
   },
   proportion: {
-    card: "!border-[color-mix(in_srgb,#f59e0b_48%,transparent)] !bg-[color-mix(in_srgb,#f59e0b_9%,var(--home-theme-bg)_91%)]",
+    card: "",
     help: "!text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]",
-    icon: "!border-[color-mix(in_srgb,#f59e0b_50%,transparent)] !bg-[color-mix(in_srgb,#f59e0b_16%,transparent)] !text-[#f59e0b]",
-    label: "!text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]",
-    value: "!text-[color-mix(in_srgb,#f59e0b_82%,var(--home-theme-text)_18%)]",
+    icon: "!border-[color-mix(in_srgb,#f59e0b_52%,transparent)] !bg-[color-mix(in_srgb,#f59e0b_14%,transparent)] !text-[#f59e0b]",
+    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
+    value: "!text-[var(--home-theme-text)]",
   },
   store: {
-    card: "!border-[color-mix(in_srgb,#a78bfa_48%,transparent)] !bg-[color-mix(in_srgb,#a78bfa_9%,var(--home-theme-bg)_91%)]",
+    card: "",
     help: "!text-[color-mix(in_srgb,#a78bfa_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#a78bfa_50%,transparent)] !bg-[color-mix(in_srgb,#a78bfa_16%,transparent)] !text-[#a78bfa]",
-    label: "!text-[color-mix(in_srgb,#a78bfa_76%,var(--home-theme-text)_24%)]",
-    value: "!text-[color-mix(in_srgb,#a78bfa_84%,var(--home-theme-text)_16%)]",
+    icon: "!border-[color-mix(in_srgb,#a855f7_52%,transparent)] !bg-[color-mix(in_srgb,#a855f7_14%,transparent)] !text-[#a855f7]",
+    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
+    value: "!text-[var(--home-theme-text)]",
   },
   task: {
-    card: "!border-[color-mix(in_srgb,#3b82f6_48%,transparent)] !bg-[color-mix(in_srgb,#3b82f6_9%,var(--home-theme-bg)_91%)]",
-    help: "!text-[color-mix(in_srgb,#3b82f6_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#3b82f6_50%,transparent)] !bg-[color-mix(in_srgb,#3b82f6_16%,transparent)] !text-[#3b82f6]",
-    label: "!text-[color-mix(in_srgb,#3b82f6_76%,var(--home-theme-text)_24%)]",
-    value: "!text-[color-mix(in_srgb,#3b82f6_84%,var(--home-theme-text)_16%)]",
+    card: "",
+    help: "!text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]",
+    icon: "!border-[color-mix(in_srgb,#22c55e_52%,transparent)] !bg-[color-mix(in_srgb,#22c55e_14%,transparent)] !text-[#22c55e]",
+    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
+    value: "!text-[var(--home-theme-text)]",
   },
   token: {
-    card: "!border-[color-mix(in_srgb,#22c55e_48%,transparent)] !bg-[color-mix(in_srgb,#22c55e_9%,var(--home-theme-bg)_91%)]",
-    help: "!text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#22c55e_50%,transparent)] !bg-[color-mix(in_srgb,#22c55e_16%,transparent)] !text-[#22c55e]",
-    label: "!text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]",
-    value: "!text-[color-mix(in_srgb,#22c55e_84%,var(--home-theme-text)_16%)]",
+    card: "",
+    help: "!text-[color-mix(in_srgb,#22d3ee_76%,var(--home-theme-text)_24%)]",
+    icon: "!border-[color-mix(in_srgb,#22d3ee_52%,transparent)] !bg-[color-mix(in_srgb,#22d3ee_14%,transparent)] !text-[#22d3ee]",
+    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
+    value: "!text-[var(--home-theme-text)]",
   },
 };
 
@@ -187,6 +211,68 @@ function formatToken(value: number) {
   }
 
   return String(value);
+}
+
+function toMetricDeltaText(value: number, precision = 1) {
+  if (value === 0) {
+    return "+0";
+  }
+
+  const absValue = Math.abs(value);
+  const formatted =
+    Number.isInteger(absValue) || absValue >= 10
+      ? Math.round(absValue).toString()
+      : absValue.toFixed(precision);
+
+  return `${value > 0 ? "+" : "-"}${formatted}`;
+}
+
+function getMetricDirection(value: number): MetricDelta["direction"] {
+  if (value > 0) {
+    return "up";
+  }
+
+  if (value < 0) {
+    return "down";
+  }
+
+  return "flat";
+}
+
+function buildPercentDelta(current: number, previous: number): MetricDelta {
+  if (previous <= 0) {
+    const diff = current - previous;
+
+    return {
+      direction: getMetricDirection(diff),
+      text: diff === 0 ? "+0" : toMetricDeltaText(diff),
+    };
+  }
+
+  const percent = ((current - previous) / previous) * 100;
+
+  return {
+    direction: getMetricDirection(percent),
+    text: `${toMetricDeltaText(percent)}%`,
+  };
+}
+
+function buildNumberDelta(current: number, previous: number): MetricDelta {
+  const diff = current - previous;
+
+  return {
+    direction: getMetricDirection(diff),
+    text: toMetricDeltaText(diff),
+  };
+}
+
+function buildPointDelta(current: number, previous: number): MetricDelta {
+  const diff = current - previous;
+
+  return {
+    direction: getMetricDirection(diff),
+    text: `${toMetricDeltaText(diff)}%`,
+  };
 }
 
 function getHourFilterValue(hour: number | null) {
@@ -215,6 +301,36 @@ function getTokenFilterValue(tokenCount: number) {
   }
 
   return "large";
+}
+
+function compareText(left: string, right: string) {
+  return left.localeCompare(right, "zh-CN");
+}
+
+function getRecordTimestamp(record: CodexLogRecord) {
+  const value = record.created_at ? new Date(record.created_at).getTime() : 0;
+
+  return Number.isNaN(value) ? 0 : value;
+}
+
+function getSortedRecords(records: CodexLogRecord[], sorter: TableSorterState) {
+  if (!sorter.order) {
+    return records;
+  }
+
+  const direction = sorter.order === "ascend" ? 1 : -1;
+
+  return [...records].sort((left, right) => {
+    if (sorter.field === "time") {
+      return (getRecordTimestamp(left) - getRecordTimestamp(right)) * direction;
+    }
+
+    if (sorter.field === "token_count") {
+      return (left.token_count - right.token_count) * direction;
+    }
+
+    return compareText(left[sorter.field], right[sorter.field]) * direction;
+  });
 }
 
 function readThemePalette(): ChartPalette {
@@ -261,15 +377,25 @@ function useChartPalette() {
 }
 
 function MetricIcon({
+  className,
+  iconClassName,
   name,
   tone = "neutral",
 }: {
+  className?: string;
+  iconClassName?: string;
   name: string;
   tone?: keyof typeof metricToneClassNames;
 }) {
   return (
-    <span className={cn("codex-log-metric-icon", metricToneClassNames[tone].icon)}>
-      <i aria-hidden className={`iconfont ${name}`} />
+    <span
+      className={cn(
+        "codex-log-metric-icon",
+        metricToneClassNames[tone].icon,
+        className,
+      )}
+    >
+      <i aria-hidden className={cn("iconfont", name, iconClassName)} />
     </span>
   );
 }
@@ -459,7 +585,9 @@ function TaskList({
         return (
           <div className="codex-log-rank-item" key={item.key}>
             <span className="codex-log-rank-index">{index + 1}</span>
-            <span className="codex-log-rank-title">{item.thread_title}</span>
+            <span className="codex-log-rank-title" title={item.user_tasks}>
+              {item.user_tasks}
+            </span>
             <span className="codex-log-rank-meta">
               {formatToken(item.token_count)} Token
             </span>
@@ -582,6 +710,16 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const palette = useChartPalette();
   const [keyword, setKeyword] = useState("");
   const [repository, setRepository] = useState<string>("all");
+  const [tableFilters, setTableFilters] = useState<TableFilterState>({
+    time: [],
+    token_count: [],
+  });
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(6);
+  const [tableSorter, setTableSorter] = useState<TableSorterState>({
+    field: "time",
+    order: "descend",
+  });
   const selectedDay = dayjs(data.selectedDate);
   const trendOption = useMemo(
     () => buildTrendOption(data.trend, palette),
@@ -605,6 +743,24 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     data.stats.tokenSource === "desktop"
       ? `使用 Codex 桌面 usage 聚合；入库估算为 ${formatToken(data.stats.databaseTokenTotal)} Token。`
       : "未读取到本机 Codex 桌面 usage，当前使用 codex_log.token_count 入库值。";
+  const metricDeltas = {
+    estimatedRatio: buildPointDelta(
+      data.stats.estimatedRatio,
+      data.stats.previous.estimatedRatio,
+    ),
+    repositoryCount: buildNumberDelta(
+      data.stats.repositoryCount,
+      data.stats.previous.repositoryCount,
+    ),
+    taskCount: buildPercentDelta(
+      data.stats.taskCount,
+      data.stats.previous.taskCount,
+    ),
+    tokenTotal: buildPercentDelta(
+      data.stats.tokenTotal,
+      data.stats.previous.tokenTotal,
+    ),
+  };
   const filteredRecords = useMemo(() => {
     const lowerKeyword = keyword.trim().toLowerCase();
 
@@ -626,58 +782,104 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       return matchesRepository && matchesKeyword;
     });
   }, [data.records, keyword, repository]);
+  const tableRecords = useMemo(() => {
+    const nextRecords = filteredRecords.filter((record) => {
+      const matchesTime =
+        !tableFilters.time.length ||
+        tableFilters.time.includes(getHourFilterValue(record.hour));
+      const matchesToken =
+        !tableFilters.token_count.length ||
+        tableFilters.token_count.includes(
+          getTokenFilterValue(record.token_count),
+        );
+
+      return matchesTime && matchesToken;
+    });
+
+    return getSortedRecords(nextRecords, tableSorter);
+  }, [filteredRecords, tableFilters, tableSorter]);
+  const tableTotal = tableRecords.length;
+  const maxTablePage = Math.max(1, Math.ceil(tableTotal / tablePageSize));
+  const safeTablePage = Math.min(tablePage, maxTablePage);
+  const tableStartIndex = tableTotal ? (safeTablePage - 1) * tablePageSize : 0;
+  const tablePageRecords = tableRecords.slice(
+    tableStartIndex,
+    tableStartIndex + tablePageSize,
+  );
+  const tableRangeStart = tableTotal ? tableStartIndex + 1 : 0;
+  const tableRangeEnd = Math.min(tableStartIndex + tablePageSize, tableTotal);
   const columns: TableColumnsType<CodexLogRecord> = [
     {
       dataIndex: "time",
+      filteredValue: tableFilters.time,
       filters: hourFilters,
-      onFilter: (value, record) =>
-        getHourFilterValue(record.hour) === String(value),
+      sorter: true,
+      sortOrder: tableSorter.field === "time" ? tableSorter.order : null,
+      sortDirections: ["descend", "ascend"],
       title: "时间",
       width: 86,
     },
     {
       dataIndex: "thread_title",
       render: (value: string, record) => (
-        <Space className="codex-log-title-cell" size={8}>
+        <div className="codex-log-title-cell">
           <Tag>{record.repository}</Tag>
           <span>{value}</span>
-        </Space>
+        </div>
       ),
+      sorter: true,
+      sortOrder:
+        tableSorter.field === "thread_title" ? tableSorter.order : null,
+      sortDirections: ["ascend", "descend"],
       title: "会话",
-      width: 180,
+      width: 170,
     },
     {
       dataIndex: "user_tasks",
       ellipsis: { showTitle: false },
       render: (value: string) => (
-        <Typography.Text className="block max-w-[240px]" ellipsis={{ tooltip: value }}>
+        <Typography.Text
+          className="block max-w-[220px]"
+          ellipsis={{ tooltip: value }}
+        >
           {value}
         </Typography.Text>
       ),
+      sorter: true,
+      sortOrder: tableSorter.field === "user_tasks" ? tableSorter.order : null,
+      sortDirections: ["ascend", "descend"],
       title: "任务",
-      width: 260,
+      width: 230,
     },
     {
       dataIndex: "assistant_summary",
       ellipsis: { showTitle: false },
       render: (value: string) => (
-        <Typography.Text className="block max-w-[260px]" ellipsis={{ tooltip: value }}>
+        <Typography.Text
+          className="block max-w-[240px]"
+          ellipsis={{ tooltip: value }}
+        >
           {value}
         </Typography.Text>
       ),
+      sorter: true,
+      sortOrder:
+        tableSorter.field === "assistant_summary" ? tableSorter.order : null,
+      sortDirections: ["ascend", "descend"],
       title: "回答简述",
-      width: 280,
+      width: 250,
     },
     {
       align: "right",
       dataIndex: "token_count",
+      filteredValue: tableFilters.token_count,
       filters: tokenFilters,
-      onFilter: (value, record) =>
-        getTokenFilterValue(record.token_count) === String(value),
       render: (value: number) => formatToken(value),
-      sorter: (left, right) => left.token_count - right.token_count,
+      sorter: true,
+      sortOrder: tableSorter.field === "token_count" ? tableSorter.order : null,
+      sortDirections: ["descend", "ascend"],
       title: "Token",
-      width: 104,
+      width: 112,
     },
   ];
 
@@ -689,6 +891,39 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     router.push(`${pathname}?date=${value.format("YYYY-MM-DD")}`);
   }
 
+  const handleTableChange: TableProps<CodexLogRecord>["onChange"] = (
+    _pagination,
+    filters,
+    sorter,
+  ) => {
+    const nextSorter = Array.isArray(sorter) ? sorter[0] : sorter;
+    const field = String(nextSorter.field ?? "");
+
+    setTableFilters({
+      time: (filters.time ?? []).map(String),
+      token_count: (filters.token_count ?? []).map(String),
+    });
+    setTablePage(1);
+
+    if (
+      field === "assistant_summary" ||
+      field === "thread_title" ||
+      field === "time" ||
+      field === "token_count" ||
+      field === "user_tasks"
+    ) {
+      setTableSorter({
+        field,
+        order: nextSorter.order ?? null,
+      });
+    } else {
+      setTableSorter({
+        field: "time",
+        order: "descend",
+      });
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -696,7 +931,12 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         scrollbarClassName,
       )}
     >
-      <div className={cn("codex-log-toolbar", panelClassName, "p-3")}>
+      <div
+        className={cn(
+          "codex-log-toolbar grid grid-cols-1 items-start gap-3 p-3 xl:flex xl:items-center xl:justify-between",
+          panelClassName,
+        )}
+      >
         <div className="codex-log-page-title">
           <MetricIcon name="icon-codex" tone="codex" />
           <div>
@@ -706,7 +946,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <Space wrap>
+        <div className="codex-log-toolbar-actions">
           <DatePicker
             allowClear={false}
             className="codex-log-date-picker"
@@ -718,14 +958,20 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           />
           <Select
             className="codex-log-repo-select"
-            onChange={setRepository}
+            onChange={(value) => {
+              setRepository(value);
+              setTablePage(1);
+            }}
             options={repositoryOptions}
             value={repository}
           />
           <Input
             allowClear
             className="codex-log-search"
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setTablePage(1);
+            }}
             placeholder="搜索任务或回答"
             prefix={<SearchOutlined />}
             value={keyword}
@@ -735,34 +981,38 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             onClick={() => router.refresh()}
             type="text"
           />
-        </Space>
+        </div>
       </div>
 
       <section className="codex-log-metric-grid grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
+          delta={metricDeltas.taskCount}
           icon="icon-task"
-          label="任务"
+          label="今日任务"
           tone="task"
           value={formatNumber(data.stats.taskCount)}
         />
         <MetricCard
+          delta={metricDeltas.tokenTotal}
+          icon="icon-token"
+          hint={tokenHint}
+          label="Token"
+          tone="token"
+          value={formatNumber(data.stats.tokenTotal)}
+        />
+        <MetricCard
+          delta={metricDeltas.repositoryCount}
           icon="icon-store"
           label="仓库"
           tone="store"
           value={formatNumber(data.stats.repositoryCount)}
         />
         <MetricCard
+          delta={metricDeltas.estimatedRatio}
           icon="icon-proportion"
           label="估算占比"
           tone="proportion"
           value={`${data.stats.estimatedRatio}%`}
-        />
-        <MetricCard
-          icon="icon-token"
-          hint={tokenHint}
-          label="入库Token"
-          tone="token"
-          value={formatToken(data.stats.tokenTotal)}
         />
       </section>
 
@@ -793,32 +1043,44 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
 
       <section
         className={cn(
-          "codex-log-panel codex-log-table-panel min-w-0 overflow-hidden p-3",
+          "codex-log-panel codex-log-table-panel min-w-0 p-3",
           panelClassName,
         )}
       >
         <div className="codex-log-panel-header">
           <PanelTitle title="会话记录" />
           <Typography.Text type="secondary">
-            {formatNumber(filteredRecords.length)} 条
+            {formatNumber(tableTotal)} 条
           </Typography.Text>
         </div>
         <Table
           className={cn("codex-log-table", "min-w-0", tableScrollbarClassName)}
           columns={columns}
-          dataSource={filteredRecords}
-          pagination={{
-            pageSize: 6,
-            pageSizeOptions: ["6", "8", "12"],
-            showSizeChanger: true,
-            showTotal: (total, range) =>
-              `共 ${formatNumber(total)} 条 · ${range[0]}-${range[1]}`,
-          }}
+          dataSource={tablePageRecords}
+          onChange={handleTableChange}
+          pagination={false}
           rowKey="key"
-          scroll={{ x: 860, y: 300 }}
+          scroll={{ x: 848, y: 220 }}
+          showSorterTooltip={{ target: "sorter-icon" }}
           size="middle"
           tableLayout="fixed"
         />
+        <div className="codex-log-table-footer">
+          <Typography.Text className="codex-log-table-total" type="secondary">
+            共 {formatNumber(tableTotal)} 条 · {tableRangeStart}-{tableRangeEnd}
+          </Typography.Text>
+          <Pagination
+            current={safeTablePage}
+            onChange={(page, pageSize) => {
+              setTablePage(page);
+              setTablePageSize(pageSize);
+            }}
+            pageSize={tablePageSize}
+            pageSizeOptions={["6", "8", "12"]}
+            showSizeChanger
+            total={tableTotal}
+          />
+        </div>
       </section>
       <SummaryPanel date={data.selectedDate} />
     </div>
@@ -826,12 +1088,14 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
 }
 
 function MetricCard({
+  delta,
   hint,
   icon,
   label,
   tone,
   value,
 }: {
+  delta?: MetricDelta;
   hint?: string;
   icon: string;
   label: string;
@@ -841,26 +1105,75 @@ function MetricCard({
   return (
     <article
       className={cn(
-        "codex-log-metric-card min-w-0 rounded-lg p-3",
+        "codex-log-metric-card min-w-0 rounded-lg !border-[color-mix(in_srgb,var(--home-theme-text)_16%,transparent)] !bg-[color-mix(in_srgb,var(--home-theme-bg)_90%,#ffffff_10%)] px-5 py-4",
         panelClassName,
         metricToneClassNames[tone].card,
       )}
     >
-      <MetricIcon name={icon} tone={tone} />
-      <div>
-        <span className={cn("codex-log-metric-label", metricToneClassNames[tone].label)}>
+      <MetricIcon
+        className="!size-16 !rounded-xl"
+        iconClassName="!text-[34px]"
+        name={icon}
+        tone={tone}
+      />
+      <div className="min-w-0">
+        <span
+          className={cn(
+            "codex-log-metric-label text-sm font-semibold leading-none",
+            metricToneClassNames[tone].label,
+          )}
+        >
           {label}
           {hint ? (
             <Tooltip title={hint}>
               <QuestionCircleOutlined
                 aria-label={`${label}说明`}
-                className={cn("codex-log-metric-help", metricToneClassNames[tone].help)}
+                className={cn(
+                  "codex-log-metric-help",
+                  metricToneClassNames[tone].help,
+                )}
               />
             </Tooltip>
           ) : null}
         </span>
-        <strong className={metricToneClassNames[tone].value}>{value}</strong>
+        <strong
+          className={cn(
+            "block truncate text-[30px] font-bold leading-none tabular-nums",
+            metricToneClassNames[tone].value,
+          )}
+        >
+          {value}
+        </strong>
+        {delta ? <MetricDeltaLine delta={delta} /> : null}
       </div>
     </article>
+  );
+}
+
+function MetricDeltaLine({ delta }: { delta: MetricDelta }) {
+  const Icon =
+    delta.direction === "up"
+      ? ArrowUpOutlined
+      : delta.direction === "down"
+        ? ArrowDownOutlined
+        : MinusOutlined;
+
+  return (
+    <span
+      className={cn(
+        "codex-log-metric-delta inline-flex items-center gap-1 text-sm font-medium leading-none tabular-nums",
+        delta.direction === "down"
+          ? "text-red-400"
+          : delta.direction === "up"
+            ? "text-emerald-400"
+            : "text-[color-mix(in_srgb,var(--home-theme-text)_54%,transparent)]",
+      )}
+    >
+      <span className="text-[color-mix(in_srgb,var(--home-theme-text)_58%,transparent)]">
+        较昨日
+      </span>
+      <span>{delta.text}</span>
+      <Icon aria-hidden className="text-xs" />
+    </span>
   );
 }

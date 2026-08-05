@@ -95,8 +95,12 @@ test("Codex dashboard summary prompt analyzes the user instead of Codex", () => 
 
 test("Codex token metric makes the imported data source explicit", () => {
   assert.match(utilsSource, /readCodexDesktopUsageTotals/);
-  assert.match(utilsSource, /threads/);
-  assert.match(utilsSource, /tokens_used/);
+  assert.match(utilsSource, /sessions/);
+  assert.match(utilsSource, /archived_sessions/);
+  assert.match(utilsSource, /last_token_usage/);
+  assert.match(utilsSource, /total_tokens/);
+  assert.match(utilsSource, /for await \(const line of lines\)/);
+  assert.doesNotMatch(utilsSource, /date\(updated_at/);
   assert.match(utilsSource, /tokenSource:\s*desktopUsageTotals/);
   assert.match(dashboardSource, /data\.stats\.tokenSource === "desktop"/);
   assert.match(dashboardSource, /Codex 桌面 usage 聚合/);
@@ -105,9 +109,10 @@ test("Codex token metric makes the imported data source explicit", () => {
 test("Codex conversation table keeps overflow inside the table panel", () => {
   assert.match(dashboardSource, /className=\{cn\("codex-log-table"/);
   assert.match(dashboardSource, /tableLayout="fixed"/);
-  assert.match(dashboardSource, /scroll=\{\{ x: 860, y: 300 \}\}/);
-  assert.match(dashboardSource, /showTotal:/);
-  assert.match(dashboardSource, /showSizeChanger:\s*true/);
+  assert.match(dashboardSource, /scroll=\{\{ x: 848, y: 220 \}\}/);
+  assert.match(dashboardSource, /pagination=\{false\}/);
+  assert.match(dashboardSource, /<Pagination/);
+  assert.match(dashboardSource, /showSizeChanger/);
   assert.match(dashboardSource, /overflow-auto/);
 });
 
@@ -148,8 +153,8 @@ test("Codex metric cards use inline Tailwind tones matching the provided icons",
   assert.match(dashboardSource, /icon\-token/);
   assert.match(dashboardSource, /metricToneClassNames\[tone\]\.card/);
   assert.match(dashboardSource, /metricToneClassNames\[tone\]\.value/);
-  assert.match(dashboardSource, /#3b82f6/);
-  assert.match(dashboardSource, /#a78bfa/);
+  assert.match(dashboardSource, /#22d3ee/);
+  assert.match(dashboardSource, /#a855f7/);
   assert.match(dashboardSource, /#f59e0b/);
   assert.match(dashboardSource, /#22c55e/);
   assert.match(dashboardSource, /#18f83a/);

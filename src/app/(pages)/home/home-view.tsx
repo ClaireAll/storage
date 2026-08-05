@@ -1,10 +1,10 @@
 ﻿"use client";
 
+import { AiAssistant } from "@/app/(pages)/common/ai-assistant";
 import { ClothesCreateModal } from "@/app/(pages)/home/clothes/clothes-create-modal";
 import type { ClothesItem } from "@/app/(pages)/home/clothes/clothes-type";
-import { HobbyShareControl } from "@/app/(pages)/home/share/hobby-share-control";
-import { AiAssistant } from "@/app/(pages)/common/ai-assistant";
 import { HomeDashboard } from "@/app/(pages)/home/home-dashboard";
+import { HobbyShareControl } from "@/app/(pages)/home/share/hobby-share-control";
 import {
   ThemeFallingLights,
   ThemeTexturePublisher,
@@ -109,8 +109,7 @@ export default function HomePage({
     categoryNavigation.fromCategoryHref === activeCategoryHref
       ? categoryNavigation.pendingCategoryHref
       : undefined;
-  const displayActiveCategoryHref =
-    pendingCategoryHref ?? activeCategoryHref;
+  const displayActiveCategoryHref = pendingCategoryHref ?? activeCategoryHref;
   const isCategoryContentLoading = Boolean(
     pendingCategoryHref && pendingCategoryHref !== activeCategoryHref,
   );
@@ -203,7 +202,7 @@ export default function HomePage({
   }
 
   return (
-    <SessionProvider basePath="/api/users/auth">
+    <SessionProvider>
       <ThemeProvider initialTheme={initialTheme}>
         {({ activePalette, resolvedMode, themeConfig }) => {
           const isDark = resolvedMode === "dark";
@@ -274,9 +273,7 @@ export default function HomePage({
                   isActive={themeConfig.texture === "meteor"}
                   variant="shared"
                 />
-                <header
-                  className="home-brand-header flex h-10 shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3"
-                >
+                <header className="home-brand-header flex h-10 shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3">
                   <div className="flex h-10 items-center gap-2.5">
                     <HomeProfileButton
                       editor={profileEditor}

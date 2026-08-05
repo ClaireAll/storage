@@ -41,7 +41,6 @@ async function upgradePlainPassword(userId: string, password: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  basePath: "/api/users/auth",
   callbacks: {
     /** 将用户 id 和手机号写入 JWT，供后续 session 回调使用。 */
     jwt({ token, user }) {

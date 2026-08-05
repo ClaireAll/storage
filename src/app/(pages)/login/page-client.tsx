@@ -340,10 +340,10 @@ function LoginForm() {
   );
 }
 
-/** 登录页客户端入口，为 NextAuth 指定 users 分组下的认证接口路径。 */
+/** 登录页客户端入口，使用 NextAuth 默认认证接口路径。 */
 export default function LoginPageClient() {
   return (
-    <SessionProvider basePath="/api/users/auth">
+    <SessionProvider>
       <LoginForm />
     </SessionProvider>
   );

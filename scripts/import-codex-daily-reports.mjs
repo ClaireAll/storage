@@ -1,7 +1,14 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import {
+  createReadStream,
+  existsSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
@@ -294,6 +301,25 @@ function getDefaultCodexStatePath() {
   );
 }
 
+function getCodexHome() {
+  return process.env.CODEX_HOME?.trim() || join(homedir(), ".codex");
+}
+
+function getDefaultCodexSessionRoots() {
+  const configuredRoot = process.env.CODEX_SESSIONS_DIR?.trim();
+
+  if (configuredRoot) {
+    return [configuredRoot];
+  }
+
+  const codexHome = getCodexHome();
+
+  return [
+    join(codexHome, "sessions"),
+    join(codexHome, "archived_sessions"),
+  ];
+}
+
 function getSqliteExecutable() {
   const candidates = [
     process.env.CODEX_SQLITE3_PATH?.trim(),
@@ -310,7 +336,180 @@ function getSqliteExecutable() {
   });
 }
 
+function collectCodexSessionFiles(root, startTime) {
+  if (!existsSync(root)) {
+    return [];
+  }
+
+  const files = [];
+  const visit = (target) => {
+    let entries;
+
+    try {
+      entries = readdirSync(target, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    entries.forEach((entry) => {
+      const entryPath = join(target, entry.name);
+
+      if (entry.isDirectory()) {
+        visit(entryPath);
+        return;
+      }
+
+      if (!entry.isFile() || !entry.name.endsWith(".jsonl")) {
+        return;
+      }
+
+      try {
+        if (statSync(entryPath).mtimeMs >= startTime) {
+          files.push(entryPath);
+        }
+      } catch {
+        // Ignore files that disappear while the desktop app is writing.
+      }
+    });
+  };
+
+  visit(root);
+
+  return files;
+}
+
+function getShanghaiDateFromTimestamp(timestamp) {
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+  }).format(date);
+}
+
+function readCodexThreadMetadataById({ sqlitePath, statePath } = {}) {
+  const targetStatePath = statePath || getDefaultCodexStatePath();
+  const sqlite = sqlitePath || getSqliteExecutable();
+
+  if (!sqlite || !existsSync(targetStatePath)) {
+    return new Map();
+  }
+
+  const sql = [
+    ".mode json",
+    "select id, title, cwd",
+    "from threads",
+    "where id is not null;",
+  ].join("\n");
+
+  try {
+    const rows = JSON.parse(
+      execFileSync(sqlite, [targetStatePath], {
+        encoding: "utf8",
+        input: sql,
+        stdio: ["pipe", "pipe", "ignore"],
+      }),
+    );
+
+    if (!Array.isArray(rows)) {
+      return new Map();
+    }
+
+    return new Map(
+      rows
+        .map((row) => normalizeDesktopUsageThread(row))
+        .filter((thread) => thread.id)
+        .map((thread) => [thread.id, thread]),
+    );
+  } catch {
+    return new Map();
+  }
+}
+
+function getFirstUserText(payload) {
+  if (payload?.role !== "user" || !Array.isArray(payload.content)) {
+    return "";
+  }
+
+  return payload.content
+    .map((item) => toText(item?.text))
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function parseCodexSessionUsageEvent(line, targetDate) {
+  try {
+    const event = JSON.parse(line);
+
+    if (event.type === "session_meta") {
+      return {
+        cwd: toText(event.payload?.cwd),
+        id: toText(event.payload?.id),
+        kind: "meta",
+      };
+    }
+
+    if (event.type === "response_item") {
+      const firstUserText = getFirstUserText(event.payload);
+
+      return firstUserText
+        ? {
+            kind: "title",
+            title: firstUserText.split(/\r?\n/).find(Boolean)?.slice(0, 120) ?? "",
+          }
+        : null;
+    }
+
+    if (event.type !== "event_msg" || event.payload?.type !== "token_count") {
+      return null;
+    }
+
+    if (getShanghaiDateFromTimestamp(event.timestamp) !== targetDate) {
+      return null;
+    }
+
+    const tokenCount = toExplicitTokenCount(
+      event.payload?.info?.last_token_usage?.total_tokens,
+    );
+
+    return tokenCount && tokenCount > 0
+      ? {
+          kind: "usage",
+          tokenCount,
+        }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export function parseCodexDesktopUsageRows(output) {
+  try {
+    const rows = JSON.parse(toText(output));
+
+    if (Array.isArray(rows)) {
+      return rows
+        .map((row) =>
+          normalizeDesktopUsageThread({
+            cwd: row?.cwd,
+            id: row?.id,
+            title: row?.title,
+            tokens_used: row?.tokens_used,
+          }),
+        )
+        .filter((thread) => thread.tokens_used > 0);
+    }
+  } catch {
+    // Fall back to legacy tab output for older sqlite builds.
+  }
+
   return toText(output)
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -328,35 +527,77 @@ export function parseCodexDesktopUsageRows(output) {
     .filter((thread) => thread.tokens_used > 0);
 }
 
-export function readCodexDesktopUsageThreads({ date, sqlitePath, statePath } = {}) {
-  const targetStatePath = statePath || getDefaultCodexStatePath();
-  const sqlite = sqlitePath || getSqliteExecutable();
-
-  if (!sqlite || !existsSync(targetStatePath)) {
+export async function readCodexDesktopUsageThreads({
+  date,
+  sessionsRoots,
+  sqlitePath,
+  statePath,
+} = {}) {
+  if (!isValidDate(date)) {
     return [];
   }
 
-  const dateClause = isValidDate(date)
-    ? ` and date(updated_at, 'unixepoch', 'localtime')='${date}'`
-    : "";
-  const sql = [
-    ".mode tabs",
-    "select id, title, cwd, tokens_used",
-    "from threads",
-    `where tokens_used > 0${dateClause}`,
-    "order by tokens_used desc;",
-  ].join("\n");
+  const metadataById = readCodexThreadMetadataById({ sqlitePath, statePath });
+  const startTime = new Date(`${date}T00:00:00+08:00`).getTime();
+  const threadUsageById = new Map();
+  const roots = sessionsRoots || getDefaultCodexSessionRoots();
+  const files = roots.flatMap((root) => collectCodexSessionFiles(root, startTime));
 
-  try {
-    return parseCodexDesktopUsageRows(
-      execFileSync(sqlite, [targetStatePath, sql], {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      }),
-    );
-  } catch {
-    return [];
+  for (const file of files) {
+    const fallbackId = toText(file.match(/-([0-9a-f-]{36})\.jsonl$/)?.[1]);
+    let threadId = fallbackId;
+    let cwd = "";
+    let title = "";
+    let tokensUsed = 0;
+
+    try {
+      const lines = createInterface({
+        crlfDelay: Infinity,
+        input: createReadStream(file, { encoding: "utf8" }),
+      });
+
+      for await (const line of lines) {
+        const event = parseCodexSessionUsageEvent(line, date);
+
+        if (!event) {
+          continue;
+        }
+
+        if (event.kind === "meta") {
+          threadId = event.id || threadId;
+          cwd = event.cwd || cwd;
+          continue;
+        }
+
+        if (event.kind === "title" && !title) {
+          title = event.title;
+          continue;
+        }
+
+        if (event.kind === "usage") {
+          tokensUsed += event.tokenCount;
+        }
+      }
+    } catch {
+      // Ignore files that are being rotated or rewritten by Codex Desktop.
+    }
+
+    if (!threadId || tokensUsed <= 0) {
+      continue;
+    }
+
+    const metadata = metadataById.get(threadId);
+    threadUsageById.set(threadId, {
+      cwd: metadata?.cwd || cwd,
+      id: threadId,
+      title: metadata?.title || title,
+      tokens_used: (threadUsageById.get(threadId)?.tokens_used ?? 0) + tokensUsed,
+    });
   }
+
+  return Array.from(threadUsageById.values()).sort(
+    (left, right) => right.tokens_used - left.tokens_used,
+  );
 }
 
 export function resolveCodexReportCategory({ cwd = "", title = "" } = {}) {
@@ -585,10 +826,11 @@ async function main() {
     process.env.CODEX_DAILY_USER_ID?.trim(),
   );
   const rawEntries = readEntries(entriesPath);
+  const desktopUsageThreads = await readCodexDesktopUsageThreads({ date });
   const entries = normalizeCodexDailyReportEntries(
     applyCodexDesktopUsageTokenCounts(
       rawEntries,
-      readCodexDesktopUsageThreads({ date }),
+      desktopUsageThreads,
     ),
     date,
   );
