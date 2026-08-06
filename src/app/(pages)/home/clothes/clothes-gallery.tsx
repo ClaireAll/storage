@@ -701,14 +701,14 @@ export function ClothesGallery({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           >
             {!hasFilter ? (
-              <button
-                className="cursor-pointer border-0 bg-transparent text-(--home-theme-color)"
+              <Button
+                className="px-0 text-(--home-theme-color)!"
                 onClick={openClothesCreateModal}
-                type="button"
+                type="link"
               >
                 添加第一{itemLabel === "裤子" ? "条" : "件"}
                 {itemLabel}
-              </button>
+              </Button>
             ) : null}
           </Empty>
         </div>

@@ -13,6 +13,7 @@ import {
   App,
   Button,
   Checkbox,
+  ColorPicker,
   DatePicker,
   Form,
   Input,
@@ -1318,11 +1319,12 @@ export function ItemEditForm({
             {hasColor ? (
               <Form.Item label="颜色">
                 <div className="flex items-center gap-3">
-                  <input
+                  <ColorPicker
                     aria-label={`选择${itemLabel}颜色`}
                     className="clothes-create-color-picker size-8 shrink-0 cursor-pointer rounded border p-0"
-                    onChange={(event) => setColor(event.target.value)}
-                    type="color"
+                    disabledAlpha
+                    onChange={(value) => setColor(value.toHexString())}
+                    showText={false}
                     value={color || fallbackColor}
                   />
                   <Input
