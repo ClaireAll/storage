@@ -11,6 +11,7 @@ function readSource(path) {
 }
 
 const layoutSource = readSource("../src/app/layout.tsx");
+const dashboardSource = readSource("../src/app/(pages)/home/home-dashboard.tsx");
 const homeViewSource = readSource("../src/app/(pages)/home/home-view.tsx");
 const assistantSource = readSource("../src/app/(pages)/common/ai-assistant.tsx");
 const routeSource = readSource("../src/app/api/ai/chat/route.ts");
@@ -43,7 +44,8 @@ test("AI assistant shows a bottom-right DeepSeek icon and inline chat panel", ()
   assert.match(assistantSource, /ai-assistant-fab/);
   assert.match(assistantSource, /ai-assistant-fab-icon/);
   assert.match(assistantSource, /ai-assistant-fab-symbol/);
-  assert.doesNotMatch(assistantSource, /absolute bottom/);
+  assert.match(assistantSource, /fixed bottom-6 right-6/);
+  assert.match(assistantSource, /absolute bottom-14 right-3/);
   assert.match(assistantSource, /openChat/);
   assert.doesNotMatch(assistantSource, /Modal/);
   assert.doesNotMatch(assistantSource, /centered/);
@@ -108,40 +110,32 @@ test("AI chat route exposes Wanxiang outfit image generation to DeepSeek", () =>
 
 test("AI assistant has theme-aware floating and dashboard-card dialog styles", () => {
   assert.match(styleSource, /ai-assistant-root/);
-  assert.match(styleSource, /position:\s*fixed/);
-  assert.match(styleSource, /right:\s*24px/);
-  assert.match(styleSource, /bottom:\s*24px/);
-  assert.match(styleSource, /z-index:\s*2147483000/);
+  assert.match(assistantSource, /fixed bottom-6 right-6 z-\[2147483000\]/);
   assert.match(styleSource, /ai-assistant-fab/);
-  assert.match(styleSource, /width:\s*56px/);
-  assert.match(styleSource, /height:\s*56px/);
-  assert.match(styleSource, /ai-assistant-fab-icon/);
-  assert.match(styleSource, /ai-assistant-fab-symbol/);
-  assert.match(styleSource, /font-size:\s*28px/);
+  assert.match(assistantSource, /size-14 min-w-14/);
+  assert.match(assistantSource, /ai-assistant-fab-icon size-\[42px\]/);
+  assert.match(assistantSource, /ai-assistant-fab-symbol size-7/);
+  assert.match(assistantSource, /iconClassName="ai-assistant-fab-symbol size-7 text-\[28px\] leading-none"/);
   assert.match(styleSource, /linear-gradient\([\s\S]*145deg/);
   assert.match(styleSource, /ai-assistant-panel/);
-  assert.match(styleSource, /ai-assistant-panel-expanded/);
-  assert.match(styleSource, /right:\s*12px/);
-  assert.match(styleSource, /bottom:\s*56px/);
-  assert.match(styleSource, /width:\s*min\(380px,\s*calc\(100vw - 48px\)\)/);
-  assert.match(styleSource, /height:\s*min\(330px,\s*calc\(100dvh - 96px\)\)/);
-  assert.match(styleSource, /home-ai-assistant-slot/);
+  assert.match(assistantSource, /ai-assistant-panel-expanded/);
+  assert.match(assistantSource, /bottom-14 right-3/);
+  assert.match(assistantSource, /w-\[min\(380px,calc\(100vw-48px\)\)\]/);
+  assert.match(assistantSource, /h-\[min\(330px,calc\(100dvh-96px\)\)\]/);
   assert.match(
-    styleSource,
-    /home-dashboard-grid:has\(\.ai-assistant-root-expanded\)/,
+    dashboardSource,
+    /\[&:has\(\.ai-assistant-root-expanded\)\]:grid-cols-\[minmax\(0,1180px\)_minmax\(320px,360px\)\]/,
   );
   assert.doesNotMatch(
     styleSource,
     /home-category-workspace:has\(\.ai-assistant-root-expanded\)[\s\S]*minmax\(320px,\s*360px\)/,
   );
-  assert.match(styleSource, /ai-assistant-root\.ai-assistant-root-expanded/);
+  assert.match(assistantSource, /ai-assistant-root-expanded/);
   assert.match(
-    styleSource,
-    /ai-assistant-root-expanded \.ai-assistant-panel-expanded/,
+    assistantSource,
+    /ai-assistant-panel-expanded/,
   );
-  assert.match(styleSource, /position:\s*static/);
-  assert.match(styleSource, /height:\s*100%/);
-  assert.match(styleSource, /width:\s*100%/);
+  assert.match(assistantSource, /static z-auto h-full min-h-0 w-full/);
   assert.doesNotMatch(
     styleSource,
     /width:\s*min\(360px,\s*calc\(100vw - 324px\)\)/,
@@ -152,7 +146,7 @@ test("AI assistant has theme-aware floating and dashboard-card dialog styles", (
   assert.match(styleSource, /var\(--ai-assistant-theme-text/);
   assert.match(styleSource, /ai-assistant-message-user/);
   assert.match(styleSource, /ai-assistant-message-assistant/);
-  assert.match(styleSource, /ai-assistant-capabilities/);
+  assert.match(assistantSource, /ai-assistant-capabilities flex flex-wrap gap-2/);
   assert.match(styleSource, /ai-assistant-capability\.ant-btn-default/);
   assert.match(styleSource, /ai-assistant-textarea\.ant-input/);
   assert.match(styleSource, /ai-assistant-textarea\.ant-input-outlined/);
@@ -209,8 +203,8 @@ test("AI assistant renders structured responses and generated outfit images", ()
   assert.match(assistantSource, /ai-assistant-items/);
   assert.match(assistantSource, /ai-assistant-sections/);
   assert.match(assistantSource, /ai-assistant-suggestions/);
-  assert.match(styleSource, /ai-assistant-generated-images/);
-  assert.match(styleSource, /ai-assistant-items/);
-  assert.match(styleSource, /ai-assistant-suggestions/);
-  assert.match(styleSource, /object-fit:\s*cover/);
+  assert.match(assistantSource, /ai-assistant-generated-images[^"]*grid/);
+  assert.match(assistantSource, /ai-assistant-items[^"]*grid/);
+  assert.match(assistantSource, /ai-assistant-suggestions[^"]*flex flex-wrap/);
+  assert.match(assistantSource, /ai-assistant-generated-image[^"]*object-cover/);
 });

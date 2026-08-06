@@ -1,5 +1,12 @@
 # 版本更新
 
+## 2026-08-06 14:36:34 +08:00
+
+- 再次盘查 Storage 工程内 Less 可迁移样式，继续将首页布局、AI 助手浮层与展开布局、衣物/爱好多图弹窗、卡片操作按钮和 Codex 日报普通布局迁移到组件内 Tailwind CSS 类名。
+- Codex 日报进一步复用 Ant Design `Card.classNames.body`、`Table.pagination` 和已有 Tailwind 公共片段，Less 中保留主题色、滚动条、AntD 深层选择器、全屏与特效类样式。
+- 清理 `home.less`、`clothes.less` 中重复或空壳选择器，并同步更新源码断言测试，确保后续不会把已迁移的普通布局规则重新写回 Less。
+- 明确保留 `base-texture.less` 背景动画、`hobby-share.less` Flame/Swiper/分享页特效、以及部分 AntD 内部覆盖样式，不做强行 Tailwind 化，避免降低可读性和可维护性。
+
 ## 2026-08-06 11:57:07 +08:00
 
 - 优化 Storage 样式归属：将笔记阅读页的分栏、工具栏、列表、预览区布局从 `home.less` 迁移到组件内 Tailwind CSS 类名，Less 仅保留主题色、边框色和 Ant Design 内部状态覆盖。

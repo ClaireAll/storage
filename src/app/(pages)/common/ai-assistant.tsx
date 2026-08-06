@@ -211,8 +211,8 @@ export function AiAssistant() {
     <div
       className={
         isOpen && isExpanded
-          ? "ai-assistant-root ai-assistant-root-expanded"
-          : "ai-assistant-root"
+          ? "ai-assistant-root ai-assistant-root-expanded pointer-events-auto static z-auto h-full min-h-0 w-full self-stretch max-[640px]:h-[min(560px,calc(100dvh-96px))]"
+          : "ai-assistant-root pointer-events-none fixed bottom-6 right-6 z-[2147483000] max-[640px]:bottom-4 max-[640px]:right-4"
       }
       ref={assistantRootRef}
     >
@@ -221,16 +221,16 @@ export function AiAssistant() {
           aria-label="DeepSeek 助手"
           className={
             isExpanded
-              ? "ai-assistant-panel ai-assistant-panel-expanded"
-              : "ai-assistant-panel"
+              ? "ai-assistant-panel ai-assistant-panel-expanded pointer-events-auto static z-[1] flex h-full max-h-none min-h-0 w-full flex-col gap-3 rounded-lg p-3.5"
+              : "ai-assistant-panel pointer-events-auto absolute bottom-14 right-3 z-[1] flex h-[min(330px,calc(100dvh-96px))] w-[min(380px,calc(100vw-48px))] flex-col gap-3 rounded-lg p-3.5"
           }
           role="dialog"
         >
-          <div className="ai-assistant-panel-header">
+          <div className="ai-assistant-panel-header flex min-h-7 items-center justify-between gap-3">
             <Typography.Text className="ai-assistant-title" strong>
               DeepSeek 助手
             </Typography.Text>
-            <div className="ai-assistant-header-actions">
+            <div className="ai-assistant-header-actions inline-flex items-center gap-1">
               <Button
                 aria-label={
                   isExpanded
@@ -259,23 +259,26 @@ export function AiAssistant() {
               />
             </div>
           </div>
-          <div className="ai-assistant-dialog">
-            <div className="ai-assistant-messages" role="log">
+          <div className="ai-assistant-dialog flex min-h-0 flex-1 flex-col gap-3">
+            <div
+              className="ai-assistant-messages flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1"
+              role="log"
+            >
               {messages.map((message, index) => (
                 <div
                   className={
                     message.role === "user"
-                      ? "ai-assistant-message ai-assistant-message-user"
-                      : "ai-assistant-message ai-assistant-message-assistant"
+                      ? "ai-assistant-message ai-assistant-message-user max-w-[86%] self-end whitespace-pre-wrap rounded-lg px-2.5 py-2 leading-[1.6]"
+                      : "ai-assistant-message ai-assistant-message-assistant max-w-[86%] self-start whitespace-pre-wrap rounded-lg px-2.5 py-2 leading-[1.6]"
                   }
                   key={`${message.role}-${index}-${message.content.slice(0, 12)}`}
                 >
                   <Typography.Text>{message.content}</Typography.Text>
                   {message.sections?.length ? (
-                    <div className="ai-assistant-sections">
+                      <div className="ai-assistant-sections mt-2 grid gap-2">
                       {message.sections.map((section) => (
                         <div
-                          className="ai-assistant-section"
+                          className="ai-assistant-section grid gap-1 rounded-lg border p-2"
                           key={`${section.title}-${section.content.slice(0, 12)}`}
                         >
                           <Typography.Text strong>
@@ -287,10 +290,10 @@ export function AiAssistant() {
                     </div>
                   ) : null}
                   {message.items?.length ? (
-                    <div className="ai-assistant-items">
+                    <div className="ai-assistant-items mt-2 grid gap-2">
                       {message.items.map((item) => (
                         <a
-                          className="ai-assistant-item"
+                          className="ai-assistant-item grid min-w-0 grid-cols-[34px_minmax(0,1fr)] items-center gap-2 rounded-lg border p-[7px]"
                           href={item.url}
                           key={`${item.category}-${item.id}-${item.name}`}
                           rel="noreferrer"
@@ -300,20 +303,20 @@ export function AiAssistant() {
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               alt={item.name}
-                              className="ai-assistant-item-image"
+                              className="ai-assistant-item-image size-[34px] rounded-md object-cover"
                               src={item.imageUrl}
                             />
                           ) : (
-                            <span className="ai-assistant-item-placeholder">
+                            <span className="ai-assistant-item-placeholder inline-flex size-[34px] items-center justify-center rounded-md">
                               {item.name.slice(0, 1)}
                             </span>
                           )}
-                          <span className="ai-assistant-item-body">
-                            <Typography.Text className="ai-assistant-item-name">
+                          <span className="ai-assistant-item-body grid min-w-0 gap-0.5">
+                            <Typography.Text className="ai-assistant-item-name overflow-hidden text-ellipsis whitespace-nowrap">
                               {item.name}
                             </Typography.Text>
                             <Typography.Text
-                              className="ai-assistant-item-meta"
+                              className="ai-assistant-item-meta overflow-hidden text-ellipsis whitespace-nowrap"
                               type="secondary"
                             >
                               {item.subtitle ??
@@ -329,7 +332,7 @@ export function AiAssistant() {
                     </div>
                   ) : null}
                   {message.images?.length ? (
-                    <div className="ai-assistant-generated-images">
+                    <div className="ai-assistant-generated-images mt-2 grid w-full grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2">
                       {message.images.map((image) => (
                         <a
                           href={image}
@@ -340,7 +343,7 @@ export function AiAssistant() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             alt="搭配效果图"
-                            className="ai-assistant-generated-image"
+                            className="ai-assistant-generated-image block aspect-[3/4] w-full rounded-lg border object-cover"
                             src={image}
                           />
                         </a>
@@ -348,7 +351,7 @@ export function AiAssistant() {
                     </div>
                   ) : null}
                   {message.suggestions?.length ? (
-                    <div className="ai-assistant-suggestions">
+                    <div className="ai-assistant-suggestions mt-2 flex flex-wrap gap-2">
                       {message.suggestions.map((suggestion) => (
                         <Button
                           className="ai-assistant-suggestion"
@@ -371,11 +374,11 @@ export function AiAssistant() {
               ) : null}
             </div>
             {error ? (
-              <Typography.Text className="ai-assistant-error" type="danger">
+              <Typography.Text className="ai-assistant-error block" type="danger">
                 {error}
               </Typography.Text>
             ) : null}
-            <div className="ai-assistant-capabilities">
+            <div className="ai-assistant-capabilities flex flex-wrap gap-2">
               {assistantCapabilities.map((capability) => (
                 <Button
                   className="ai-assistant-capability"
@@ -388,7 +391,7 @@ export function AiAssistant() {
                 </Button>
               ))}
             </div>
-            <div className="ai-assistant-input-row">
+            <div className="ai-assistant-input-row grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
               <Input.TextArea
                 autoSize={{ maxRows: 4, minRows: 2 }}
                 className="ai-assistant-textarea"
@@ -416,12 +419,12 @@ export function AiAssistant() {
         className={
           isOpen && isExpanded
             ? "ai-assistant-fab ai-assistant-fab-hidden"
-            : "ai-assistant-fab"
+            : "ai-assistant-fab pointer-events-auto relative z-[2] inline-flex size-14 min-w-14 items-center justify-center overflow-hidden rounded-full"
         }
         icon={
           <CategoryIcon
-            className="ai-assistant-fab-icon"
-            iconClassName="ai-assistant-fab-symbol"
+            className="ai-assistant-fab-icon size-[42px]"
+            iconClassName="ai-assistant-fab-symbol size-7 text-[28px] leading-none"
             mode="font"
             name="icon-deepseek"
           />

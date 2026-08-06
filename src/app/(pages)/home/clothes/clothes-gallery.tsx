@@ -508,14 +508,14 @@ export function ClothesGallery({
           </div>
         </div>
         {shouldShowFilterDetails ? (
-          <div className="clothes-gallery-filter-details">
+          <div className="clothes-gallery-filter-details grid grid-cols-[minmax(260px,1fr)_minmax(240px,280px)_200px] gap-x-2.5 gap-y-2 border-t pt-2.5 max-[900px]:grid-cols-1">
             {hasSeason ? (
-              <div className="clothes-gallery-season-row">
-                <Typography.Text className="clothes-gallery-filter-label">
+              <div className="clothes-gallery-season-row flex h-8 min-w-0 items-center gap-3 whitespace-nowrap">
+                <Typography.Text className="clothes-gallery-filter-label shrink-0">
                   季节
                 </Typography.Text>
                 <Checkbox.Group
-                  className="clothes-gallery-season-filter"
+                  className="clothes-gallery-season-filter flex flex-nowrap gap-2.5"
                   onChange={(nextSeasons) =>
                     filterSeason(nextSeasons as string[])
                   }
@@ -528,19 +528,19 @@ export function ClothesGallery({
               <RangePicker
                 allowClear
                 allowEmpty
-                className="clothes-gallery-time-filter"
+                className="clothes-gallery-time-filter h-8 w-full max-[900px]:max-w-[360px]"
                 onChange={filterTimeRange}
                 placeholder={["购买开始", "购买结束"]}
                 value={timeRange}
               />
             ) : null}
             {hasPrice ? (
-              <div className="clothes-gallery-price-row">
-                <Typography.Text className="clothes-gallery-filter-label">
+              <div className="clothes-gallery-price-row col-start-3 flex h-8 min-w-0 items-center gap-[7px] max-[900px]:col-auto">
+                <Typography.Text className="clothes-gallery-filter-label shrink-0">
                   价格
                 </Typography.Text>
                 <InputNumber
-                  className="clothes-gallery-price-input"
+                  className="clothes-gallery-price-input h-8 w-[70px]"
                   controls={false}
                   min={0}
                   onChange={filterMinPrice}
@@ -550,7 +550,7 @@ export function ClothesGallery({
                 />
                 <span className="clothes-gallery-price-separator">-</span>
                 <InputNumber
-                  className="clothes-gallery-price-input"
+                  className="clothes-gallery-price-input h-8 w-[70px]"
                   controls={false}
                   min={0}
                   onChange={filterMaxPrice}
@@ -562,7 +562,7 @@ export function ClothesGallery({
             ) : null}
             {availableSortOptions.length ? (
               <Select<ClothesSortRule>
-                className="clothes-gallery-sort-select theme-texture-select"
+                className="clothes-gallery-sort-select theme-texture-select col-start-1 w-[260px] max-w-full max-[900px]:max-w-[360px]"
                 getPopupContainer={(triggerNode) =>
                   triggerNode.closest(".clothes-gallery-filters") ??
                   document.body
@@ -579,7 +579,7 @@ export function ClothesGallery({
               />
             ) : null}
             <Button
-              className="clothes-gallery-reset-button"
+              className="clothes-gallery-reset-button col-start-3 h-8 justify-self-end px-2 max-[900px]:col-auto max-[900px]:justify-self-start"
               disabled={!canResetFilters}
               onClick={resetFilters}
               size="small"
@@ -816,19 +816,19 @@ function ClothesImageCard({
         </div>
       )}
       {showCount ? (
-        <span className="clothes-gallery-card-count-badge">
+        <span className="clothes-gallery-card-count-badge absolute left-2.5 top-2.5 z-[9] max-w-[calc(100%-20px)] overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold leading-[18px]">
           x{item.count ?? 1}
         </span>
       ) : null}
       {itemImageUrls.length > 1 ? (
-        <span className="clothes-gallery-card-count-badge clothes-gallery-card-image-count">
+        <span className="clothes-gallery-card-count-badge clothes-gallery-card-image-count absolute left-auto right-2.5 top-2.5 z-[9] max-w-[calc(100%-20px)] overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold leading-[18px]">
           {itemImageUrls.length}
         </span>
       ) : null}
       {item.download_url ? (
         <Button
           aria-label={`下载 ${item.name}`}
-          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button"
+          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button absolute bottom-2.5 right-[50px] z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-[180ms] ease-out group-hover:opacity-[0.86]"
           href={item.download_url}
           icon={<DownloadOutlined />}
           rel="noreferrer"
@@ -841,7 +841,7 @@ function ClothesImageCard({
       {item.url ? (
         <Button
           aria-label={`打开 ${item.name}`}
-          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button"
+          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button absolute bottom-2.5 right-[50px] z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-[180ms] ease-out group-hover:opacity-[0.86]"
           href={item.url}
           icon={<LinkOutlined />}
           rel="noreferrer"
@@ -853,7 +853,7 @@ function ClothesImageCard({
       ) : null}
       <Button
         aria-label={`编辑 ${item.name}`}
-        className="clothes-gallery-card-edit-button"
+        className="clothes-gallery-card-edit-button absolute bottom-2.5 right-2.5 z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-[180ms] ease-out group-hover:opacity-[0.86]"
         icon={<EditOutlined />}
         onClick={() => onEdit(item)}
         shape="circle"

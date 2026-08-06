@@ -146,7 +146,7 @@ test("shared dialog and gallery support hobby multiple image management", () => 
   assert.match(dialogSource, /style=\{isCropImageReady \? getCropImageStyle\(\) : undefined\}/);
   assert.match(dialogSource, /clothes-multi-image-preview[^`]*\$\{\s*isDragOverUpload \? "is-drag-over" : ""\s*\}[^`]*\$\{\s*isUploadPasteReady \? "is-paste-ready" : ""\s*\}/);
   assert.match(dialogSource, /onPaste=\{pasteUpload\}[\s\S]*>\s*\{selectedImageDraft/);
-  assert.match(dialogSource, /className="clothes-multi-image-empty"[\s\S]*<PlusOutlined className="text-2xl" \/>[\s\S]*双击 \/ 拖拽 \/ 粘贴上传/);
+  assert.match(dialogSource, /className="clothes-multi-image-empty[^"]*inline-flex[^"]*"[\s\S]*<PlusOutlined className="text-2xl" \/>[\s\S]*双击 \/ 拖拽 \/ 粘贴上传/);
   assert.match(dialogSource, /hasImage \? \(/);
   assert.match(dialogSource, /hasBookFile \? \([\s\S]*label="文件"/);
   assert.match(dialogSource, /const itemFormCategoryOptions = itemCategoryOptions \?\? bookCategoryOptions/);

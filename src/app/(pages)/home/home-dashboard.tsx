@@ -372,8 +372,8 @@ export function HomeDashboard({
 
   return (
     <main className="home-dashboard-main mx-auto flex min-h-0 w-full max-w-[1540px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
-      <div className="home-dashboard-grid">
-        <div className="home-dashboard-left-stack">
+      <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1180px)] justify-center gap-6 [&:has(.ai-assistant-root-expanded)]:grid-cols-[minmax(0,1180px)_minmax(320px,360px)] max-[640px]:[&:has(.ai-assistant-root-expanded)]:grid-cols-[minmax(0,1fr)]">
+        <div className="home-dashboard-left-stack flex min-h-0 min-w-0 flex-col gap-5">
       <section className="grid shrink-0 grid-cols-3 gap-4 max-md:grid-cols-1">
         {homeStats.map((stat) => {
           return (
@@ -568,7 +568,9 @@ export function HomeDashboard({
         </div>
 
         {aiAssistant ? (
-          <div className="home-ai-assistant-slot">{aiAssistant}</div>
+          <div className="home-ai-assistant-slot contents min-h-0 [&:has(.ai-assistant-root-expanded)]:block">
+            {aiAssistant}
+          </div>
         ) : null}
       </div>
     </main>

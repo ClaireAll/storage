@@ -132,19 +132,18 @@ test("dashboard centers category content and reserves a same-level AI slot", () 
   assert.match(dashboardSource, /\{aiAssistant\}/);
   assert.match(homeViewSource, /aiAssistant=\{<AiAssistant \/>\}/);
   assert.doesNotMatch(homeViewSource, /<\/HomeDashboard>\s*<AiAssistant \/>/);
-  assert.match(homeStyleSource, /home-dashboard-main/);
-  assert.match(homeStyleSource, /home-dashboard-grid/);
-  assert.match(homeStyleSource, /home-dashboard-left-stack/);
-  assert.match(homeStyleSource, /home-dashboard-grid:has\(\.ai-assistant-root-expanded\)/);
+  assert.match(dashboardSource, /home-dashboard-grid[^"]*grid-cols-\[minmax\(0,1180px\)\]/);
+  assert.match(dashboardSource, /home-dashboard-left-stack[^"]*flex min-h-0 min-w-0 flex-col gap-5/);
+  assert.match(dashboardSource, /\[&:has\(\.ai-assistant-root-expanded\)\]:grid-cols-\[minmax\(0,1180px\)_minmax\(320px,360px\)\]/);
   assert.match(
-    homeStyleSource,
-    /minmax\(0,\s*1180px\) minmax\(320px,\s*360px\)/,
+    dashboardSource,
+    /max-\[640px\]:\[&:has\(\.ai-assistant-root-expanded\)\]:grid-cols-\[minmax\(0,1fr\)\]/,
   );
   assert.doesNotMatch(
     homeStyleSource,
     /home-category-workspace:has\(\.ai-assistant-root-expanded\)[\s\S]*minmax\(320px,\s*360px\)/,
   );
-  assert.match(homeStyleSource, /justify-content:\s*center/);
+  assert.match(dashboardSource, /home-category-workspace[^"]*justify-center/);
 });
 
 test("collapsed category sidebar centers menu icons", () => {

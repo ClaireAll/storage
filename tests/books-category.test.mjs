@@ -118,7 +118,7 @@ test("books with uploaded files expose a download action on image cards", () => 
   assert.match(gallerySource, /DownloadOutlined/);
   assert.match(gallerySource, /item\.download_url/);
   assert.match(gallerySource, /aria-label=\{`下载 \$\{item\.name\}`\}/);
-  assert.match(gallerySource, /className="clothes-gallery-card-download-button clothes-gallery-card-edit-button"/);
+  assert.match(gallerySource, /className="clothes-gallery-card-download-button clothes-gallery-card-edit-button[^"]*right-\[50px\][^"]*group-hover:opacity-\[0\.86\]"/);
   assert.match(gallerySource, /target="_blank"/);
 });
 

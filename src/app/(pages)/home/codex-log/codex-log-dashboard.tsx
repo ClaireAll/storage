@@ -392,12 +392,15 @@ function MetricIcon({
   return (
     <span
       className={cn(
-        "codex-log-metric-icon",
+        "codex-log-metric-icon inline-flex size-[42px] items-center justify-center rounded-lg",
         metricToneClassNames[tone].icon,
         className,
       )}
     >
-      <i aria-hidden className={cn("iconfont", name, iconClassName)} />
+      <i
+        aria-hidden
+        className={cn("iconfont text-2xl leading-none", name, iconClassName)}
+      />
     </span>
   );
 }
@@ -416,7 +419,16 @@ function DashboardPanel({
   title?: string;
 }) {
   return (
-    <Card className={cn("codex-log-panel min-w-0", panelClassName, className)}>
+    <Card
+      className={cn(
+        "codex-log-panel flex min-h-0 min-w-0 flex-col overflow-hidden",
+        panelClassName,
+        className,
+      )}
+      classNames={{
+        body: "flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3.5!",
+      }}
+    >
       {title || extra ? (
         <div className="codex-log-panel-header flex items-center justify-between gap-3">
           {title ? <PanelTitle icon={icon} title={title} /> : <span />}
@@ -1021,7 +1033,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   return (
     <div
       className={cn(
-        "codex-log-dashboard min-w-0 overflow-auto",
+        "codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3.5 overflow-auto",
         scrollbarClassName,
       )}
     >
@@ -1031,7 +1043,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           panelClassName,
         )}
       >
-        <div className="codex-log-page-title">
+        <div className="codex-log-page-title flex min-w-[220px] items-center gap-3">
           <MetricIcon name="icon-codex" tone="codex" />
           <div>
             <Typography.Title level={4}>Codex日报</Typography.Title>
@@ -1040,10 +1052,10 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions">
+        <div className="codex-log-toolbar-actions flex w-full min-w-0 flex-wrap gap-2 xl:w-auto xl:justify-end">
           <DatePicker
             allowClear={false}
-            className="codex-log-date-picker"
+            className="codex-log-date-picker min-w-40"
             disabledDate={(current) =>
               !data.availableDates.includes(current.format("YYYY-MM-DD"))
             }
@@ -1051,7 +1063,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             value={selectedDay.isValid() ? selectedDay : undefined}
           />
           <Select
-            className="codex-log-repo-select"
+            className="codex-log-repo-select min-w-40"
             onChange={(value) => {
               setRepository(value);
               setTablePage(1);
@@ -1061,7 +1073,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           />
           <Input
             allowClear
-            className="codex-log-search"
+            className="codex-log-search min-w-40 w-[min(280px,34vw)]"
             onChange={(event) => {
               setKeyword(event.target.value);
               setTablePage(1);
@@ -1183,6 +1195,9 @@ function MetricCard({
         panelClassName,
         metricToneClassNames[tone].card,
       )}
+      classNames={{
+        body: "flex min-h-[108px] w-full items-center gap-4 p-4! md:px-5!",
+      }}
     >
       <MetricIcon
         className="!size-16 !rounded-xl"
@@ -1190,7 +1205,7 @@ function MetricCard({
         name={icon}
         tone={tone}
       />
-      <div className="min-w-0">
+      <div className="grid min-w-0 gap-2">
         <Statistic
           className={cn(
             "codex-log-metric-stat",
@@ -1199,7 +1214,7 @@ function MetricCard({
           title={
             <span
               className={cn(
-                "codex-log-metric-label text-sm font-semibold leading-none",
+                "codex-log-metric-label inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold leading-none",
                 metricToneClassNames[tone].label,
               )}
             >

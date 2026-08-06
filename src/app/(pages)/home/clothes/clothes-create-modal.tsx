@@ -1350,7 +1350,7 @@ export function ItemEditForm({
                 ]}
               >
                 <Checkbox.Group
-                  className="clothes-create-season-checkboxes"
+                  className="clothes-create-season-checkboxes flex w-[200px] max-w-full flex-nowrap gap-2.5"
                   options={seasons}
                 />
               </Form.Item>
@@ -1496,8 +1496,10 @@ export function ImageUploader({
                 />
                 <span className="pointer-events-none absolute inset-0 border-2 border-white/80 shadow-[inset_0_0_0_9999px_rgb(0_0_0/12%)]" />
               </div>
-              <span className="clothes-multi-image-cover-badge">封面</span>
-              <div className="clothes-multi-image-preview-toolbar">
+              <span className="clothes-multi-image-cover-badge absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[13px] font-semibold">
+                封面
+              </span>
+              <div className="clothes-multi-image-preview-toolbar absolute inset-x-0 bottom-0 flex justify-center gap-[18px] p-2.5">
                 {!isSelectedImageCover ? (
                   <Button
                     icon={<StarOutlined />}
@@ -1526,8 +1528,10 @@ export function ImageUploader({
                 className="size-full object-cover"
                 src={selectedImageDraft.url}
               />
-              <span className="clothes-multi-image-cover-badge">封面</span>
-              <div className="clothes-multi-image-preview-toolbar">
+              <span className="clothes-multi-image-cover-badge absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[13px] font-semibold">
+                封面
+              </span>
+              <div className="clothes-multi-image-preview-toolbar absolute inset-x-0 bottom-0 flex justify-center gap-[18px] p-2.5">
                 {!isSelectedImageCover ? (
                   <Button
                     icon={<StarOutlined />}
@@ -1550,7 +1554,7 @@ export function ImageUploader({
             </>
           ) : (
             <button
-              className="clothes-multi-image-empty"
+              className="clothes-multi-image-empty inline-flex cursor-pointer flex-col items-center gap-2 border-0 bg-transparent text-sm font-semibold"
               type="button"
             >
               <PlusOutlined className="text-2xl" />
@@ -1558,10 +1562,10 @@ export function ImageUploader({
             </button>
           )}
         </div>
-        <div className="clothes-multi-image-strip">
+        <div className="clothes-multi-image-strip flex gap-2.5 overflow-x-auto pb-0.5">
           {imageDrafts.map((draft, index) => (
             <button
-              className={`clothes-multi-image-thumb ${
+              className={`clothes-multi-image-thumb relative size-[72px] flex-[0_0_72px] cursor-pointer overflow-hidden rounded-lg border ${
                 draft.id === selectedImageDraft?.id ? "is-active" : ""
               }`}
               key={draft.id}
@@ -1569,12 +1573,18 @@ export function ImageUploader({
               type="button"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt={`${itemLabel}图片 ${index + 1}`} src={draft.url} />
+              <img
+                alt={`${itemLabel}图片 ${index + 1}`}
+                className="size-full object-cover"
+                src={draft.url}
+              />
               {index === 0 ? (
-                <span className="clothes-multi-image-thumb-cover">封面</span>
+                <span className="clothes-multi-image-thumb-cover absolute left-1 top-1 rounded-[5px] px-[5px] py-px text-[11px]">
+                  封面
+                </span>
               ) : null}
               <span
-                className="clothes-multi-image-thumb-delete"
+                className="clothes-multi-image-thumb-delete absolute right-1 top-1 inline-flex size-[18px] items-center justify-center rounded-full"
                 onClick={(event) => {
                   event.stopPropagation();
                   removeImageDraft(draft.id);
@@ -1585,7 +1595,7 @@ export function ImageUploader({
             </button>
           ))}
           <button
-            className="clothes-multi-image-add"
+            className="clothes-multi-image-add relative inline-flex size-[72px] flex-[0_0_72px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed text-[22px]"
             onClick={prepareNewImageDraft}
             type="button"
           >
