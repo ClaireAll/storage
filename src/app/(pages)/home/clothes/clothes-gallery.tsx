@@ -592,7 +592,7 @@ export function ClothesGallery({
       </section>
 
       {pagedClothes.length && viewMode === "card" ? (
-        <div className="clothes-gallery-card-grid min-h-0 flex-1 overflow-auto pr-1">
+        <div className="clothes-gallery-card-grid flex min-h-0 flex-1 flex-wrap content-start gap-3 overflow-auto pr-1">
           {pagedClothes.map((item) => (
             <ClothesImageCard
               highlightIndexes={
@@ -607,25 +607,25 @@ export function ClothesGallery({
         </div>
       ) : pagedClothes.length ? (
         <div
-          className="clothes-gallery-detail-list min-h-0 flex-1 overflow-auto"
+          className="clothes-gallery-detail-list grid min-h-0 flex-1 content-start gap-0.5 overflow-auto"
           role="list"
         >
           {pagedClothes.map((item) => (
             <article
-              className="clothes-gallery-detail-list-item"
+              className="clothes-gallery-detail-list-item min-h-7 rounded-md border px-2 py-1"
               key={item.c_id}
               role="listitem"
             >
-              <div className="clothes-gallery-detail-row">
-                <div className="clothes-gallery-detail-name-cell">
+              <div className="clothes-gallery-detail-row grid w-full min-w-0 grid-cols-[repeat(4,minmax(0,1fr))_32px] items-center gap-2 leading-[18px]">
+                <div className="clothes-gallery-detail-name-cell flex min-w-0 items-center gap-2">
                   {hasColor && item.color ? (
                     <span
-                      className="clothes-gallery-detail-color"
+                      className="clothes-gallery-detail-color h-2.5 w-2.5 rounded-full border"
                       style={{ backgroundColor: item.color }}
                     />
                   ) : null}
                   <Typography.Text
-                    className="clothes-gallery-detail-name"
+                    className="clothes-gallery-detail-name overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]"
                     strong
                   >
                     {renderHighlightedClothesName(
@@ -636,33 +636,33 @@ export function ClothesGallery({
                   </Typography.Text>
                 </div>
                 {hasPrice ? (
-                  <Typography.Text className="clothes-gallery-detail-meta">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
                     ¥{(item.price ?? 0).toFixed(2)}
                   </Typography.Text>
                 ) : null}
                 {hasDate ? (
-                  <Typography.Text className="clothes-gallery-detail-meta">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
                     购买时间：{dayjs(item.timeStamp).format("YYYY-MM-DD")}
                   </Typography.Text>
                 ) : null}
                 {hasBookCategory || itemCategoryLabels ? (
-                  <Typography.Text className="clothes-gallery-detail-meta">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
                     分类：
                     {getItemCategoryLabel(itemCategoryLabels, item.category) ||
                       "未分类"}
                   </Typography.Text>
                 ) : null}
                 {showCount ? (
-                  <Typography.Text className="clothes-gallery-detail-meta">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
                     数量：{item.count ?? 1}
                   </Typography.Text>
                 ) : null}
                 {hasSeason ? (
-                  <Typography.Text className="clothes-gallery-detail-meta">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
                     适合季节：{parseClothesSeasons(item.season ?? "").join(" ")}
                   </Typography.Text>
                 ) : null}
-                <span className="clothes-gallery-detail-action-cell">
+                <span className="clothes-gallery-detail-action-cell flex justify-end">
                   {item.url ? (
                     <Button
                       aria-label={`打开 ${item.name}`}
@@ -772,7 +772,7 @@ function ClothesImageCard({
 
   return (
     <article
-      className="clothes-gallery-card group relative overflow-hidden rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_92%,#ffffff_8%)]"
+      className="clothes-gallery-card group relative aspect-square flex-[0_0_calc((100%-36px)/4)] overflow-hidden rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_92%,#ffffff_8%)] max-[900px]:flex-[0_0_calc((100%-12px)/2)]"
       style={{
         borderColor:
           "color-mix(in srgb, var(--home-theme-color) 30%, transparent)",

@@ -73,12 +73,12 @@ export function BlogReader({ items }: BlogReaderProps) {
   }
 
   return (
-    <div className="blog-reader-shell">
-      <aside className="blog-reader-sidebar">
-        <div className="blog-reader-toolbar">
+    <div className="grid h-full min-h-0 w-full grid-cols-[minmax(220px,280px)_minmax(0,1fr)] gap-3.5 max-[900px]:grid-cols-1">
+      <aside className="flex min-h-0 min-w-0 flex-col gap-3 max-[900px]:min-h-[260px]">
+        <div className="grid h-8 grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5">
           <Input
             allowClear
-            className="blog-reader-search"
+            className="blog-reader-search h-8"
             onChange={changeKeyword}
             onCompositionEnd={finishKeywordComposition}
             placeholder="搜索笔记名称"
@@ -87,36 +87,45 @@ export function BlogReader({ items }: BlogReaderProps) {
           />
           <Button
             aria-label="新增笔记"
-            className="blog-reader-add"
+            className="blog-reader-add h-8 w-8 min-w-8 rounded-lg p-0"
             icon={<PlusOutlined />}
             onClick={openClothesCreateModal}
             type="primary"
           />
         </div>
-        <div className="blog-reader-list" role="list">
+        <div
+          className="blog-reader-list min-h-0 flex-1 overflow-auto rounded-lg border"
+          role="list"
+        >
           {filteredItems.length ? (
             filteredItems.map((item) => (
               <article
                 aria-current={selectedItem?.c_id === item.c_id ? "true" : undefined}
-                className={cn("blog-reader-list-item", {
-                  "is-active": selectedItem?.c_id === item.c_id,
-                })}
+                className={cn(
+                  "blog-reader-list-item grid min-h-[42px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b",
+                  { "is-active": selectedItem?.c_id === item.c_id },
+                )}
                 key={item.c_id}
                 role="listitem"
               >
                 <button
-                  className="blog-reader-select"
+                  className="blog-reader-select grid h-full min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-2 border-0 bg-transparent px-2.5 py-[9px] text-left"
                   onClick={() => setSelectedId(item.c_id)}
                   type="button"
                 >
-                  <span className="blog-reader-item-icon">✿</span>
-                  <Typography.Text className="blog-reader-item-name" strong>
+                  <span className="blog-reader-item-icon text-base leading-none">
+                    ✿
+                  </span>
+                  <Typography.Text
+                    className="blog-reader-item-name overflow-hidden text-ellipsis whitespace-nowrap"
+                    strong
+                  >
                     {renderHighlightedName(item.name, keyword)}
                   </Typography.Text>
                 </button>
                 <Button
                   aria-label={`编辑 ${item.name}`}
-                  className="blog-reader-edit"
+                  className="blog-reader-edit mr-1.5"
                   icon={<EditOutlined />}
                   onClick={() => openClothesEditModal(item)}
                   shape="circle"
@@ -127,20 +136,27 @@ export function BlogReader({ items }: BlogReaderProps) {
             ))
           ) : (
             <Empty
-              className="blog-reader-empty"
+              className="m-auto"
               description={normalizedKeyword ? "没有匹配的笔记" : "还没有笔记"}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           )}
         </div>
       </aside>
-      <section className="blog-reader-preview">
+      <section className="blog-reader-preview flex min-h-0 flex-col overflow-hidden rounded-lg border max-[900px]:min-h-[460px]">
         {selectedItem ? (
           <>
-            <div className="blog-reader-preview-header">
-              <div className="blog-reader-preview-title">
-                <span className="blog-reader-preview-icon">✿</span>
-                <Typography.Title level={3}>{selectedItem.name}</Typography.Title>
+            <div className="blog-reader-preview-header flex min-h-14 items-center justify-between gap-3 border-b px-3.5 py-2.5">
+              <div className="blog-reader-preview-title flex min-w-0 items-center gap-2">
+                <span className="blog-reader-preview-icon text-base leading-none">
+                  ✿
+                </span>
+                <Typography.Title
+                  className="m-0! overflow-hidden text-ellipsis whitespace-nowrap"
+                  level={3}
+                >
+                  {selectedItem.name}
+                </Typography.Title>
               </div>
               {previewUrl ? (
                 <Button
@@ -156,7 +172,7 @@ export function BlogReader({ items }: BlogReaderProps) {
             </div>
             {previewUrl ? (
               <iframe
-                className="blog-reader-iframe"
+                className="blog-reader-iframe min-h-0 flex-1 border-0"
                 key={previewUrl}
                 referrerPolicy="no-referrer"
                 sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
@@ -165,13 +181,18 @@ export function BlogReader({ items }: BlogReaderProps) {
               />
             ) : (
               <Empty
+                className="m-auto"
                 description="这个笔记还没有链接"
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             )}
           </>
         ) : (
-          <Empty description="请选择一条笔记" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            className="m-auto"
+            description="请选择一条笔记"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
         )}
       </section>
     </div>

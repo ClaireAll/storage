@@ -72,8 +72,12 @@ test("blog page renders the dedicated split reader", () => {
   assert.match(pageSource, /listItems\(supabase,\s*"blog",\s*userId\)/);
   assert.match(pageSource, /<BlogReader items=\{blogItems\} \/>/);
   assert.doesNotMatch(pageSource, /ClothesGallery/);
-  assert.match(readerSource, /blog-reader-shell/);
-  assert.match(readerSource, /blog-reader-sidebar/);
+  assert.match(
+    readerSource,
+    /grid-cols-\[minmax\(220px,280px\)_minmax\(0,1fr\)\]/,
+  );
+  assert.match(readerSource, /max-\[900px\]:grid-cols-1/);
+  assert.match(readerSource, /flex min-h-0 min-w-0 flex-col gap-3/);
   assert.match(readerSource, /blog-reader-preview/);
   assert.match(readerSource, /iframe/);
   assert.match(readerSource, /搜索笔记名称/);
@@ -86,15 +90,15 @@ test("blog page renders the dedicated split reader", () => {
     readerSource,
     /aria-label="新增笔记"[\s\S]*shape="circle"[\s\S]*type="primary"/,
   );
-  assert.match(
+  assert.match(readerSource, /blog-reader-add h-8 w-8 min-w-8 rounded-lg p-0/);
+  assert.match(readerSource, /blog-reader-preview-header flex min-h-14/);
+  assert.doesNotMatch(styleSource, /\.blog-reader-shell\s*\{/);
+  assert.doesNotMatch(styleSource, /\.blog-reader-sidebar\s*\{/);
+  assert.doesNotMatch(
     styleSource,
-    /blog-reader-add\.ant-btn-primary[\s\S]*height:\s*32px[\s\S]*min-width:\s*32px[\s\S]*width:\s*32px/,
+    /blog-reader-add\.ant-btn-primary[\s\S]*height:\s*32px/,
   );
-  assert.match(
-    styleSource,
-    /blog-reader-add\.ant-btn-primary[\s\S]*border-radius:\s*8px/,
-  );
-  assert.match(
+  assert.doesNotMatch(
     styleSource,
     /blog-reader-preview-header[\s\S]*min-height:\s*56px/,
   );
