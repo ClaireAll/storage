@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-06 16:18:10 +08:00
+
+- 清理 Storage 工程内无关开发过程文件：删除 `.tmp/`、`.next/`、`.agents/`、`.superpowers/`、`node_modules.bak-*` 等本地生成或过程记录目录，保留 `.codex/context/home-dashboard-context.md` 这类已入库上下文文档。
+- 按要求移除已跟踪的 `tests/` 测试目录，避免仓库继续保留当前不再需要的测试脚本；`supabase/migrations` 保留作为数据库结构演进历史。
+
 ## 2026-08-06 14:55:22 +08:00
 
 - 按 `AGENTS.md` 的组件复用准则优化低风险 UI：将编辑弹窗中的颜色选择从原生 `input[type=color]` 改为 Ant Design `ColorPicker`，保留旁侧十六进制输入联动。
