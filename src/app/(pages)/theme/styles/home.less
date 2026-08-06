@@ -998,20 +998,6 @@
   padding: 14px;
 }
 
-.codex-log-panel-header {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-}
-
-.codex-log-panel-title {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  min-width: 0;
-}
-
 .codex-log-panel-title .codex-log-metric-icon {
   height: 28px;
   width: 28px;
@@ -1019,40 +1005,6 @@
 
 .codex-log-panel-title .codex-log-metric-icon .iconfont {
   font-size: 16px;
-}
-
-.codex-log-chart-panel {
-  min-height: 260px;
-}
-
-.codex-log-chart-shell {
-  flex: 1;
-  min-height: 210px;
-  position: relative;
-}
-
-.codex-log-chart {
-  height: 100%;
-  min-height: 210px;
-  width: 100%;
-}
-
-.codex-log-chart-empty {
-  inset: 50% auto auto 50%;
-  position: absolute;
-  transform: translate(-50%, -50%);
-}
-
-.codex-log-summary-panel {
-  min-height: 260px;
-}
-
-.codex-log-summary-loading {
-  align-items: center;
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  min-height: 180px;
 }
 
 .codex-log-summary-grid {
@@ -1063,16 +1015,10 @@
 .codex-log-summary-block {
   background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
   border: 1px solid color-mix(in srgb, var(--home-theme-color) 18%, transparent);
-  border-radius: 8px;
-  padding: 10px;
 }
 
 .codex-log-summary-block > span {
   color: var(--home-theme-color);
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 6px;
 }
 
 .codex-log-summary-block .ant-typography {
@@ -1088,15 +1034,8 @@
 }
 
 .codex-log-rank-item.ant-list-item {
-  align-items: center;
   background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
   border: 1px solid color-mix(in srgb, var(--home-theme-color) 18%, transparent);
-  border-radius: 8px;
-  display: grid;
-  gap: 8px;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  min-height: 40px;
-  padding: 8px 10px;
 }
 
 .codex-log-rank-list .ant-list-empty-text {
@@ -1104,34 +1043,16 @@
 }
 
 .codex-log-rank-index {
-  align-items: center;
   background: color-mix(in srgb, var(--home-theme-color) 18%, transparent);
-  border-radius: 7px;
   color: var(--home-theme-color);
-  display: inline-flex;
-  font-size: 12px;
-  font-weight: 700;
-  height: 24px;
-  justify-content: center;
-  width: 24px;
 }
 
 .codex-log-rank-title {
   color: var(--home-theme-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .codex-log-rank-meta {
   color: color-mix(in srgb, var(--home-theme-text) 58%, transparent);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.codex-log-table-panel {
-  min-height: 390px;
-  overflow: visible;
 }
 
 .codex-log-dashboard .ant-table-wrapper,
@@ -1197,21 +1118,6 @@
     var(--home-theme-color) 12%,
     transparent
   ) !important;
-}
-
-.codex-log-title-cell {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.codex-log-title-cell > span:last-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .codex-log-dashboard .ant-tag {
@@ -1343,10 +1249,6 @@
 
   .codex-log-metric-stat .ant-statistic-content {
     font-size: 26px;
-  }
-
-  .codex-log-table-panel {
-    min-height: 380px;
   }
 
   .codex-log-table-footer {

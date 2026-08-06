@@ -416,11 +416,9 @@ function DashboardPanel({
   title?: string;
 }) {
   return (
-    <Card
-      className={cn("codex-log-panel min-w-0", panelClassName, className)}
-    >
+    <Card className={cn("codex-log-panel min-w-0", panelClassName, className)}>
       {title || extra ? (
-        <div className="codex-log-panel-header">
+        <div className="codex-log-panel-header flex items-center justify-between gap-3">
           {title ? <PanelTitle icon={icon} title={title} /> : <span />}
           {extra}
         </div>
@@ -489,14 +487,17 @@ function EChart({
   }, [empty, option]);
 
   return (
-    <div className="codex-log-chart-shell">
+    <div className="codex-log-chart-shell relative min-h-[210px] flex-1">
       <div
-        className={cn("codex-log-chart", empty && "pointer-events-none opacity-0")}
+        className={cn(
+          "codex-log-chart h-full min-h-[210px] w-full",
+          empty && "pointer-events-none opacity-0",
+        )}
         ref={chartRef}
       />
       {empty ? (
         <Empty
-          className="codex-log-chart-empty"
+          className="codex-log-chart-empty absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           description={emptyText}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
@@ -517,7 +518,7 @@ function ChartPanel({
   title: string;
 }) {
   return (
-    <DashboardPanel className="codex-log-chart-panel" title={title}>
+    <DashboardPanel className="codex-log-chart-panel min-h-[260px]" title={title}>
       <EChart empty={empty} emptyText={emptyText} option={option} />
     </DashboardPanel>
   );
@@ -656,7 +657,7 @@ function buildRepositoryOption(
 
 function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
   return (
-    <div className="codex-log-panel-title min-w-0 items-center gap-2">
+    <div className="codex-log-panel-title flex min-w-0 items-center gap-2">
       {icon}
       <Typography.Title level={5}>{title}</Typography.Title>
     </div>
@@ -680,12 +681,17 @@ function TaskList({
         ),
       }}
       renderItem={(item, index) => (
-        <List.Item className="codex-log-rank-item">
-          <span className="codex-log-rank-index">{index + 1}</span>
-          <span className="codex-log-rank-title" title={item.user_tasks}>
+        <List.Item className="codex-log-rank-item grid min-h-10 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2.5 py-2">
+          <span className="codex-log-rank-index inline-flex size-6 items-center justify-center rounded-[7px] text-xs font-bold">
+            {index + 1}
+          </span>
+          <span
+            className="codex-log-rank-title overflow-hidden text-ellipsis whitespace-nowrap"
+            title={item.user_tasks}
+          >
             {item.user_tasks}
           </span>
-          <span className="codex-log-rank-meta">
+          <span className="codex-log-rank-meta whitespace-nowrap text-xs">
             {formatToken(item.token_count)} Token
           </span>
         </List.Item>
@@ -756,7 +762,7 @@ function SummaryPanel({ date }: { date: string }) {
 
   return (
     <DashboardPanel
-      className="codex-log-summary-panel"
+      className="codex-log-summary-panel min-h-[260px]"
       extra={
         <Button
           icon={<ReloadOutlined />}
@@ -770,7 +776,7 @@ function SummaryPanel({ date }: { date: string }) {
       title="总结"
     >
       {summaryState.status === "loading" ? (
-        <div className="codex-log-summary-loading">
+        <div className="codex-log-summary-loading flex min-h-[180px] flex-1 items-center justify-center">
           <Skeleton active paragraph={{ rows: 4 }} title={false} />
         </div>
       ) : summaryState.status === "error" ? (
@@ -788,8 +794,8 @@ function SummaryPanel({ date }: { date: string }) {
 
 function SummaryBlock({ label, text }: { label: string; text: string }) {
   return (
-    <div className="codex-log-summary-block min-w-0 rounded-lg p-3">
-      <span>{label}</span>
+    <div className="codex-log-summary-block min-w-0 rounded-lg border p-3">
+      <span className="mb-1.5 block text-[13px] font-bold">{label}</span>
       <Typography.Paragraph>{text}</Typography.Paragraph>
     </div>
   );
@@ -906,9 +912,11 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     {
       dataIndex: "thread_title",
       render: (value: string, record) => (
-        <div className="codex-log-title-cell">
+        <div className="codex-log-title-cell flex min-w-0 items-center gap-2 overflow-hidden">
           <Tag>{record.repository}</Tag>
-          <span>{value}</span>
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+            {value}
+          </span>
         </div>
       ),
       sorter: true,
@@ -1119,7 +1127,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       </section>
 
       <DashboardPanel
-        className="codex-log-table-panel"
+        className="codex-log-table-panel min-h-[390px] overflow-visible max-[640px]:min-h-[380px]"
         extra={
           <Typography.Text type="secondary">
             {formatNumber(tableTotal)} 条

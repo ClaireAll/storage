@@ -4,6 +4,7 @@
 
 - 优化 Storage 样式归属：将笔记阅读页的分栏、工具栏、列表、预览区布局从 `home.less` 迁移到组件内 Tailwind CSS 类名，Less 仅保留主题色、边框色和 Ant Design 内部状态覆盖。
 - 将服饰/爱好通用列表中的卡片网格、卡片尺寸、详情行网格、详情文本截断等布局迁移到 `clothes-gallery.tsx` 的 Tailwind CSS 类名，减少 `clothes.less` 中可替代的布局规则。
+- 补充迁移 Codex 日报普通布局样式：面板头部、图表容器、总结加载态、排行条目、表格标题单元格和表格面板高度改由 `codex-log-dashboard.tsx` 内 Tailwind CSS 类名表达。
 - 修复笔记阅读组件残留中文乱码文案，并同步调整测试，确保后续不会把已迁移的布局规则重新写回 Less。
 - 保留背景动画、伪元素、关键帧、主题 `color-mix` 与 Ant Design 深层选择器在 Less 中，避免把不可读或不可维护的样式硬塞进 Tailwind 任意选择器。
 
