@@ -148,7 +148,9 @@ const defaultPalette: ChartPalette = {
   text: "#111827",
 };
 const panelClassName =
-  "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-color)_26%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_90%,#ffffff_10%)] shadow-[inset_0_1px_0_rgb(255_255_255/5%)]";
+  "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)] shadow-sm";
+const quietPanelClassName =
+  "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]";
 const scrollbarClassName =
   "[scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--home-theme-color)_54%,transparent)_color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)] hover:[&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_72%,transparent)]";
 const tableScrollbarClassName =
@@ -425,11 +427,11 @@ function DashboardPanel({
         className,
       )}
       classNames={{
-        body: "flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3.5!",
+        body: "flex min-h-0 min-w-0 flex-1 flex-col gap-4 p-4! md:p-5!",
       }}
     >
       {title || extra ? (
-        <div className="codex-log-panel-header flex items-center justify-between gap-3">
+        <div className="codex-log-panel-header flex min-h-8 items-center justify-between gap-3">
           {title ? <PanelTitle icon={icon} title={title} /> : <span />}
           {extra}
         </div>
@@ -498,10 +500,10 @@ function EChart({
   }, [empty, option]);
 
   return (
-    <div className="codex-log-chart-shell relative min-h-[210px] flex-1">
+    <div className="codex-log-chart-shell relative min-h-[220px] flex-1">
       <div
         className={cn(
-          "codex-log-chart h-full min-h-[210px] w-full",
+          "codex-log-chart h-full min-h-[220px] w-full",
           empty && "pointer-events-none opacity-0",
         )}
         ref={chartRef}
@@ -529,7 +531,7 @@ function ChartPanel({
   title: string;
 }) {
   return (
-    <DashboardPanel className="codex-log-chart-panel min-h-[260px]" title={title}>
+    <DashboardPanel className="codex-log-chart-panel min-h-[300px]" title={title}>
       <EChart empty={empty} emptyText={emptyText} option={option} />
     </DashboardPanel>
   );
@@ -670,7 +672,9 @@ function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
   return (
     <div className="codex-log-panel-title flex min-w-0 items-center gap-2">
       {icon}
-      <Typography.Title level={5}>{title}</Typography.Title>
+      <Typography.Title className="!mb-0 !text-base text-balance" level={5}>
+        {title}
+      </Typography.Title>
     </div>
   );
 }
@@ -691,13 +695,16 @@ function TaskList({
   return (
     <ul
       className={cn(
-        "codex-log-rank-list m-0 flex min-h-0 flex-1 list-none flex-col gap-2 overflow-auto p-0",
+        "codex-log-rank-list m-0 flex min-h-0 flex-1 list-none flex-col gap-2.5 overflow-auto p-0",
         scrollbarClassName,
       )}
     >
       {items.map((item, index) => (
         <li
-          className="codex-log-rank-item grid min-h-10 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2.5 py-2"
+          className={cn(
+            "codex-log-rank-item grid min-h-12 grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2.5",
+            quietPanelClassName,
+          )}
           key={item.key}
         >
           <span className="codex-log-rank-index inline-flex size-6 items-center justify-center rounded-[7px] text-xs font-bold">
@@ -780,7 +787,7 @@ function SummaryPanel({ date }: { date: string }) {
 
   return (
     <DashboardPanel
-      className="codex-log-summary-panel min-h-[260px]"
+      className="codex-log-summary-panel min-h-[240px]"
       extra={
         <Button
           icon={<ReloadOutlined />}
@@ -812,9 +819,16 @@ function SummaryPanel({ date }: { date: string }) {
 
 function SummaryBlock({ label, text }: { label: string; text: string }) {
   return (
-    <div className="codex-log-summary-block min-w-0 rounded-lg border p-3">
-      <span className="mb-1.5 block text-[13px] font-bold">{label}</span>
-      <Typography.Paragraph>{text}</Typography.Paragraph>
+    <div
+      className={cn(
+        "codex-log-summary-block min-w-0 rounded-lg border p-4",
+        quietPanelClassName,
+      )}
+    >
+      <span className="mb-2 block text-sm font-bold text-balance">{label}</span>
+      <Typography.Paragraph className="!mb-0 text-pretty">
+        {text}
+      </Typography.Paragraph>
     </div>
   );
 }
@@ -1039,29 +1053,31 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   return (
     <div
       className={cn(
-        "codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3.5 overflow-auto",
+        "codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-auto p-1 md:gap-5",
         scrollbarClassName,
       )}
     >
       <div
         className={cn(
-          "codex-log-toolbar grid grid-cols-1 items-start gap-3 p-3 xl:flex xl:items-center xl:justify-between",
+          "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 xl:flex xl:items-center xl:justify-between",
           panelClassName,
         )}
       >
-        <div className="codex-log-page-title flex min-w-[220px] items-center gap-3">
-          <MetricIcon name="icon-codex" tone="codex" />
-          <div>
-            <Typography.Title level={4}>Codex日报</Typography.Title>
+        <div className="codex-log-page-title flex min-w-0 items-center gap-3">
+          <MetricIcon className="shrink-0" name="icon-codex" tone="codex" />
+          <div className="min-w-0">
+            <Typography.Title className="!mb-1 !text-xl text-balance" level={4}>
+              Codex日报
+            </Typography.Title>
             <Typography.Text type="secondary">
               {data.selectedDate} · {formatNumber(data.stats.taskCount)} 个任务
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions flex w-full min-w-0 flex-wrap gap-2 xl:w-auto xl:justify-end">
+        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] xl:w-[720px]">
           <DatePicker
             allowClear={false}
-            className="codex-log-date-picker min-w-40"
+            className="codex-log-date-picker w-full"
             disabledDate={(current) =>
               !data.availableDates.includes(current.format("YYYY-MM-DD"))
             }
@@ -1069,7 +1085,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             value={selectedDay.isValid() ? selectedDay : undefined}
           />
           <Select
-            className="codex-log-repo-select min-w-40"
+            className="codex-log-repo-select w-full"
             onChange={(value) => {
               setRepository(value);
               setTablePage(1);
@@ -1079,7 +1095,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           />
           <Input
             allowClear
-            className="codex-log-search min-w-40 w-[min(280px,34vw)]"
+            className="codex-log-search w-full"
             onChange={(event) => {
               setKeyword(event.target.value);
               setTablePage(1);
@@ -1089,6 +1105,8 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             value={keyword}
           />
           <Button
+            aria-label="刷新日报"
+            className="w-full"
             icon={<SyncOutlined />}
             onClick={() => router.refresh()}
             type="text"
@@ -1096,7 +1114,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </div>
       </div>
 
-      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           delta={metricDeltas.taskCount}
           icon="icon-task"
@@ -1128,7 +1146,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         />
       </section>
 
-      <section className="codex-log-analysis-grid grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)_minmax(260px,0.8fr)]">
+      <section className="codex-log-analysis-grid grid grid-cols-1 gap-4 xl:grid-cols-[minmax(420px,1.35fr)_minmax(300px,0.9fr)_minmax(300px,0.95fr)]">
         <ChartPanel
           empty={!data.trend.length}
           option={trendOption}
@@ -1139,13 +1157,13 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           option={repositoryOption}
           title="仓库占比"
         />
-        <DashboardPanel title="最长会话">
+        <DashboardPanel className="min-h-[300px]" title="最长会话">
           <TaskList emptyText="暂无会话" items={data.longestSessions} />
         </DashboardPanel>
       </section>
 
       <DashboardPanel
-        className="codex-log-table-panel min-h-[390px] overflow-visible max-[640px]:min-h-[380px]"
+        className="codex-log-table-panel min-h-[440px] overflow-visible max-[640px]:min-h-[420px]"
         extra={
           <Typography.Text type="secondary">
             {formatNumber(tableTotal)} 条
@@ -1168,7 +1186,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             total: tableTotal,
           }}
           rowKey="key"
-          scroll={{ x: 848, y: 220 }}
+          scroll={{ x: 880, y: 260 }}
           showSorterTooltip={{ target: "sorter-icon" }}
           size="middle"
           tableLayout="fixed"
@@ -1197,21 +1215,21 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "codex-log-metric-card min-w-0 !border-[color-mix(in_srgb,var(--home-theme-text)_16%,transparent)] !bg-[color-mix(in_srgb,var(--home-theme-bg)_90%,#ffffff_10%)]",
+        "codex-log-metric-card min-w-0 !border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)] !bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]",
         panelClassName,
         metricToneClassNames[tone].card,
       )}
       classNames={{
-        body: "flex min-h-[108px] w-full items-center gap-4 p-4! md:px-5!",
+        body: "flex min-h-[118px] w-full items-center gap-4 p-4! md:px-5!",
       }}
     >
       <MetricIcon
-        className="!size-16 !rounded-xl"
-        iconClassName="!text-[34px]"
+        className="!size-14 !rounded-xl"
+        iconClassName="!text-[30px]"
         name={icon}
         tone={tone}
       />
-      <div className="grid min-w-0 gap-2">
+      <div className="grid min-w-0 gap-2.5">
         <Statistic
           className={cn(
             "codex-log-metric-stat",
