@@ -16,7 +16,6 @@ import {
   DatePicker,
   Empty,
   Input,
-  List,
   Select,
   Skeleton,
   Statistic,
@@ -683,17 +682,24 @@ function TaskList({
   emptyText: string;
   items: CodexLogRecord[];
 }) {
+  if (items.length === 0) {
+    return (
+      <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    );
+  }
+
   return (
-    <List<CodexLogRecord>
-      className={cn("codex-log-rank-list", scrollbarClassName)}
-      dataSource={items}
-      locale={{
-        emptyText: (
-          <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        ),
-      }}
-      renderItem={(item, index) => (
-        <List.Item className="codex-log-rank-item grid min-h-10 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2.5 py-2">
+    <ul
+      className={cn(
+        "codex-log-rank-list m-0 flex min-h-0 flex-1 list-none flex-col gap-2 overflow-auto p-0",
+        scrollbarClassName,
+      )}
+    >
+      {items.map((item, index) => (
+        <li
+          className="codex-log-rank-item grid min-h-10 grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border px-2.5 py-2"
+          key={item.key}
+        >
           <span className="codex-log-rank-index inline-flex size-6 items-center justify-center rounded-[7px] text-xs font-bold">
             {index + 1}
           </span>
@@ -706,9 +712,9 @@ function TaskList({
           <span className="codex-log-rank-meta whitespace-nowrap text-xs">
             {formatToken(item.token_count)} Token
           </span>
-        </List.Item>
-      )}
-    />
+        </li>
+      ))}
+    </ul>
   );
 }
 

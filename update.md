@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-07 10:47:14 +08:00
+
+- 修复 Codex 日报页面 Ant Design v6 废弃警告：将“最长会话”区域从已废弃的 `List` 组件改为原生 `ul/li` 结构，并继续使用 Tailwind CSS 保持原有列表布局、滚动条和空状态展示。
+
 ## 2026-08-06 16:18:10 +08:00
 
 - 清理 Storage 工程内无关开发过程文件：删除 `.tmp/`、`.next/`、`.agents/`、`.superpowers/`、`node_modules.bak-*` 等本地生成或过程记录目录，保留 `.codex/context/home-dashboard-context.md` 这类已入库上下文文档。
