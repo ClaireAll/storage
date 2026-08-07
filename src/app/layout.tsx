@@ -16,12 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         {/* eslint-disable-next-line @next/next/no-css-tags */}
         <link href="/iconfont/iconfont.css" rel="stylesheet" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <IconfontScriptLoader />
         <SharedThemeTexture />
         <AntdRegistry>{children}</AntdRegistry>
