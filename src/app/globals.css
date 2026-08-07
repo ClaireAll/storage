@@ -33,7 +33,7 @@
   --storage-scrollbar-thumb: transparent;
   --storage-scrollbar-thumb-active: color-mix(
     in srgb,
-    var(--foreground) 32%,
+    var(--home-theme-text, var(--foreground)) 30%,
     transparent
   );
 }
@@ -70,20 +70,32 @@
   scrollbar-width: thin;
 }
 
-*::-webkit-scrollbar {
-  height: 10px;
-  width: 10px;
+::-webkit-scrollbar {
+  background: transparent;
+  height: 8px;
+  width: 8px;
 }
 
-*::-webkit-scrollbar-track {
-  background: var(--storage-scrollbar-track);
+::-webkit-scrollbar-button {
+  background: transparent;
+  display: none;
+  height: 0;
+  width: 0;
 }
 
-*::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  background-clip: content-box;
-  border: 3px solid transparent;
+::-webkit-scrollbar-corner,
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-track-piece {
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent !important;
+  background-clip: padding-box;
+  border: 2px solid transparent;
   border-radius: 999px;
+  min-height: 36px;
+  min-width: 36px;
 }
 
 html.storage-is-scrolling * {
@@ -91,8 +103,8 @@ html.storage-is-scrolling * {
     var(--storage-scrollbar-track);
 }
 
-html.storage-is-scrolling *::-webkit-scrollbar-thumb {
-  background-color: var(--storage-scrollbar-thumb-active);
+html.storage-is-scrolling ::-webkit-scrollbar-thumb {
+  background-color: var(--storage-scrollbar-thumb-active) !important;
 }
 
 html,

@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-07 16:56:53 +08:00
+
+- Refine the global scrollbar skin: hide native white tracks, buttons, track pieces, and corners; keep the reserved gutter while using a subtle transparent thumb that appears only during scroll activity.
+
 ## 2026-08-07 14:47:31 +08:00
 
 - Unify scrollbar styling across the project: scrollbars keep their layout gutter, stay visually hidden by default, and reveal only while scrolling with a global scroll activity state.
