@@ -1,6 +1,7 @@
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import type { Metadata } from "next";
 import { IconfontScriptLoader } from "./(pages)/common/iconfont-script-loader";
+import { ScrollActivityProvider } from "./(pages)/common/scroll-activity-provider";
 import { SharedThemeTexture } from "./(pages)/theme/shared-theme-texture";
 import "./(pages)/theme/theme.less";
 import "./globals.css";
@@ -23,6 +24,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <IconfontScriptLoader />
+        <ScrollActivityProvider />
         <SharedThemeTexture />
         <AntdRegistry>{children}</AntdRegistry>
       </body>

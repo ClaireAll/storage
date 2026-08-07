@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-07 14:47:31 +08:00
+
+- Unify scrollbar styling across the project: scrollbars keep their layout gutter, stay visually hidden by default, and reveal only while scrolling with a global scroll activity state.
+- Remove Codex daily report's local visible scrollbar overrides so Ant Design tables and custom scroll containers follow the same global behavior.
+
 ## 2026-08-07 14:25:42 +08:00
 
 - 修复 Codex 日报全屏预览布局变形：为全屏态补充独立 flex、高度、滚动、图表、指标卡、表格和总结区尺寸约束，避免普通页面 min-height 与 gap 在全屏下挤压变形。

@@ -151,10 +151,9 @@ const panelClassName =
   "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)] shadow-sm";
 const quietPanelClassName =
   "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]";
-const scrollbarClassName =
-  "[scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--home-theme-color)_54%,transparent)_color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)] [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)] hover:[&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_72%,transparent)]";
+const scrollbarClassName = "";
 const tableScrollbarClassName =
-  "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto [&_.ant-table-content]:[scrollbar-width:thin] [&_.ant-table-body]:[scrollbar-width:thin] [&_.ant-table-content::-webkit-scrollbar]:h-2 [&_.ant-table-content::-webkit-scrollbar]:w-2 [&_.ant-table-body::-webkit-scrollbar]:h-2 [&_.ant-table-body::-webkit-scrollbar]:w-2 [&_.ant-table-content::-webkit-scrollbar-thumb]:rounded-full [&_.ant-table-body::-webkit-scrollbar-thumb]:rounded-full [&_.ant-table-content::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)] [&_.ant-table-body::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_54%,transparent)]";
+  "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto";
 const metricToneClassNames = {
   codex: {
     card: "",
