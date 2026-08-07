@@ -107,9 +107,11 @@ export function HomeDashboard({
     borderColor: surfaceBorderColor,
   } satisfies CSSProperties;
   const refreshFullscreenLayout = useCallback(() => {
-    window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
       window.dispatchEvent(new Event("resize"));
-    }, 80);
+    });
+    window.setTimeout(() => window.dispatchEvent(new Event("resize")), 120);
+    window.setTimeout(() => window.dispatchEvent(new Event("resize")), 280);
   }, []);
   const handleCodexLogFullscreenClick = useCallback(
     async (event: MouseEvent<HTMLButtonElement>) => {
