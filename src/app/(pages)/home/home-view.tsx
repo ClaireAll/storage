@@ -30,7 +30,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { homeCategories } from "./constant";
+import { homeLeafCategories } from "./constant";
 import {
   HomeProfileButton,
   HomeProfileModal,
@@ -101,10 +101,10 @@ export default function HomePage({
   const [shouldShowItemCategorySelect, setShouldShowItemCategorySelect] =
     useState(false);
   const [visibleCategoryHrefs, setVisibleCategoryHrefs] = useState(() =>
-    homeCategories.map((category) => category.href),
+    homeLeafCategories.map((category) => category.href),
   );
   const isAllCategoriesVisible =
-    visibleCategoryHrefs.length === homeCategories.length;
+    visibleCategoryHrefs.length === homeLeafCategories.length;
   const pendingCategoryHref =
     categoryNavigation.fromCategoryHref === activeCategoryHref
       ? categoryNavigation.pendingCategoryHref
@@ -116,13 +116,13 @@ export default function HomePage({
   const activeItemCategory = getItemCategoryConfig(displayActiveCategoryHref);
   const selectedItemCategory =
     getItemCategoryConfig(selectedItemCategoryHref) ?? activeItemCategory;
-  const itemCategoryOptions = homeCategories
+  const itemCategoryOptions = homeLeafCategories
     .filter((category) => itemCategoryConfigs[category.href])
     .map((category) => ({
       label: category.label,
       value: category.href,
     }));
-  const activeCategory = homeCategories.find(
+  const activeCategory = homeLeafCategories.find(
     (category) => category.href === displayActiveCategoryHref,
   );
   const emptyDescription = activeCategory
@@ -141,9 +141,9 @@ export default function HomePage({
   /** 切换全部分类复选按钮，全选时再次点击会清空左侧分类列表。 */
   function toggleAllCategoriesVisible() {
     setVisibleCategoryHrefs((currentHrefs) =>
-      currentHrefs.length === homeCategories.length
+      currentHrefs.length === homeLeafCategories.length
         ? []
-        : homeCategories.map((category) => category.href),
+        : homeLeafCategories.map((category) => category.href),
     );
   }
 

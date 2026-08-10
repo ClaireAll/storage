@@ -1063,9 +1063,16 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         )}
       >
         <div className="codex-log-page-title flex min-w-0 items-center gap-3">
-          <MetricIcon className="shrink-0" name="icon-codex" tone="codex" />
+          <MetricIcon
+            className="shrink-0"
+            name="icon-daily-report"
+            tone="codex"
+          />
           <div className="min-w-0">
             <Typography.Title className="!mb-1 !text-xl text-balance" level={4}>
+              日报
+            </Typography.Title>
+            <Typography.Title className="!hidden" level={4}>
               Codex日报
             </Typography.Title>
             <Typography.Text type="secondary">

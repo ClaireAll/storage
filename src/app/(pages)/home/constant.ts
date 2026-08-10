@@ -5,6 +5,7 @@ export type HomeCategory = {
   href: string;
   Icon?: ElementType;
   iconClassName?: string;
+  children?: HomeCategory[];
 };
 
 export type HomeStat = {
@@ -97,14 +98,35 @@ export const homeCategories: HomeCategory[] = [
     label: "笔记",
   },
   {
-    href: "/home/codex-log",
+    href: "codex",
     iconClassName: "icon-codex",
-    label: "Codex日报",
+    label: "Codex",
+    children: [
+      {
+        href: "/home/codex-log",
+        iconClassName: "icon-daily-report",
+        label: "日报",
+      },
+      {
+        href: "/home/codex-plugin",
+        iconClassName: "icon-plugin",
+        label: "Plugin",
+      },
+      {
+        href: "/home/codex-skills",
+        iconClassName: "icon-skills",
+        label: "Skills",
+      },
+    ],
   },
 ];
+
+export const homeLeafCategories = homeCategories.flatMap(
+  (category) => category.children ?? [category],
+);
 
 export const homeStats: HomeStat[] = [
   { label: "文章推荐", value: 0 },
   { label: "位置", value: 0 },
-  { label: "快捷功能", value: homeCategories.length },
+  { label: "快捷功能", value: homeLeafCategories.length },
 ];

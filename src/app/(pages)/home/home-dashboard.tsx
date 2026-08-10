@@ -46,6 +46,7 @@ const initialWeather: WeatherState = {
   status: "loading",
 };
 const codexLogCategoryHref = "/home/codex-log";
+const codexCategoryKey = "codex";
 
 const homeDashboardCache: {
   hasInitializedKnowledge: boolean;
@@ -137,9 +138,20 @@ export function HomeDashboard({
   const menuItems = useMemo(
     () =>
       homeCategories
-        .filter((category) => visibleCategoryHrefs.includes(category.href))
+        .filter(
+          (category) =>
+            category.children?.some((child) =>
+              visibleCategoryHrefs.includes(child.href),
+            ) ?? visibleCategoryHrefs.includes(category.href),
+        )
         .map((category) => {
-          const isCategoryActive = activeCategoryHref === category.href;
+          const isCategoryActive =
+            activeCategoryHref === category.href ||
+            Boolean(
+              category.children?.some(
+                (child) => activeCategoryHref === child.href,
+              ),
+            );
           const shouldShowFullscreenButton =
             category.href === codexLogCategoryHref &&
             isCategoryActive &&
@@ -149,6 +161,50 @@ export function HomeDashboard({
             className: cn("hover:scale-[1.1]", {
               "scale-[1.1] font-bold": isCategoryActive,
             }),
+            children: category.children
+              ?.filter((child) => visibleCategoryHrefs.includes(child.href))
+              .map((child) => {
+                const isChildActive = activeCategoryHref === child.href;
+                const shouldShowChildFullscreenButton =
+                  child.href === codexLogCategoryHref &&
+                  isChildActive &&
+                  !isCategorySidebarCollapsed;
+
+                return {
+                  className: cn("hover:scale-[1.1]", {
+                    "scale-[1.1] font-bold": isChildActive,
+                  }),
+                  icon: (
+                    <CategoryIcon
+                      Icon={child.Icon}
+                      name={child.iconClassName}
+                      mode="symbol"
+                    />
+                  ),
+                  key: child.href,
+                  label: shouldShowChildFullscreenButton ? (
+                    <span className="codex-log-fullscreen-menu-label">
+                      <span className="codex-log-fullscreen-menu-text">
+                        {child.label}
+                      </span>
+                      <button
+                        aria-label="全屏预览日报"
+                        className={cn("codex-log-fullscreen-button", {
+                          "is-active": isCodexLogFullscreen,
+                        })}
+                        onClick={handleCodexLogFullscreenClick}
+                        title={isCodexLogFullscreen ? "退出全屏" : "全屏"}
+                        type="button"
+                      >
+                        <i aria-hidden className="iconfont icon-fullscreen" />
+                      </button>
+                    </span>
+                  ) : (
+                    child.label
+                  ),
+                  title: child.label,
+                };
+              }),
             icon: (
               <CategoryIcon
                 Icon={category.Icon}
@@ -536,10 +592,17 @@ export function HomeDashboard({
           </div>
           <Menu
             className="home-category-menu"
+            defaultOpenKeys={[codexCategoryKey]}
             inlineCollapsed={isCategorySidebarCollapsed}
             items={menuItems}
             mode="inline"
-            onClick={({ key }) => onCategoryNavigate(String(key))}
+            onClick={({ key }) => {
+              const categoryHref = String(key);
+
+              if (categoryHref.startsWith("/")) {
+                onCategoryNavigate(categoryHref);
+              }
+            }}
             selectedKeys={selectedCategoryKeys}
           />
         </aside>

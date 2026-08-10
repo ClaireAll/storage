@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 15:12:03 +08:00
+
+- Add a Codex expandable category group in the home sidebar: keep Codex as a parent-only node, rename the daily report entry to 日报 with `icon-daily-report`, add Plugin and Skills child nodes with their new iconfont assets, and provide matching placeholder pages for the new routes.
+
 ## 2026-08-10 14:34:24 +08:00
 
 - Refine the glass home title bar geometry: increase the header/avatar breathing room, keep the brand text truncatable, prevent the action buttons from shrinking, make uploaded avatars render without the theme-color fill behind them, and restrict reserved scrollbar gutters to real scroll containers so the right edge no longer looks cut off.
