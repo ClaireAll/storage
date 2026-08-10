@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 14:09:21 +08:00
+
+- Restore the home title bar to a transparent glass style: lower the header tint opacity, add backdrop blur/saturation, subtle inner highlights, a soft bottom border, and an explicit z-index so the animated background can show through cleanly.
+
 ## 2026-08-10 10:27:37 +08:00
 
 - Apply ponytail-style code reduction to repeated image-item API routes: consolidate clothes, pants, toiletries, cosmetic, and skincare create/update/delete logic into one shared route helper, keep each route as a compact config, and remove the leftover users debug log.
