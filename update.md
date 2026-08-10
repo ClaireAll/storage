@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 14:18:35 +08:00
+
+- Fix the glass home title bar clipping regression: remove the header overflow clipping that cut off the profile avatar and right-side actions, keep the brand area flexible, and prevent the action buttons from shrinking.
+
 ## 2026-08-10 14:09:21 +08:00
 
 - Restore the home title bar to a transparent glass style: lower the header tint opacity, add backdrop blur/saturation, subtle inner highlights, a soft bottom border, and an explicit z-index so the animated background can show through cleanly.
