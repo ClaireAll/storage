@@ -51,10 +51,21 @@ export function ScrollActivityProvider() {
     let activeScrollContainer: HTMLElement | null = null;
     let timer: number | undefined;
 
+    const clearVerticallyScrolling = () => {
+      if (timer) {
+        window.clearTimeout(timer);
+        timer = undefined;
+      }
+
+      activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
+      activeScrollContainer = null;
+    };
+
     const markVerticallyScrolling = (target: EventTarget | null) => {
       const nextScrollContainer = findVerticalScrollContainer(target);
 
       if (!nextScrollContainer) {
+        clearVerticallyScrolling();
         return;
       }
 
@@ -73,8 +84,7 @@ export function ScrollActivityProvider() {
       }
 
       timer = window.setTimeout(() => {
-        activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
-        activeScrollContainer = null;
+        clearVerticallyScrolling();
       }, scrollActivityRetentionMs);
     };
 
@@ -82,9 +92,9 @@ export function ScrollActivityProvider() {
       markVerticallyScrolling(event.target);
     };
 
-    const handleWheel = (event: WheelEvent) => {
-      if (event.deltaY !== 0) {
-        markVerticallyScrolling(event.target);
+    const handlePointerOver = (event: PointerEvent) => {
+      if (event.target instanceof HTMLIFrameElement) {
+        clearVerticallyScrolling();
       }
     };
 
@@ -92,15 +102,17 @@ export function ScrollActivityProvider() {
       capture: true,
       passive: true,
     });
-    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("pointerover", handlePointerOver, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
-      if (timer) {
-        window.clearTimeout(timer);
-      }
-      activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
+      clearVerticallyScrolling();
       window.removeEventListener("scroll", handleScroll, { capture: true });
-      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("pointerover", handlePointerOver, {
+        capture: true,
+      });
     };
   }, []);
 

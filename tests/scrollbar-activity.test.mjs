@@ -26,6 +26,8 @@ test("keeps only the active vertical scrollbar visible for two seconds", async (
   assert.equal(source.includes("findVerticalScrollContainer"), true);
   assert.equal(source.includes("}, scrollActivityRetentionMs);"), true);
   assert.equal(source.includes("storage-is-scrolling"), false);
+  assert.equal(source.includes('window.addEventListener("wheel"'), false);
+  assert.equal(source.includes("event.target instanceof HTMLIFrameElement"), true);
 });
 
 test("uses a lighter theme color for active vertical and persistent horizontal scrollbars", async () => {

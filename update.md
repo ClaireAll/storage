@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 19:22:00 +08:00
+
+- Fix nested preview scrollbar targeting: remove speculative wheel-based activation, rely on real scroll events, and clear the previous vertical scrollbar when the pointer enters an embedded preview frame.
+
 ## 2026-08-10 19:10:00 +08:00
 
 - Refine scrollbar behavior: use a lighter theme tint, keep horizontal scrollbar thumbs visible when present, and reveal only the one vertical scrollbar that is actively scrolling.
