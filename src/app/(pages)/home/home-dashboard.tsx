@@ -248,21 +248,6 @@ export function HomeDashboard({
     ],
   );
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
-  const isCodexChildCategoryActive = useMemo(
-    () =>
-      homeCategories
-        .find((category) => category.href === codexCategoryKey)
-        ?.children?.some((child) => child.href === activeCategoryHref) ?? false,
-    [activeCategoryHref],
-  );
-  const effectiveOpenCategoryKeys = useMemo(
-    () =>
-      isCodexChildCategoryActive &&
-      !openCategoryKeys.includes(codexCategoryKey)
-        ? [...openCategoryKeys, codexCategoryKey]
-        : openCategoryKeys,
-    [isCodexChildCategoryActive, openCategoryKeys],
-  );
   const weatherCascaderOptions = useMemo(
     () =>
       weatherAreaPath.length === 1 && weatherAreaPath[0]
@@ -571,14 +556,14 @@ export function HomeDashboard({
       >
         <aside
           className={cn(
-            "home-soft-shadow h-full min-h-0 overflow-hidden rounded-lg border p-4 transition-[padding] duration-200",
+            "home-soft-shadow flex h-full min-h-0 flex-col overflow-hidden rounded-lg border p-4 transition-[padding] duration-200",
             isCategorySidebarCollapsed && "px-2",
           )}
           style={surfaceStyle}
         >
           <div
             className={cn(
-              "mb-3 flex items-center",
+              "mb-3 flex shrink-0 items-center",
               isCategorySidebarCollapsed
                 ? "justify-center"
                 : "justify-between gap-2",
@@ -608,33 +593,28 @@ export function HomeDashboard({
               type="text"
             />
           </div>
-          <Menu
-            className="home-category-menu"
-            inlineCollapsed={isCategorySidebarCollapsed}
-            items={menuItems}
-            mode="inline"
-            onClick={({ key }) => {
-              const categoryHref = String(key);
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+            <Menu
+              className="home-category-menu"
+              inlineCollapsed={isCategorySidebarCollapsed}
+              items={menuItems}
+              mode="inline"
+              onClick={({ key }) => {
+                const categoryHref = String(key);
 
-              if (categoryHref.startsWith("/")) {
-                onCategoryNavigate(categoryHref);
+                if (categoryHref.startsWith("/")) {
+                  onCategoryNavigate(categoryHref);
+                }
+              }}
+              onOpenChange={(keys) => {
+                setOpenCategoryKeys(keys.map(String));
+              }}
+              openKeys={
+                isCategorySidebarCollapsed ? undefined : openCategoryKeys
               }
-            }}
-            onOpenChange={(keys) => {
-              const nextKeys = keys.map(String);
-
-              setOpenCategoryKeys(
-                isCodexChildCategoryActive &&
-                  !nextKeys.includes(codexCategoryKey)
-                  ? [...nextKeys, codexCategoryKey]
-                  : nextKeys,
-              );
-            }}
-            openKeys={
-              isCategorySidebarCollapsed ? undefined : effectiveOpenCategoryKeys
-            }
-            selectedKeys={selectedCategoryKeys}
-          />
+              selectedKeys={selectedCategoryKeys}
+            />
+          </div>
         </aside>
 
         <Card

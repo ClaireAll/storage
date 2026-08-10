@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 16:17:36 +08:00
+
+- Fix the Codex sidebar interaction: preserve its initial expanded state while allowing the user to collapse it on any child route, and make the category list independently scrollable when its entries exceed the available height.
+
 ## 2026-08-10 15:28:45 +08:00
 
 - Fix the Codex sidebar group visibility: replace one-time `defaultOpenKeys` with controlled Ant Design `Menu.openKeys`, keep the Codex parent expanded while a Codex child route is active, and ensure the newly added Skills entry remains visible under the Codex group.
