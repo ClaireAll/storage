@@ -16,7 +16,5 @@ export async function GET() {
     );
   }
 
-  console.log("users table content:", data);
-
   return NextResponse.json(data);
 }

@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-10 10:27:37 +08:00
+
+- Apply ponytail-style code reduction to repeated image-item API routes: consolidate clothes, pants, toiletries, cosmetic, and skincare create/update/delete logic into one shared route helper, keep each route as a compact config, and remove the leftover users debug log.
+- Code volume comparison: tracked code files went from 20,907 lines to 20,307 lines, reducing 600 lines while preserving typecheck, lint, and production build.
+
 ## 2026-08-10 10:19:31 +08:00
 
 - Rewrite README.md with the current project documentation: local Alibaba iconfont files, Supabase connection and hobby_shares/RPC sharing flow, OSS/AI notes, and refreshed project structure.
