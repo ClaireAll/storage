@@ -100,14 +100,11 @@
   min-width: 36px;
 }
 
+html.storage-is-scrolling,
 html.storage-is-scrolling * {
   --storage-scrollbar-thumb: color-mix(
     in srgb,
-    var(
-        --home-theme-color,
-        var(--theme-page-color, var(--app-texture-color, var(--primary)))
-      )
-      42%,
+    var(--storage-scrollbar-color, var(--primary)) 54%,
     transparent
   );
   scrollbar-color: var(--storage-scrollbar-thumb)

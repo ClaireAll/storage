@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 18:58:00 +08:00
+
+- Fix the global scrollbar color source: publish the active theme accent to the document root and apply it to both the root scroller and nested scroll containers, preventing native gray/white fallback colors.
+
 ## 2026-08-10 18:40:01 +08:00
 
 - Fix the active scrollbar thumb color scope: resolve the semi-transparent theme color on each scrolling element so it remains visible while scrolling in themed pages.

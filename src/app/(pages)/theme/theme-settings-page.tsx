@@ -194,7 +194,10 @@ function ThemeSettingsContent({
 
   return (
     <>
-      <ThemeShellBackground color={appliedShellBackground} />
+      <ThemeShellBackground
+        color={appliedShellBackground}
+        scrollbarColor={appliedPalette.color}
+      />
       <ThemeTexturePublisher
         background={appliedShellBackground}
         color={appliedAnimationColor}

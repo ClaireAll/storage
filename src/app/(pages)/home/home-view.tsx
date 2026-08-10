@@ -237,7 +237,10 @@ export default function HomePage({
             <HomeContentActionsContext.Provider
               value={{ openClothesCreateModal, openClothesEditModal }}
             >
-              <ThemeShellBackground color={homeShellBackground} />
+              <ThemeShellBackground
+                color={homeShellBackground}
+                scrollbarColor={activePalette.color}
+              />
               <ThemeTexturePublisher
                 background={homeShellBackground}
                 color={homeAnimationColor}
