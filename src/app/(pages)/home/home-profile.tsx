@@ -219,14 +219,14 @@ export function HomeProfileButton({
   return (
     <button
       aria-label="编辑个人资料"
-      className="home-profile-trigger group relative size-8 rounded-full border-0 bg-transparent p-0"
+      className="home-profile-trigger group relative size-9 rounded-full border-0 bg-transparent p-0"
       onClick={openProfileModal}
       type="button"
     >
       <Avatar
         alt={profile.name ?? "用户头像"}
         className={cn(
-          "home-profile-avatar size-8! text-white! text-[24px]! leading-[32px]! shrink-0",
+          "home-profile-avatar size-9! text-white! text-[26px]! leading-[36px]! shrink-0",
           {
             "text-[#141414]!": isDark,
             "text-white!": !isDark,
@@ -234,13 +234,13 @@ export function HomeProfileButton({
         )}
         icon={
           headerAvatarUrl ? undefined : (
-            <i className="iconfont icon-avatar text-[32px]!" />
+            <i className="iconfont icon-avatar text-[36px]!" />
           )
         }
         key={headerAvatarUrl ?? "default-header-avatar"}
         src={headerAvatarUrl}
         style={{
-          backgroundColor: palette.color,
+          backgroundColor: headerAvatarUrl ? "transparent" : palette.color,
         }}
       />
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">

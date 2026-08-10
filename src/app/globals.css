@@ -66,8 +66,15 @@
   box-sizing: border-box;
   border-color: var(--border);
   scrollbar-color: var(--storage-scrollbar-thumb) var(--storage-scrollbar-track);
-  scrollbar-gutter: stable;
   scrollbar-width: thin;
+}
+
+[class*="overflow-auto"],
+[class*="overflow-x-auto"],
+[class*="overflow-y-auto"],
+.ant-table-body,
+.ant-table-content {
+  scrollbar-gutter: stable;
 }
 
 ::-webkit-scrollbar {

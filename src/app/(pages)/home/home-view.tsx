@@ -273,15 +273,15 @@ export default function HomePage({
                   isActive={themeConfig.texture === "meteor"}
                   variant="shared"
                 />
-                <header className="home-brand-header relative z-[3] flex h-10 shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3">
-                  <div className="flex h-10 min-w-0 items-center gap-2.5">
+                <header className="home-brand-header relative z-[3] flex h-11 w-full shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3">
+                  <div className="flex h-9 min-w-0 items-center gap-2.5">
                     <HomeProfileButton
                       editor={profileEditor}
                       isDark={isDark}
                       palette={activePalette}
                     />
                     <span
-                      className="home-brand-name flex h-10 items-center font-['Dancing_Script',cursive] text-[28px] leading-none"
+                      className="home-brand-name flex h-9 min-w-0 items-center truncate font-['Dancing_Script',cursive] text-[28px] leading-none"
                       style={{
                         color: activePalette.color,
                       }}

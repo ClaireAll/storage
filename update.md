@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 14:34:24 +08:00
+
+- Refine the glass home title bar geometry: increase the header/avatar breathing room, keep the brand text truncatable, prevent the action buttons from shrinking, make uploaded avatars render without the theme-color fill behind them, and restrict reserved scrollbar gutters to real scroll containers so the right edge no longer looks cut off.
+
 ## 2026-08-10 14:18:35 +08:00
 
 - Fix the glass home title bar clipping regression: remove the header overflow clipping that cut off the profile avatar and right-side actions, keep the brand area flexible, and prevent the action buttons from shrinking.
