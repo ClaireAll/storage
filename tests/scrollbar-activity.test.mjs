@@ -39,7 +39,7 @@ test("uses a lighter theme color for active vertical and persistent horizontal s
 
   assert.equal(
     source.includes(
-      ".storage-is-vertically-scrolling::-webkit-scrollbar-thumb:vertical",
+      ".storage-is-vertically-scrolling {\n  scrollbar-color: color-mix(",
     ),
     true,
   );
@@ -49,13 +49,19 @@ test("uses a lighter theme color for active vertical and persistent horizontal s
   );
   assert.equal(
     source.includes(
-      "var(--storage-scrollbar-color, var(--primary)) 30%",
+      "var(--storage-scrollbar-color, var(--primary)) 36%",
     ),
     true,
   );
   assert.equal(
-    source.includes("var(--storage-scrollbar-color, var(--primary)) 22%"),
+    source.includes("var(--storage-scrollbar-color, var(--primary)) 26%"),
     true,
+  );
+  assert.equal(
+    source.includes(
+      ".storage-is-vertically-scrolling::-webkit-scrollbar-thumb:vertical",
+    ),
+    false,
   );
   assert.equal(source.includes("html.storage-is-scrolling"), false);
   assert.equal(universalRule.includes("scrollbar-width"), false);

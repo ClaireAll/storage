@@ -101,17 +101,17 @@
 ::-webkit-scrollbar-thumb:horizontal {
   background-color: color-mix(
     in srgb,
-    var(--storage-scrollbar-color, var(--primary)) 22%,
+    var(--storage-scrollbar-color, var(--primary)) 26%,
     transparent
   ) !important;
 }
 
-.storage-is-vertically-scrolling::-webkit-scrollbar-thumb:vertical {
-  background-color: color-mix(
+.storage-is-vertically-scrolling {
+  scrollbar-color: color-mix(
     in srgb,
-    var(--storage-scrollbar-color, var(--primary)) 30%,
+    var(--storage-scrollbar-color, var(--primary)) 36%,
     transparent
-  ) !important;
+  ) transparent;
 }
 
 @supports not selector(::-webkit-scrollbar) {
@@ -120,14 +120,6 @@
     scrollbar-width: thin;
   }
 
-  .storage-is-vertically-scrolling {
-    scrollbar-color: color-mix(
-        in srgb,
-        var(--storage-scrollbar-color, var(--primary)) 30%,
-        transparent
-      )
-      transparent;
-  }
 }
 
 html,

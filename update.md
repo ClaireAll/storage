@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 20:08:00 +08:00
+
+- Stabilize scrollbar rendering in Chromium: keep the horizontal thumb independently visible, apply the active theme color through `scrollbar-color` only to the current vertical scroll container, and retain the two-second post-scroll hide behavior.
+
 ## 2026-08-10 19:36:00 +08:00
 
 - Fix Chromium scrollbar rendering: isolate `scrollbar-width` and `scrollbar-color` to a non-WebKit fallback so axis-specific horizontal and vertical thumb styles can render normally.
