@@ -1,15 +1,15 @@
-import { CodexSectionPlaceholder } from "../codex-section-placeholder";
+import { GitHubReadmePreview } from "../github-readme-preview";
 import { renderHomePage } from "../page";
 
-/** Codex Skills 节点，当前先保留为信息占位页。 */
+/** Codex Skills 节点展示 Skills 仓库 README。 */
 export default async function CodexSkillsPage() {
   return renderHomePage({
     activeCategoryHref: "/home/codex-skills",
     loadContent: async () => ({
       content: (
-        <CodexSectionPlaceholder
-          description="暂无 Skills 数据"
+        <GitHubReadmePreview
           iconClassName="icon-skills"
+          repository="ClaireAll/skills"
           title="Skills"
         />
       ),

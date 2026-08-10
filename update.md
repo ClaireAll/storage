@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 18:06:33 +08:00
+
+- Add reusable GitHub README previews for the Codex Plugin and Skills sections: fetch GitHub-rendered Markdown server-side, render it in the current theme with readable tables, code blocks, and scrolling content, and provide a GitHub fallback when loading fails.
+
 ## 2026-08-10 16:17:36 +08:00
 
 - Fix the Codex sidebar interaction: preserve its initial expanded state while allowing the user to collapse it on any child route, and make the category list independently scrollable when its entries exceed the available height.
