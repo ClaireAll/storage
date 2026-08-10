@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 19:36:00 +08:00
+
+- Fix Chromium scrollbar rendering: isolate `scrollbar-width` and `scrollbar-color` to a non-WebKit fallback so axis-specific horizontal and vertical thumb styles can render normally.
+
 ## 2026-08-10 19:22:00 +08:00
 
 - Fix nested preview scrollbar targeting: remove speculative wheel-based activation, rely on real scroll events, and clear the previous vertical scrollbar when the pointer enters an embedded preview frame.

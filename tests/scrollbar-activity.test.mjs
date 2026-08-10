@@ -32,6 +32,10 @@ test("keeps only the active vertical scrollbar visible for two seconds", async (
 
 test("uses a lighter theme color for active vertical and persistent horizontal scrollbars", async () => {
   const source = await readFile(globalStylesPath, "utf8");
+  const universalRule = source.slice(
+    source.indexOf("* {"),
+    source.indexOf("[class*=\"overflow-auto\"]"),
+  );
 
   assert.equal(
     source.includes(
@@ -54,6 +58,11 @@ test("uses a lighter theme color for active vertical and persistent horizontal s
     true,
   );
   assert.equal(source.includes("html.storage-is-scrolling"), false);
+  assert.equal(universalRule.includes("scrollbar-width"), false);
+  assert.equal(
+    source.includes("@supports not selector(::-webkit-scrollbar)"),
+    true,
+  );
 });
 
 test("publishes the active theme color to the root scrollbar scope", async () => {
