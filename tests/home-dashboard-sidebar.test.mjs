@@ -22,7 +22,7 @@ test("keeps the Codex submenu user-controlled on an active child route", async (
   assert.equal(source.includes("effectiveOpenCategoryKeys"), false);
 });
 
-test("gives the category menu its own vertical scroll viewport", async () => {
+test("keeps the category menu vertically scrollable without horizontal overflow", async () => {
   const source = await readDashboardSource();
 
   assert.equal(
@@ -31,8 +31,12 @@ test("gives the category menu its own vertical scroll viewport", async () => {
   );
   assert.equal(
     source.includes(
-      "min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-gutter:stable]",
+      "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 [scrollbar-gutter:stable]",
     ),
+    true,
+  );
+  assert.equal(
+    source.includes('className="home-category-menu !w-full min-w-0"'),
     true,
   );
 });

@@ -33,7 +33,11 @@
   --storage-scrollbar-thumb: transparent;
   --storage-scrollbar-thumb-active: color-mix(
     in srgb,
-    var(--home-theme-text, var(--foreground)) 30%,
+    var(
+        --home-theme-color,
+        var(--theme-page-color, var(--app-texture-color, var(--primary)))
+      )
+      42%,
     transparent
   );
 }

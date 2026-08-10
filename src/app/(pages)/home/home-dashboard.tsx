@@ -593,9 +593,9 @@ export function HomeDashboard({
               type="text"
             />
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 [scrollbar-gutter:stable]">
             <Menu
-              className="home-category-menu"
+              className="home-category-menu !w-full min-w-0"
               inlineCollapsed={isCategorySidebarCollapsed}
               items={menuItems}
               mode="inline"

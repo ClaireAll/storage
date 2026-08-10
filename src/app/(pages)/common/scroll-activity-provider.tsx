@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 const scrollActiveClassName = "storage-is-scrolling";
+const scrollActivityRetentionMs = 2_000;
 const scrollKeys = new Set([
   "ArrowDown",
   "ArrowLeft",
@@ -27,7 +28,7 @@ export function ScrollActivityProvider() {
       }
       timer = window.setTimeout(() => {
         root.classList.remove(scrollActiveClassName);
-      }, 760);
+      }, scrollActivityRetentionMs);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {

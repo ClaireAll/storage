@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-10 18:24:35 +08:00
+
+- Refine global scrollbar behavior: keep the themed, semi-transparent scrollbar thumb visible for two seconds after scrolling ends, then hide it while preserving its layout gutter.
+- Prevent horizontal overflow in the home category sidebar by constraining the menu viewport and matching the Ant Design menu width to its container.
+
 ## 2026-08-10 18:06:33 +08:00
 
 - Add reusable GitHub README previews for the Codex Plugin and Skills sections: fetch GitHub-rendered Markdown server-side, render it in the current theme with readable tables, code blocks, and scrolling content, and provide a GitHub fallback when loading fails.
