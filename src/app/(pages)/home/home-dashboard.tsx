@@ -102,6 +102,9 @@ export function HomeDashboard({
   const [isCategorySidebarCollapsed, setIsCategorySidebarCollapsed] =
     useState(false);
   const [isCodexLogFullscreen, setIsCodexLogFullscreen] = useState(false);
+  const [openCategoryKeys, setOpenCategoryKeys] = useState<string[]>([
+    codexCategoryKey,
+  ]);
   const categoryContentRef = useRef<HTMLDivElement>(null);
   const surfaceStyle = {
     backgroundColor: surfaceBackground,
@@ -245,6 +248,21 @@ export function HomeDashboard({
     ],
   );
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
+  const isCodexChildCategoryActive = useMemo(
+    () =>
+      homeCategories
+        .find((category) => category.href === codexCategoryKey)
+        ?.children?.some((child) => child.href === activeCategoryHref) ?? false,
+    [activeCategoryHref],
+  );
+  const effectiveOpenCategoryKeys = useMemo(
+    () =>
+      isCodexChildCategoryActive &&
+      !openCategoryKeys.includes(codexCategoryKey)
+        ? [...openCategoryKeys, codexCategoryKey]
+        : openCategoryKeys,
+    [isCodexChildCategoryActive, openCategoryKeys],
+  );
   const weatherCascaderOptions = useMemo(
     () =>
       weatherAreaPath.length === 1 && weatherAreaPath[0]
@@ -592,7 +610,6 @@ export function HomeDashboard({
           </div>
           <Menu
             className="home-category-menu"
-            defaultOpenKeys={[codexCategoryKey]}
             inlineCollapsed={isCategorySidebarCollapsed}
             items={menuItems}
             mode="inline"
@@ -603,6 +620,19 @@ export function HomeDashboard({
                 onCategoryNavigate(categoryHref);
               }
             }}
+            onOpenChange={(keys) => {
+              const nextKeys = keys.map(String);
+
+              setOpenCategoryKeys(
+                isCodexChildCategoryActive &&
+                  !nextKeys.includes(codexCategoryKey)
+                  ? [...nextKeys, codexCategoryKey]
+                  : nextKeys,
+              );
+            }}
+            openKeys={
+              isCategorySidebarCollapsed ? undefined : effectiveOpenCategoryKeys
+            }
             selectedKeys={selectedCategoryKeys}
           />
         </aside>

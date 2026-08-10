@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 15:28:45 +08:00
+
+- Fix the Codex sidebar group visibility: replace one-time `defaultOpenKeys` with controlled Ant Design `Menu.openKeys`, keep the Codex parent expanded while a Codex child route is active, and ensure the newly added Skills entry remains visible under the Codex group.
+
 ## 2026-08-10 15:12:03 +08:00
 
 - Add a Codex expandable category group in the home sidebar: keep Codex as a parent-only node, rename the daily report entry to 日报 with `icon-daily-report`, add Plugin and Skills child nodes with their new iconfont assets, and provide matching placeholder pages for the new routes.
