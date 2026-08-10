@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 10:19:31 +08:00
+
+- Rewrite README.md with the current project documentation: local Alibaba iconfont files, Supabase connection and hobby_shares/RPC sharing flow, OSS/AI notes, and refreshed project structure.
+
 ## 2026-08-07 16:56:53 +08:00
 
 - Refine the global scrollbar skin: hide native white tracks, buttons, track pieces, and corners; keep the reserved gutter while using a subtle transparent thumb that appears only during scroll activity.

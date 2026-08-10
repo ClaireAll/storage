@@ -1,18 +1,23 @@
 # Storage
 
-个人物品储存 / 库存管理平台，用于记录物品、位置、分类、标签和图片。
+个人库存与资料管理应用，用来记录衣服、裤子、日用品、图书、爱好、化妆品、护肤品、笔记和 Codex 日报。项目包含主题系统、OSS 文件上传、AI 助手、万相图片生成、爱好分享页和 Codex 日报仪表板。
 
 ## 技术栈
 
 - Next.js 16
 - React 19
+- TypeScript
 - Tailwind CSS 4
-- Ant Design
+- Ant Design 6
 - Less
 - Supabase PostgreSQL
 - Supabase SSR client
 - NextAuth Credentials
 - 阿里云 OSS
+- DeepSeek
+- 阿里云百炼 / 万相
+- ECharts
+- Swiper
 - pnpm
 
 ## 本地开发
@@ -22,46 +27,103 @@ pnpm install
 pnpm dev
 ```
 
-打开 http://localhost:3888。
+默认端口由 `.env.local` 中的 `PORT` 控制；本地常用地址是：
+
+```txt
+http://localhost:3888
+```
+
+常用校验命令：
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm build
+```
+
+## 环境变量
+
+`.env.local` 只保存在本地，不提交到 Git。线上部署时需要在 Vercel 环境变量中逐项配置。
+
+```env
+PORT=3888
+
+AUTH_SECRET=
+AUTH_TRUST_HOST=true
+
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+ALIYUN_OSS_ACCESS_KEY_ID=
+ALIYUN_OSS_ACCESS_KEY_SECRET=
+ALIYUN_OSS_BUCKET=
+ALIYUN_OSS_REGION=
+ALIYUN_OSS_ENDPOINT=
+ALIYUN_OSS_PUBLIC_BASE_URL=
+
+DEEPSEEK_API_KEY=
+
+DASHSCOPE_API_KEY=
+DASHSCOPE_BASE_URL=
+WAN_IMAGE_MODEL=
+```
+
+说明：
+
+- `NEXT_PUBLIC_*` 变量会暴露给浏览器，只能放公开可用的配置。
+- `SUPABASE_SERVICE_ROLE_KEY` 只能在服务端使用，目前用于分享链接创建、查询、删除等高权限操作。
+- `DEEPSEEK_API_KEY` 用于页面右下角 AI 助手和 Codex 日报总结。
+- `DASHSCOPE_API_KEY` 用于万相生成搭配效果图。
 
 ## 引入阿里图标库
 
-当前项目使用阿里 iconfont 的 Font class 在线链接：
+项目现在采用“下载文件后本地引入”的方式，不再依赖 iconfont 在线链接。
 
-```css
-@import url("生成的在线链接");
+本地文件放在：
+
+```txt
+public/iconfont/iconfont.css
+public/iconfont/iconfont.js
+public/iconfont/iconfont.ttf
+public/iconfont/iconfont.woff
+public/iconfont/iconfont.woff2
 ```
 
-该链接已在 `src/app/globals.less` 中全局引入。
+全局 CSS 入口在根布局中通过 `<link>` 引入：
 
-使用图标时，在页面或组件中添加对应的 iconfont class：
+```tsx
+<link href="/iconfont/iconfont.css" rel="stylesheet" />
+```
+
+彩色 symbol 图标通过 `IconfontScriptLoader` 在客户端加载：
+
+```tsx
+const iconfontScriptSrc = "/iconfont/iconfont.js";
+```
+
+使用方式：
 
 ```tsx
 <i className="iconfont icon-xxx" />
 ```
 
-其中 `icon-xxx` 替换为阿里图标库项目中对应图标的 class 名称。
+分类图标统一使用 `CategoryIcon`，需要彩色图标时使用 `mode="symbol"`：
 
-如果后续在阿里图标库中新增或删除图标，需要先在 iconfont 项目中更新代码，然后同步替换 `src/app/globals.less` 里的在线链接。
+```tsx
+<CategoryIcon name="icon-codex" mode="symbol" />
+```
 
-## 主题配置
+更新图标库时：
 
-项目已接入主题配置能力，支持浅色、深色、跟随系统，以及浅色/深色两套调色板。主题设置页路径为 `/theme`，右上角主题按钮可进入设置页。
-
-主题数据会通过 `/api/theme` 写入 Supabase `theme` 表，显示模式会配合 cookie 用于服务端首屏读取。Ant Design 的 primary、link、background、text token 会跟随当前主题调色板。
+1. 在阿里 iconfont 项目中更新图标。
+2. 下载最新代码包。
+3. 用下载包里的 `iconfont.css`、`iconfont.js`、字体文件替换 `public/iconfont` 下的同名文件。
+4. 刷新页面；如果浏览器缓存旧文件，执行硬刷新。
 
 ## Supabase 连接
 
-项目已经按 Next.js + Supabase SSR 方式接入 Supabase。当前读取 `.env.local` 中的配置：
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-```
-
-`SUPABASE_SERVICE_ROLE_KEY` 仅供服务端创建爱好分享快照时调用高权限
-RPC，不能添加 `NEXT_PUBLIC_` 前缀，也不能传给浏览器组件。
+项目使用 `@supabase/ssr` 区分浏览器、服务端和中间件场景。
 
 浏览器组件使用：
 
@@ -71,7 +133,7 @@ import { createClient } from "@/utils/supabase/client";
 const supabase = createClient();
 ```
 
-服务端组件、Route Handler 使用：
+服务端组件和 Route Handler 使用：
 
 ```ts
 import { createClient } from "@/utils/supabase/server";
@@ -79,177 +141,295 @@ import { createClient } from "@/utils/supabase/server";
 const supabase = await createClient();
 ```
 
-## 登录与注册
+需要 service-role 权限的服务端逻辑使用：
 
-项目使用 NextAuth Credentials 登录方式：
+```ts
+import { createAdminClient } from "@/utils/supabase/admin";
 
-- 登录页：`/login`
-- 认证接口：`/api/users/auth/[...nextauth]`
-- 注册接口：`/api/users/register`
-- 用户查询接口：`/api/users`
-- 用户资料接口：`/api/users/profile`
-
-注册字段：
-
-- `name`：姓名
-- `phone`：手机号
-- `password`：密码，最少 4 位
-
-注册接口会将密码用 bcrypt hash 后写入 `users.password`，`id` 由数据库自动生成。`users` 表至少需要包含 `id`、`name`、`phone`、`password`、`avatar` 字段。
-
-## 配置阿里云 OSS
-
-项目使用阿里云 OSS 存储物品图片和头像图片，数据库只保存图片 URL、OSS key 等元数据。
-
-`.env.local` 需要配置：
-
-```env
-ALIYUN_OSS_ACCESS_KEY_ID=
-ALIYUN_OSS_ACCESS_KEY_SECRET=
-ALIYUN_OSS_BUCKET=
-ALIYUN_OSS_REGION=
-ALIYUN_OSS_ENDPOINT=
-ALIYUN_OSS_PUBLIC_BASE_URL=
+const supabase = createAdminClient();
 ```
 
-### 创建 Bucket
+### 主要数据表
 
-进入阿里云对象存储 OSS 控制台创建 Bucket：https://www.aliyun.com/product/oss
+- `users`：用户信息、手机号、密码摘要、头像。
+- `theme`：用户主题、颜色和背景动画配置。
+- `clothes`：衣服。
+- `pants`：裤子。
+- `toiletries`：日用品。
+- `books`：图书，支持图片和下载文件。
+- `hobby`：爱好，`pic_urls` 为 JSON 图片数组。
+- `cosmetic`：化妆品。
+- `skincare`：护肤品。
+- `blog`：笔记链接。
+- `codex_log`：Codex 日报数据。
+- `hobby_shares`：爱好分享快照。
 
-### 跨域设置
+### 分享表：`hobby_shares`
 
-本地开发至少需要允许：
+爱好分享不是直接公开读取 `hobby` 表，而是在创建分享链接时把当前账号下的爱好图片整理成快照，写入 `hobby_shares`。
+
+字段：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `token` | `text` | 分享令牌，主键，用于 `/share/hobby/[token]` |
+| `owner_id` | `text` | 创建分享的用户 id |
+| `slides` | `jsonb` | 分享页轮播图片快照，包含 `hobbyId`、`name`、`imageUrl` |
+| `theme` | `jsonb` | 创建分享时的主题快照 |
+| `expires_at` | `timestamptz` | 过期时间，空值表示永久有效 |
+| `password_hash` | `text` | 可选访问密码的 bcrypt 摘要 |
+| `created_at` | `timestamptz` | 创建时间 |
+
+相关迁移：
+
+```txt
+supabase/migrations/20260730_create_hobby_shares.sql
+supabase/migrations/20260731_secure_hobby_share_creation.sql
+```
+
+安全策略：
+
+- `hobby_shares` 开启 RLS。
+- 表权限从 `anon`、`authenticated` 撤销。
+- 创建分享通过 `create_hobby_share` RPC 完成，只授权给 `service_role`。
+- 公开访问通过 `resolve_hobby_share` RPC 完成，授权给 `anon` 和 `authenticated`。
+- 删除分享通过服务端 API 使用 `service_role` 删除当前账号拥有的 token。
+
+相关接口：
+
+- `GET /api/share/hobby`：读取当前账号已创建的分享链接。
+- `POST /api/share/hobby`：创建当前账号爱好图片快照分享。
+- `GET /api/share/hobby/[token]`：无密码读取公开分享。
+- `POST /api/share/hobby/[token]`：带密码读取公开分享。
+- `DELETE /api/share/hobby/[token]`：删除当前账号拥有的分享链接。
+
+公开页面：
+
+```txt
+/share/hobby/[token]
+```
+
+## 阿里云 OSS
+
+项目使用阿里云 OSS 存储头像、物品图片和图书下载文件。数据库只保存公开 URL 和业务字段。
+
+上传目录：
+
+- `avatars`
+- `clothes`
+- `pants`
+- `toiletries`
+- `books`
+- `hobby`
+- `cosmetic`
+- `skincare`
+
+上传路径按用户隔离：
+
+```txt
+{directory}/{userId}/{fileName}
+```
+
+文件命名规则：
+
+- 图片和文件上传时优先使用业务名称作为文件名。
+- 如果 OSS 中存在同名文件，自动追加 `_2`、`_3` 等后缀。
+- 中文文件名会走服务端 PUT 上传，避免浏览器直传 PostObject 的编码兼容问题。
+- 编辑时如果替换旧文件，服务端会尽量复用或清理对应资源。
+
+本地开发至少配置以下 OSS 跨域规则：
 
 ```txt
 来源：http://localhost:3888
 允许 Methods：GET, POST, PUT, DELETE, OPTIONS, HEAD
 允许 Headers：*
-允许 Expose Headers：ETag
-缓存时间：600 秒
+暴露 Headers：ETag
+缓存时间：600
 ```
 
-## 样式编辑准则
+## AI 能力
 
-- 布局、间距、尺寸、显隐状态优先使用 Tailwind CSS；Ant Design 组件深度样式、主题变量、复杂选择器、动画和背景特效再放到 Less。
-- Tailwind 任意值优先使用具体工具类写法，避免不必要的任意属性写法。例如颜色边框使用 `border-[color-mix(...)]`，颜色背景使用 `bg-[color-mix(...)]`，文字颜色使用 `text-[rgb(...)]`。
-- Tailwind 变量工具类使用括号语法，避免把 `var(...)` 写进方括号。例如主题文字色使用 `text-(--home-theme-color)`。
-- Tailwind 任意值中的透明度直接使用 `/`，避免写成下划线包裹斜杠的转义形式。例如渐变背景使用 `bg-[linear-gradient(180deg,transparent,rgb(0_0_0/64%))]`，半透明背景使用 `bg-[rgb(127_127_127/10%)]`。
-- Ant Design 组件的固定宽高、图标颜色、hover/focus 状态统一放在对应 Less 中维护，不在 TSX 里叠加带 important 的尺寸类做临时覆盖。
-- 主题相关颜色优先使用 `var(--home-theme-*)`、`var(--clothes-create-theme-color)` 和 `color-mix()`，避免随手增加不跟随主题的灰色。
-- 修改视觉问题时先确认根因，保持改动范围小，不为了压过样式而连续堆叠覆盖规则。
+### DeepSeek 助手
+
+页面右下角的 AI 助手调用：
+
+```txt
+POST /api/ai/chat
+```
+
+模型：
+
+```txt
+deepseek-v4-flash
+```
+
+助手工具定义在：
+
+```txt
+src/app/api/ai/tools
+```
+
+它可以读取当前账号下的库存列表、搜索库存、查缺失字段、汇总库存和推荐搭配。
+
+### Codex 日报总结
+
+Codex 日报页面调用：
+
+```txt
+POST /api/codex-log/summary
+```
+
+它会基于 `codex_log` 中的每日会话记录，请 DeepSeek 生成“总结 / 成长 / 不足”。
+
+### 万相搭配图
+
+搭配效果图接口：
+
+```txt
+POST /api/ai/outfit-image
+```
+
+底层调用阿里云百炼 DashScope 的万相模型。默认模型：
+
+```txt
+wan2.7-image-pro
+```
+
+生成结果直接返回临时图片 URL，不上传到 OSS。
+
+## 样式规范
+
+- 普通布局、间距、尺寸、显隐状态优先写 Tailwind CSS，并直接写在对应组件文件中。
+- Less 主要保留给主题变量、Ant Design 深层选择器、伪元素、keyframes、背景动画、Swiper/Flame 特效等 Tailwind 不适合表达的样式。
+- Ant Design 组件优先使用 v6 推荐的属性和方法。
+- 不重复手写 Ant Design 已有能力。
+- 全工程滚动条在 `src/app/globals.css` 中统一处理：默认保留占位但视觉隐藏，滚动时显示。
 
 ## 工程结构说明
 
-当前项目按 Next.js 路由入口、页面功能模块、服务端接口、通用工具和静态资源分层。下面说明当前仓库中主要文件的用途；`.next/`、`node_modules/`、`tsconfig.tsbuildinfo` 等生成文件不纳入维护清单。
-
-### 根目录文件
-
-- `.env.local`：本地环境变量文件，存放 Supabase、OSS 等敏感配置，不提交到 Git。
-- `.gitignore`：Git 忽略规则。
-- `auth.ts`：NextAuth 配置，处理 Credentials 登录、用户校验和 session 字段。
-- `CODEX.md`：项目协作记忆，记录工程背景、约定和常用命令。
-- `EXECUTION_GUIDELINES.md`：工程执行准则，约束改动范围、验证命令和注释规范。
-- `eslint.config.mjs`：ESLint 配置入口。
-- `middleware.ts`：Next.js 中间件入口，接入 Supabase session 同步。
-- `next-auth.d.ts`：NextAuth 类型扩展，补充用户字段类型。
-- `next-env.d.ts`：Next.js 自动生成的类型声明文件。
-- `next.config.ts`：Next.js 配置，包含 Less/Turbopack 相关规则。
-- `package.json`：项目脚本、依赖和开发依赖声明。
-- `pnpm-lock.yaml`：pnpm 依赖锁定文件。
-- `postcss.config.mjs`：PostCSS 配置，用于 Tailwind CSS 处理。
-- `README.md`：项目说明文档。
-- `tsconfig.json`：TypeScript 编译配置。
-
-### 脚本与文档
-
-- `scripts/next-with-env-port.mjs`：启动 Next.js 时读取环境变量端口并处理默认端口。
-- `docs/codex-memory/20260612-112031-readme-append-bottom.md`：早期 README 追加内容记录。
-- `docs/codex-memory/20260616-150233-storage-hydration-guard.md`：Hydration 风险和处理记录。
-- `docs/codex-memory/2026-06-18T11-34-08-storage-theme-texture-context.md`：主题纹理相关上下文记录。
-
-### 静态资源
-
-- `public/fonts/dancing-script-700.ttf`：首页用户名称展示使用的字体资源。
-- `public/images/login-hero.png`：登录页背景图。
-
-### `src/app` 应用入口
-
-- `src/app/favicon.ico`：站点图标。
-- `src/app/globals.less`：全局样式入口，包含 Tailwind、iconfont 和基础全局样式。
-- `src/app/layout.tsx`：根布局，挂载全局样式、Ant Design Registry 和共享主题纹理。
-- `src/app/page.tsx`：根路径入口，统一跳转到 `/home`。
+```txt
+.
+├─ public/
+│  ├─ fonts/                 # 本地字体
+│  ├─ iconfont/              # 阿里 iconfont 下载文件
+│  └─ images/                # 静态图片
+├─ scripts/                  # 本地维护脚本
+├─ src/
+│  ├─ app/
+│  │  ├─ (pages)/            # 登录后应用页面
+│  │  ├─ (share)/            # 公开分享页
+│  │  ├─ api/                # Next.js Route Handlers
+│  │  ├─ globals.css         # Tailwind 和全局基础样式
+│  │  ├─ layout.tsx          # 根布局、全局 provider、iconfont 引入
+│  │  └─ page.tsx            # 根路由入口
+│  ├─ components/            # 跨页面组件
+│  ├─ lib/                   # 通用库函数
+│  ├─ types/                 # 全局类型声明
+│  └─ utils/                 # 请求、OSS、Supabase 等工具
+├─ supabase/
+│  └─ migrations/            # 数据库迁移 SQL
+├─ auth.ts                   # NextAuth 配置
+├─ middleware.ts             # Supabase session 同步
+├─ next.config.ts            # Next.js 配置
+├─ package.json              # 脚本与依赖
+└─ README.md                 # 项目说明
+```
 
 ### `src/app/(pages)/common`
 
-- `src/app/(pages)/common/category-icon.tsx`：分类 iconfont 图标组件，统一处理尺寸和外层容器。
+跨页面通用组件：
+
+- `category-icon.tsx`：分类图标组件，支持 iconfont font class 和 symbol 彩色图标。
+- `iconfont-script-loader.tsx`：客户端加载 `/iconfont/iconfont.js`。
+- `scroll-activity-provider.tsx`：统一滚动条显示状态。
+- `ai-assistant.tsx`：DeepSeek 浮动助手。
 
 ### `src/app/(pages)/home`
 
-- `src/app/(pages)/home/page.tsx`：`/home` 服务端页面，读取 session、用户资料和初始主题。
-- `src/app/(pages)/home/home-view.tsx`：首页客户端组合组件，负责主题容器、顶部栏、主体区和弹窗组合。
-- `src/app/(pages)/home/home-dashboard.tsx`：首页主体区组件，包含统计卡片、分类菜单和空状态内容。
-- `src/app/(pages)/home/home-profile.tsx`：首页个人资料模块，包含头像入口、资料弹窗、头像上传预览、保存资料和退出登录。
-- `src/app/(pages)/home/home-config.tsx`：首页分类和统计卡片配置。
-- `src/app/(pages)/home/clothes/page.tsx`：`/home/clothes` 衣服分类页面入口。
-- `src/app/(pages)/home/clothes/clothes-create-modal.tsx`：衣服新增弹窗，包含表单、图片上传、拖拽/粘贴、裁剪和保存。
-- `src/app/(pages)/home/clothes/clothes-image.ts`：衣服图片工具，负责主色提取、裁剪图片生成和颜色校验。
-- `src/app/(pages)/home/clothes/use-draggable-modal.ts`：新增弹窗标题栏拖拽 Hook。
-- `src/app/(pages)/home/clothes/use-image-crop.ts`：图片裁剪交互 Hook，管理裁剪缩放、拖拽和样式计算。
-- `src/app/(pages)/home/pants/page.tsx`：`/home/pants` 裤子分类页面入口。
+登录后的主应用区域：
 
-### `src/app/(pages)/login`
+- `page.tsx`：主页服务端入口，读取 session、主题、用户信息和分类内容。
+- `home-view.tsx`：主页客户端组合层，负责主题容器、顶部栏、内容区和新增弹窗。
+- `home-dashboard.tsx`：首页主体卡片、天气、推荐、分类菜单和内容卡片。
+- `home-profile.tsx`：头像、个人资料弹窗、密码修改和退出登录。
+- `constant.ts`：首页分类、分类图标、分类枚举和展示文案。
+- `item-edit-config.ts`：不同库存分类的编辑弹窗配置。
 
-- `src/app/(pages)/login/page.tsx`：登录页服务端入口，已登录用户会跳转到 `/home`。
-- `src/app/(pages)/login/page-client.tsx`：登录/注册客户端组件，包含表单切换、提交和登录背景展示。
-- `src/app/(pages)/login/styles.ts`：登录页样式 className 配置和样式片段。
+分类页面：
+
+- `clothes/`：衣服列表、筛选、图片裁剪、上传和编辑弹窗。
+- `pants/`：裤子页面，复用衣服列表和编辑能力。
+- `toiletries/`：日用品页面。
+- `books/`：图书页面，支持图片和下载文件。
+- `hobby/`：爱好页面，支持多图。
+- `cosmetic/`：化妆品页面。
+- `skincare/`：护肤品页面。
+- `blog/`：笔记页面，左侧列表 + 右侧预览。
+- `codex-log/`：Codex 日报仪表板，使用 ECharts 和 Ant Design Table。
+- `share/`：登录态下的爱好分享创建、查看和删除弹窗。
 
 ### `src/app/(pages)/theme`
 
-- `src/app/(pages)/theme/page.tsx`：主题设置页服务端入口，读取用户主题数据并传给客户端页面。
-- `src/app/(pages)/theme/theme-settings-page.tsx`：主题设置客户端页面，负责模式切换、预设主题、自定义颜色、纹理选择和预览。
-- `src/app/(pages)/theme/theme-provider.tsx`：主题 Provider，向 Ant Design 注入当前主题 token，并提供主题更新能力。
-- `src/app/(pages)/theme/theme-control.tsx`：右上角主题设置入口按钮。
-- `src/app/(pages)/theme/theme-shell-background.tsx`：将当前页面主题背景同步到 document 级样式。
-- `src/app/(pages)/theme/shared-theme-texture.tsx`：跨页面共享主题纹理和纹理事件发布组件。
-- `src/app/(pages)/theme/theme-geometry-texture.tsx`：几何漂浮纹理动画组件。
-- `src/app/(pages)/theme/theme-utils.ts`：主题工具方法，包含颜色解析、颜色混合、可读文字色、背景色和随机动画工具。
-- `src/app/(pages)/theme/constants.ts`：主题预设、纹理选项、主题数据校验和数据库行转换方法。
-- `src/app/(pages)/theme/types.ts`：主题模式、调色板、纹理和数据库行类型定义。
-- `src/app/(pages)/theme/theme.less`：主题样式聚合入口，引入拆分后的 Less 文件。
-- `src/app/(pages)/theme/styles/base-texture.less`：全局主题纹理和基础背景样式。
-- `src/app/(pages)/theme/styles/home.less`：首页主题相关样式。
-- `src/app/(pages)/theme/styles/clothes.less`：衣服新增弹窗和衣服模块样式。
-- `src/app/(pages)/theme/styles/profile.less`：个人资料弹窗样式。
-- `src/app/(pages)/theme/styles/theme-settings.less`：主题设置页样式。
+主题系统：
+
+- `page.tsx`：主题设置页服务端入口。
+- `theme-settings-page.tsx`：主题配置页面。
+- `theme-provider.tsx`：向 Ant Design 注入主题 token。
+- `theme-control.tsx`：主题入口按钮。
+- `shared-theme-texture.tsx`：跨页面共享背景动画。
+- `theme-geometry-texture.tsx`：几何动画。
+- `constants.ts` / `types.ts` / `theme-utils.ts`：主题数据、类型和工具函数。
+- `theme.less`：主题 Less 聚合入口。
+- `styles/`：主题、背景动画、Ant Design 深层覆盖和复杂特效样式。
+
+### `src/app/(share)`
+
+公开分享页面：
+
+- `share/hobby/[token]/page.tsx`：读取分享 token 并渲染公开页。
+- `share/hobby/[token]/hobby-share-view.tsx`：Swiper 轮播、FlameWrap 火焰边框、密码输入和公开展示。
 
 ### `src/app/api`
 
-- `src/app/api/clothes/route.ts`：衣服物品接口，处理新增衣服记录。
-- `src/app/api/oss/policy/route.ts`：OSS PostObject 上传策略接口，生成上传所需签名和表单字段。
-- `src/app/api/theme/route.ts`：主题保存接口，将用户主题配置写入 Supabase。
-- `src/app/api/users/route.ts`：用户查询接口。
-- `src/app/api/users/auth/[...nextauth]/route.ts`：NextAuth Route Handler，暴露认证接口。
-- `src/app/api/users/profile/route.ts`：用户资料保存接口，处理名称、密码、头像更新和旧头像清理。
-- `src/app/api/users/register/route.ts`：用户注册接口，校验并写入 Supabase users 表。
+服务端接口：
 
-### `src/lib` 与 `src/types`
-
-- `src/lib/utils.ts`：通用 className 合并工具，封装 `clsx` 和 `tailwind-merge`。
-- `src/types/less.d.ts`：Less 文件模块声明，允许 TypeScript 识别 `.less` 导入。
+- `ai/chat`：DeepSeek 助手。
+- `ai/outfit-image`：万相搭配图生成。
+- `blog`、`books`、`clothes`、`cosmetic`、`hobby`、`pants`、`skincare`、`toiletries`：库存分类增删改接口。
+- `codex-log/summary`：Codex 日报总结。
+- `knowledge`：文章推荐。
+- `oss/policy`：浏览器直传 OSS policy。
+- `oss/upload`：服务端 OSS 上传 fallback。
+- `share/hobby`：创建和列出分享链接。
+- `share/hobby/[token]`：读取、带密码读取和删除分享。
+- `theme`：保存主题。
+- `users`、`users/profile`、`users/register`、`users/auth/[...nextauth]`：用户与认证接口。
 
 ### `src/utils`
 
-- `src/utils/request.ts`：浏览器请求封装，统一处理 JSON 请求、响应解析和错误抛出。
-- `src/utils/oss.ts`：浏览器侧 OSS 上传工具，负责获取 policy 并提交图片文件。
-- `src/utils/supabase/client.ts`：浏览器组件使用的 Supabase client。
-- `src/utils/supabase/server.ts`：服务端组件、Route Handler 使用的 Supabase client。
-- `src/utils/supabase/admin.ts`：仅供服务端高权限 RPC 使用的 Supabase service-role client。
-- `src/utils/supabase/middleware.ts`：Supabase session 刷新和同步中间件工具。
+通用工具：
 
-约定：
+- `request.ts`：浏览器请求封装。
+- `oss.ts`：浏览器侧上传入口。
+- `oss-server.ts`：服务端 OSS 操作。
+- `supabase/client.ts`：浏览器 Supabase client。
+- `supabase/server.ts`：服务端 Supabase client。
+- `supabase/admin.ts`：service-role Supabase client。
+- `supabase/middleware.ts`：中间件 session 同步。
 
-- `src/app` 主要放 Next.js 约定式路由入口，复杂页面实现拆到同级功能文件。
-- `src/app/api/*` 放所有服务端接口实现，对外保持 `/api/*` 路径。
-- 页面、前端 UI 交互和主题相关代码优先放到 `src/app/(pages)/*`。
-- 通用请求、OSS、Supabase 连接继续放在 `src/utils`。
-- 只服务于某个页面的组件和 Hook 与页面放在同一目录；跨页面复用后再上移到 `common` 或 `src/lib`。
+### `scripts`
+
+本地维护脚本：
+
+- `next-with-env-port.mjs`：启动 Next.js 时读取 `.env.local` 里的端口。
+- `import-codex-daily-reports.mjs`：导入 Codex 日报数据。
+- `rename-oss-images.mjs`：按命名规则整理 OSS 图片及数据库 URL。
+
+### `supabase/migrations`
+
+数据库结构迁移：
+
+- `20260730_create_hobby_shares.sql`：创建爱好分享表和 RPC。
+- `20260731_secure_hobby_share_creation.sql`：收紧分享 RPC 权限。
+- `20260803_create_codex_log.sql`：创建 Codex 日报表。
+- `20260804_add_codex_log_token_count.sql`：给 Codex 日报补充 token 统计字段。
