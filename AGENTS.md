@@ -23,4 +23,8 @@ Codex memories live in `D:\Claire\memory`. Keep `C:\Users\Claire\.codex\memories
 3. 使用 Ant Design 时，优先使用当前版本推荐的新属性和新方法。
 4. Ant Design v6 组件库的使用，要符合其组件规范，避免使用过时的属性和方法。
 
+## Workflow
+
+1. 在本工程中进行修改时，不使用 `bug-memory-workflow`、`bug-des`，以及其他缺陷记忆或缺陷文案类 Skill。
+
 </INSTRUCTIONS>

@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-10 18:40:01 +08:00
+
+- Fix the active scrollbar thumb color scope: resolve the semi-transparent theme color on each scrolling element so it remains visible while scrolling in themed pages.
+- Add the project workflow rule that code changes in this repository do not use `bug-memory-workflow`, `bug-des`, or other defect-memory and defect-copywriting Skills.
+
 ## 2026-08-10 18:24:35 +08:00
 
 - Refine global scrollbar behavior: keep the themed, semi-transparent scrollbar thumb visible for two seconds after scrolling ends, then hide it while preserving its layout gutter.

@@ -18,9 +18,20 @@ test("keeps global scrollbars visible for two seconds after scrolling stops", as
 test("uses the active theme color for visible global scrollbars", async () => {
   const source = await readFile(globalStylesPath, "utf8");
 
-  assert.equal(source.includes("--storage-scrollbar-thumb-active: color-mix("), true);
+  assert.equal(
+    source.includes(
+      "html.storage-is-scrolling * {\n  --storage-scrollbar-thumb: color-mix(",
+    ),
+    true,
+  );
   assert.equal(source.includes("--home-theme-color"), true);
   assert.equal(source.includes("var(--theme-page-color,"), true);
+  assert.equal(
+    source.includes(
+      "background-color: var(--storage-scrollbar-thumb) !important;",
+    ),
+    true,
+  );
   assert.equal(
     source.includes("var(--home-theme-text, var(--foreground)) 30%"),
     false,
