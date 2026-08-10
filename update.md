@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-10 19:10:00 +08:00
+
+- Refine scrollbar behavior: use a lighter theme tint, keep horizontal scrollbar thumbs visible when present, and reveal only the one vertical scrollbar that is actively scrolling.
+
 ## 2026-08-10 18:58:00 +08:00
 
 - Fix the global scrollbar color source: publish the active theme accent to the document root and apply it to both the root scroller and nested scroll containers, preventing native gray/white fallback colors.

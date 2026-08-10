@@ -2,58 +2,105 @@
 
 import { useEffect } from "react";
 
-const scrollActiveClassName = "storage-is-scrolling";
+const verticalScrollActiveClassName = "storage-is-vertically-scrolling";
 const scrollActivityRetentionMs = 2_000;
-const scrollKeys = new Set([
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "ArrowUp",
-  "End",
-  "Home",
-  "PageDown",
-  "PageUp",
-  " ",
-]);
+const verticalScrollableOverflowValues = new Set(["auto", "overlay", "scroll"]);
+
+function isVerticallyScrollable(element: HTMLElement, root: HTMLElement) {
+  if (element.scrollHeight <= element.clientHeight) {
+    return false;
+  }
+
+  return (
+    element === root ||
+    verticalScrollableOverflowValues.has(
+      window.getComputedStyle(element).overflowY,
+    )
+  );
+}
+
+function findVerticalScrollContainer(target: EventTarget | null) {
+  const root = document.scrollingElement;
+
+  if (!(root instanceof HTMLElement)) {
+    return null;
+  }
+
+  let currentElement: Element | null = target instanceof Element ? target : root;
+
+  while (currentElement) {
+    if (
+      currentElement instanceof HTMLElement &&
+      isVerticallyScrollable(currentElement, root)
+    ) {
+      return currentElement;
+    }
+
+    if (currentElement === root) {
+      break;
+    }
+
+    currentElement = currentElement.parentElement;
+  }
+
+  return isVerticallyScrollable(root, root) ? root : null;
+}
 
 export function ScrollActivityProvider() {
   useEffect(() => {
-    const root = document.documentElement;
+    let activeScrollContainer: HTMLElement | null = null;
     let timer: number | undefined;
 
-    const markScrolling = () => {
-      root.classList.add(scrollActiveClassName);
+    const markVerticallyScrolling = (target: EventTarget | null) => {
+      const nextScrollContainer = findVerticalScrollContainer(target);
+
+      if (!nextScrollContainer) {
+        return;
+      }
+
+      if (
+        activeScrollContainer &&
+        activeScrollContainer !== nextScrollContainer
+      ) {
+        activeScrollContainer.classList.remove(verticalScrollActiveClassName);
+      }
+
+      activeScrollContainer = nextScrollContainer;
+      activeScrollContainer.classList.add(verticalScrollActiveClassName);
+
       if (timer) {
         window.clearTimeout(timer);
       }
+
       timer = window.setTimeout(() => {
-        root.classList.remove(scrollActiveClassName);
+        activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
+        activeScrollContainer = null;
       }, scrollActivityRetentionMs);
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (scrollKeys.has(event.key)) {
-        markScrolling();
+    const handleScroll = (event: Event) => {
+      markVerticallyScrolling(event.target);
+    };
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.deltaY !== 0) {
+        markVerticallyScrolling(event.target);
       }
     };
 
-    window.addEventListener("scroll", markScrolling, {
+    window.addEventListener("scroll", handleScroll, {
       capture: true,
       passive: true,
     });
-    window.addEventListener("wheel", markScrolling, { passive: true });
-    window.addEventListener("touchmove", markScrolling, { passive: true });
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("wheel", handleWheel, { passive: true });
 
     return () => {
       if (timer) {
         window.clearTimeout(timer);
       }
-      root.classList.remove(scrollActiveClassName);
-      window.removeEventListener("scroll", markScrolling, { capture: true });
-      window.removeEventListener("wheel", markScrolling);
-      window.removeEventListener("touchmove", markScrolling);
-      window.removeEventListener("keydown", handleKeyDown);
+      activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
+      window.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("wheel", handleWheel);
     };
   }, []);
 

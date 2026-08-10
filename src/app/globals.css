@@ -60,7 +60,6 @@
 * {
   box-sizing: border-box;
   border-color: var(--border);
-  scrollbar-color: var(--storage-scrollbar-thumb) var(--storage-scrollbar-track);
   scrollbar-width: thin;
 }
 
@@ -100,19 +99,20 @@
   min-width: 36px;
 }
 
-html.storage-is-scrolling,
-html.storage-is-scrolling * {
-  --storage-scrollbar-thumb: color-mix(
+::-webkit-scrollbar-thumb:horizontal {
+  background-color: color-mix(
     in srgb,
-    var(--storage-scrollbar-color, var(--primary)) 54%,
+    var(--storage-scrollbar-color, var(--primary)) 22%,
     transparent
-  );
-  scrollbar-color: var(--storage-scrollbar-thumb)
-    var(--storage-scrollbar-track);
+  ) !important;
 }
 
-html.storage-is-scrolling ::-webkit-scrollbar-thumb {
-  background-color: var(--storage-scrollbar-thumb) !important;
+.storage-is-vertically-scrolling::-webkit-scrollbar-thumb:vertical {
+  background-color: color-mix(
+    in srgb,
+    var(--storage-scrollbar-color, var(--primary)) 30%,
+    transparent
+  ) !important;
 }
 
 html,

@@ -12,36 +12,46 @@ const themeShellBackgroundPath = new URL(
   import.meta.url,
 );
 
-test("keeps global scrollbars visible for two seconds after scrolling stops", async () => {
+test("keeps only the active vertical scrollbar visible for two seconds", async () => {
   const source = await readFile(scrollActivityProviderPath, "utf8");
 
   assert.equal(source.includes("const scrollActivityRetentionMs = 2_000;"), true);
+  assert.equal(
+    source.includes(
+      'const verticalScrollActiveClassName = "storage-is-vertically-scrolling";',
+    ),
+    true,
+  );
+  assert.equal(source.includes("activeScrollContainer"), true);
+  assert.equal(source.includes("findVerticalScrollContainer"), true);
   assert.equal(source.includes("}, scrollActivityRetentionMs);"), true);
+  assert.equal(source.includes("storage-is-scrolling"), false);
 });
 
-test("uses the active theme color for visible global scrollbars", async () => {
+test("uses a lighter theme color for active vertical and persistent horizontal scrollbars", async () => {
   const source = await readFile(globalStylesPath, "utf8");
 
   assert.equal(
     source.includes(
-      "html.storage-is-scrolling,\nhtml.storage-is-scrolling * {\n  --storage-scrollbar-thumb: color-mix(",
+      ".storage-is-vertically-scrolling::-webkit-scrollbar-thumb:vertical",
     ),
     true,
   );
   assert.equal(
-    source.includes("var(--storage-scrollbar-color, var(--primary))"),
+    source.includes("::-webkit-scrollbar-thumb:horizontal"),
     true,
   );
   assert.equal(
     source.includes(
-      "background-color: var(--storage-scrollbar-thumb) !important;",
+      "var(--storage-scrollbar-color, var(--primary)) 30%",
     ),
     true,
   );
   assert.equal(
-    source.includes("var(--home-theme-text, var(--foreground)) 30%"),
-    false,
+    source.includes("var(--storage-scrollbar-color, var(--primary)) 22%"),
+    true,
   );
+  assert.equal(source.includes("html.storage-is-scrolling"), false);
 });
 
 test("publishes the active theme color to the root scrollbar scope", async () => {
