@@ -80,6 +80,18 @@ function toText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function toIsoTimestamp(value) {
+  const timestamp = toText(value);
+
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = new Date(timestamp);
+
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+}
+
 function toCategory(value) {
   return typeof value === "number" && Number.isInteger(value)
     ? value
@@ -634,6 +646,7 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
           entry.assistantSummary ??
           entry.answerSummary,
       );
+      const createdAt = toIsoTimestamp(entry.created_at ?? entry.createdAt);
 
       return {
         assistant_summary: assistantSumma,
@@ -653,6 +666,7 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
           user_tasks: userTasks,
         }),
         user_tasks: userTasks,
+        ...(createdAt ? { created_at: createdAt } : {}),
       };
     })
     .filter((entry) => entry.user_tasks || entry.assistant_summary);
@@ -673,6 +687,7 @@ export async function saveCodexDailyReports({
     const assistantSummary = toText(
       entry.assistant_summary ?? entry.assistant_summa,
     );
+    const createdAt = toIsoTimestamp(entry.created_at ?? entry.createdAt);
     const threadTitle = toText(entry.thread_title) || "未命名任务";
     const userTasks = toText(entry.user_tasks);
 
@@ -689,6 +704,7 @@ export async function saveCodexDailyReports({
         user_tasks: userTasks,
       }),
       user_tasks: userTasks,
+      ...(createdAt ? { created_at: createdAt } : {}),
     };
   });
 
@@ -698,7 +714,7 @@ export async function saveCodexDailyReports({
 
   const { data: existingEntries, error: selectError } = await supabase
     .from(table)
-    .select("r_id,thread_title,user_tasks,assistant_summary,token_count")
+    .select("r_id,thread_title,user_tasks,assistant_summary,token_count,created_at")
     .eq("id", ownerId)
     .eq("date", date);
 
@@ -721,25 +737,34 @@ export async function saveCodexDailyReports({
         getCodexDailyReportFingerprint(entry),
       );
 
-      if (
-        !existingEntry?.r_id ||
-        toExplicitTokenCount(existingEntry.token_count) === entry.token_count
-      ) {
+      if (!existingEntry?.r_id) {
+        return null;
+      }
+
+      const tokenChanged =
+        toExplicitTokenCount(existingEntry.token_count) !== entry.token_count;
+      const createdAtChanged =
+        Boolean(entry.created_at) &&
+        toIsoTimestamp(existingEntry.created_at) !== entry.created_at;
+
+      if (!tokenChanged && !createdAtChanged) {
         return null;
       }
 
       return {
         r_id: existingEntry.r_id,
-        token_count: entry.token_count,
+        ...(tokenChanged ? { token_count: entry.token_count } : {}),
+        ...(createdAtChanged ? { created_at: entry.created_at } : {}),
       };
     })
     .filter(Boolean);
 
   for (const row of rowsToUpdate) {
+    const { r_id: recordId, ...changes } = row;
     const { error: updateError } = await supabase
       .from(table)
-      .update({ token_count: row.token_count })
-      .eq("r_id", row.r_id);
+      .update(changes)
+      .eq("r_id", recordId);
 
     if (updateError) {
       throw new Error(`更新日报 token 失败：${updateError.message}`);
