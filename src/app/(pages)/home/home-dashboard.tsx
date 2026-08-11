@@ -701,7 +701,7 @@ export function HomeDashboard({
 
         <Card
           className={cn(
-            "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden",
+            "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden has-[.blog-reader-list-toggle]:overflow-visible",
             isCategoryContentFullscreen && "home-category-content-fullscreen",
           )}
           classNames={{
