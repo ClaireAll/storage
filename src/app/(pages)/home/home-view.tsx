@@ -131,9 +131,6 @@ export default function HomePage({
   const [categoryVisibilityError, setCategoryVisibilityError] = useState<
     string | undefined
   >();
-  const visibleCategoryHrefs = homeLeafCategories
-    .filter((category) => !hiddenCategoryKeys.includes(category.key))
-    .map((category) => category.href);
   const pendingCategoryHref =
     categoryNavigation.fromCategoryHref === activeCategoryHref
       ? categoryNavigation.pendingCategoryHref
@@ -406,7 +403,6 @@ export default function HomePage({
                   onToggleCategoryVisibility={toggleCategoryVisibility}
                   surfaceBackground={activePalette.bg}
                   surfaceBorderColor={homeBorderColor}
-                  visibleCategoryHrefs={visibleCategoryHrefs}
                 >
                   {children ?? (
                     <div className="flex min-h-0 flex-1 items-center justify-center">

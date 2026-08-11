@@ -10,7 +10,7 @@ import {
   ReloadOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Cascader, Menu, Spin, Typography } from "antd";
+import { Button, Card, Cascader, Menu, Spin, Tooltip, Typography } from "antd";
 import {
   useCallback,
   useEffect,
@@ -68,7 +68,6 @@ type HomeDashboardProps = {
   hiddenCategoryKeys: string[];
   itemCount: number;
   isCategoryVisibilityEditing: boolean;
-  visibleCategoryHrefs: string[];
   isCategoryContentLoading: boolean;
   surfaceBackground: string;
   surfaceBorderColor: string;
@@ -84,12 +83,17 @@ export function HomeDashboard({
   activeCategoryHref,
   aiAssistant,
   children,
+  hiddenCategoryKeys,
   isCategoryContentLoading,
+  isCategoryVisibilityEditing,
+  onCancelCategoryVisibilityEditing,
   onCategoryNavigate,
+  onFinishCategoryVisibilityEditing,
   onOpenQuickItemCreate,
+  onStartCategoryVisibilityEditing,
+  onToggleCategoryVisibility,
   surfaceBackground,
   surfaceBorderColor,
-  visibleCategoryHrefs,
 }: HomeDashboardProps) {
   const [weather, setWeather] = useState<WeatherState>(
     () => homeDashboardCache.weather,
@@ -151,26 +155,39 @@ export function HomeDashboard({
         .filter(
           (category) =>
             category.children?.some((child) =>
-              visibleCategoryHrefs.includes(child.href),
-            ) ?? visibleCategoryHrefs.includes(category.href),
+              isCategoryVisibilityEditing ||
+              !hiddenCategoryKeys.includes(child.key),
+            ) ??
+            (isCategoryVisibilityEditing ||
+              !hiddenCategoryKeys.includes(category.key)),
         )
         .map((category) => {
           const isCategoryDirectActive = activeCategoryHref === category.href;
           const hasActiveChild = Boolean(
             category.children?.some((child) => activeCategoryHref === child.href),
           );
+          const isCategoryHidden = hiddenCategoryKeys.includes(category.key);
 
           return {
             className: cn("hover:scale-110", {
+              "opacity-45": isCategoryVisibilityEditing && isCategoryHidden,
               "scale-110": isCategoryDirectActive || hasActiveChild,
               "font-bold": isCategoryDirectActive,
             }),
             children: category.children
-              ?.filter((child) => visibleCategoryHrefs.includes(child.href))
+              ?.filter(
+                (child) =>
+                  isCategoryVisibilityEditing ||
+                  !hiddenCategoryKeys.includes(child.key),
+              )
               .map((child) => {
                 const isChildActive = activeCategoryHref === child.href;
+                const isChildHidden = hiddenCategoryKeys.includes(child.key);
+
                 return {
                   className: cn("hover:scale-110", {
+                    "opacity-45":
+                      isCategoryVisibilityEditing && isChildHidden,
                     "scale-110 font-bold": isChildActive,
                   }),
                   icon: (
@@ -181,7 +198,44 @@ export function HomeDashboard({
                     />
                   ),
                   key: child.href,
-                  label: child.label,
+                  label: (
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate">
+                        {child.label}
+                      </span>
+                      {isCategoryVisibilityEditing ? (
+                        <Tooltip
+                          title={isChildHidden ? `显示${child.label}` : `隐藏${child.label}`}
+                        >
+                          <Button
+                            aria-label={
+                              isChildHidden
+                                ? `显示${child.label}`
+                                : `隐藏${child.label}`
+                            }
+                            className="shrink-0 text-(--home-theme-color)!"
+                            icon={
+                              <CategoryIcon
+                                hasPadding={false}
+                                name={
+                                  isChildHidden
+                                    ? "icon-invisible"
+                                    : "icon-visible"
+                                }
+                              />
+                            }
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              onToggleCategoryVisibility(child.key);
+                            }}
+                            size="small"
+                            type="text"
+                          />
+                        </Tooltip>
+                      ) : null}
+                    </div>
+                  ),
                 };
               }),
             icon: (
@@ -192,12 +246,51 @@ export function HomeDashboard({
               />
             ),
             key: category.href,
-            label: category.label,
+            label: category.children ? (
+              category.label
+            ) : (
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="min-w-0 flex-1 truncate">{category.label}</span>
+                {isCategoryVisibilityEditing ? (
+                  <Tooltip
+                    title={
+                      isCategoryHidden ? `显示${category.label}` : `隐藏${category.label}`
+                    }
+                  >
+                    <Button
+                      aria-label={
+                        isCategoryHidden
+                          ? `显示${category.label}`
+                          : `隐藏${category.label}`
+                      }
+                      className="shrink-0 text-(--home-theme-color)!"
+                      icon={
+                        <CategoryIcon
+                          hasPadding={false}
+                          name={
+                            isCategoryHidden ? "icon-invisible" : "icon-visible"
+                          }
+                        />
+                      }
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onToggleCategoryVisibility(category.key);
+                      }}
+                      size="small"
+                      type="text"
+                    />
+                  </Tooltip>
+                ) : null}
+              </div>
+            ),
           };
         }),
     [
       activeCategoryHref,
-      visibleCategoryHrefs,
+      hiddenCategoryKeys,
+      isCategoryVisibilityEditing,
+      onToggleCategoryVisibility,
     ],
   );
   const selectedCategoryKeys = activeCategoryHref ? [activeCategoryHref] : [];
@@ -523,9 +616,33 @@ export function HomeDashboard({
             )}
           >
             {isCategorySidebarCollapsed ? null : (
-              <Typography.Title className="mb-0!" level={5}>
-                分类
-              </Typography.Title>
+              <div className="flex min-w-0 items-center gap-1">
+                <Typography.Title className="mb-0!" level={5}>
+                  分类
+                </Typography.Title>
+                <Tooltip
+                  title={
+                    isCategoryVisibilityEditing ? "保存分类设置" : "编辑分类设置"
+                  }
+                >
+                  <Button
+                    aria-label={
+                      isCategoryVisibilityEditing
+                        ? "保存分类设置"
+                        : "编辑分类设置"
+                    }
+                    className="text-(--home-theme-color)!"
+                    icon={<CategoryIcon hasPadding={false} name="icon-setting" />}
+                    onClick={
+                      isCategoryVisibilityEditing
+                        ? onFinishCategoryVisibilityEditing
+                        : onStartCategoryVisibilityEditing
+                    }
+                    size="small"
+                    type="text"
+                  />
+                </Tooltip>
+              </div>
             )}
             <Button
               aria-label={
@@ -538,9 +655,13 @@ export function HomeDashboard({
                   <MenuFoldOutlined />
                 )
               }
-              onClick={() =>
-                setIsCategorySidebarCollapsed((collapsed) => !collapsed)
-              }
+              onClick={() => {
+                if (isCategoryVisibilityEditing) {
+                  onCancelCategoryVisibilityEditing();
+                }
+
+                setIsCategorySidebarCollapsed((collapsed) => !collapsed);
+              }}
               size="small"
               title={isCategorySidebarCollapsed ? "展开分类" : "收起分类"}
               type="text"
@@ -558,6 +679,10 @@ export function HomeDashboard({
               items={menuItems}
               mode="inline"
               onClick={({ key }) => {
+                if (isCategoryVisibilityEditing) {
+                  return;
+                }
+
                 const categoryHref = String(key);
 
                 if (categoryHref.startsWith("/")) {

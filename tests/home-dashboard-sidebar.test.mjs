@@ -116,3 +116,16 @@ test("does not inherit bold text from the Codex parent when a child is active", 
   assert.equal(source.includes('"font-bold": isCategoryDirectActive'), true);
   assert.equal(source.includes('"scale-110 font-bold": isCategoryActive'), false);
 });
+
+test("edits category visibility from the expanded sidebar only", async () => {
+  const source = await readDashboardSource();
+
+  assert.equal(source.includes('name="icon-setting"'), true);
+  assert.equal(source.includes("isCategoryVisibilityEditing"), true);
+  assert.equal(source.includes('"icon-visible"'), true);
+  assert.equal(source.includes('"icon-invisible"'), true);
+  assert.equal(source.includes("onToggleCategoryVisibility"), true);
+  assert.equal(source.includes("event.stopPropagation()"), true);
+  assert.equal(source.includes("if (isCategoryVisibilityEditing)"), true);
+  assert.equal(source.includes("hiddenCategoryKeys.includes(child.key)"), true);
+});
