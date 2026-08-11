@@ -267,6 +267,7 @@ function ThemeSettingsContent({
               loading={isSaving}
               onClick={saveTheme}
               variant="solid"
+              type="primary"
             />
           </div>
         </header>
