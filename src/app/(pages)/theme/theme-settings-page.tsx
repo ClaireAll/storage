@@ -33,6 +33,7 @@ import {
   ThemeTexturePublisher,
 } from "./shared-theme-texture";
 import { themeReturnMarkerKey } from "./theme-control";
+import { ThemeFrostTexture } from "./theme-frost-texture";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { ThemeProvider } from "./theme-provider";
 import { ThemeShellBackground } from "./theme-shell-background";
@@ -357,6 +358,10 @@ function ThemeSettingsContent({
                   "theme-live-preview-texture",
                   `theme-texture-${draftTheme.texture}`,
                 )}
+              />
+              <ThemeFrostTexture
+                texture={draftTheme.texture}
+                variant="preview"
               />
               <ThemeFallingLights
                 isActive={draftTheme.texture === "meteor"}

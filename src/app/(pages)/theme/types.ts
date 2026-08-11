@@ -5,7 +5,12 @@ export type ThemeMode = "light" | "dark" | "system";
 export type ResolvedThemeMode = "light" | "dark";
 
 /** 主题背景纹路类型，用于主页两侧和主题预览区域。 */
-export type ThemeTexture = "none" | "bokeh" | "geometry" | "meteor";
+export type ThemeTexture =
+  | "none"
+  | "bokeh"
+  | "geometry"
+  | "meteor"
+  | "frost";
 
 /** 单个明暗模式下使用的主题调色板。 */
 export type ThemePalette = {

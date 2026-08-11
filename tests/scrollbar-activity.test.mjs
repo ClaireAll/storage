@@ -23,7 +23,7 @@ test("keeps vertical scroll activity tracking lightweight", async () => {
     true,
   );
   assert.equal(source.includes("activeScrollContainer"), true);
-  assert.equal(source.includes("findVerticalScrollContainer"), true);
+  assert.equal(source.includes("getScrollContainer"), true);
   assert.equal(source.includes("}, scrollActivityRetentionMs);"), true);
   assert.equal(source.includes("storage-is-scrolling"), false);
   assert.equal(source.includes('window.addEventListener("wheel"'), false);

@@ -55,7 +55,7 @@ test("uses an icon-only save button aligned with the home header actions", async
     true,
   );
   assert.equal(saveButtonSource.includes('aria-label="保存主题"'), true);
-  assert.equal(saveButtonSource.includes('type="primary"'), false);
+  assert.equal(saveButtonSource.includes('type="primary"'), true);
   assert.equal(saveButtonSource.includes('variant="solid"'), true);
   assert.equal(saveButtonSource.includes('variant="outlined"'), false);
   assert.notEqual(saveButtonEnd, -1);

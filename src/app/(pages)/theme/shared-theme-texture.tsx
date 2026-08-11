@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import type { AnimationEvent } from "react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { ThemeFrostTexture } from "./theme-frost-texture";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { randomFloat } from "./theme-utils";
 import type { ThemeTexture } from "./types";
@@ -101,6 +102,10 @@ export function SharedThemeTexture() {
     >
       <span
         className={`theme-shared-texture theme-texture-${textureDetail.texture}`}
+      />
+      <ThemeFrostTexture
+        texture={textureDetail.texture}
+        variant="shared"
       />
       <ThemeFallingLights
         isActive={textureDetail.texture === "meteor"}
