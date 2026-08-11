@@ -956,9 +956,9 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     {
       dataIndex: "thread_title",
       render: (value: string, record) => (
-        <div className="codex-log-title-cell flex min-w-0 items-center gap-2 overflow-hidden">
-          <Tag>{record.repository}</Tag>
-          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+        <div className="codex-log-title-cell flex min-w-0 items-start gap-2">
+          <Tag className="shrink-0">{record.repository}</Tag>
+          <span className="min-w-0 break-words whitespace-normal text-pretty leading-5">
             {value}
           </span>
         </div>
@@ -968,42 +968,34 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         tableSorter.field === "thread_title" ? tableSorter.order : null,
       sortDirections: ["ascend", "descend"],
       title: "会话",
-      width: 170,
+      width: 220,
     },
     {
       dataIndex: "user_tasks",
-      ellipsis: { showTitle: false },
       render: (value: string) => (
-        <Typography.Text
-          className="block max-w-55"
-          ellipsis={{ tooltip: value }}
-        >
+        <span className="block min-w-0 break-words whitespace-normal text-pretty leading-5">
           {value}
-        </Typography.Text>
+        </span>
       ),
       sorter: true,
       sortOrder: tableSorter.field === "user_tasks" ? tableSorter.order : null,
       sortDirections: ["ascend", "descend"],
       title: "任务",
-      width: 230,
+      width: 320,
     },
     {
       dataIndex: "assistant_summary",
-      ellipsis: { showTitle: false },
       render: (value: string) => (
-        <Typography.Text
-          className="block max-w-60"
-          ellipsis={{ tooltip: value }}
-        >
+        <span className="block min-w-0 break-words whitespace-normal text-pretty leading-5">
           {value}
-        </Typography.Text>
+        </span>
       ),
       sorter: true,
       sortOrder:
         tableSorter.field === "assistant_summary" ? tableSorter.order : null,
       sortDirections: ["ascend", "descend"],
       title: "回答简述",
-      width: 250,
+      width: 440,
     },
     {
       align: "right",
@@ -1208,8 +1200,8 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             total: tableTotal,
           }}
           rowKey="key"
-          scroll={{ x: 880, y: 260 }}
-          showSorterTooltip={{ target: "sorter-icon" }}
+          scroll={{ x: 1170, y: 260 }}
+          showSorterTooltip={false}
           size="middle"
           tableLayout="fixed"
         />
