@@ -36,7 +36,11 @@ import { themeReturnMarkerKey } from "./theme-control";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { ThemeProvider } from "./theme-provider";
 import { ThemeShellBackground } from "./theme-shell-background";
-import { getThemeShellBackground, withColorAlpha } from "./theme-utils";
+import {
+  getThemeShellBackground,
+  mixHexColor,
+  withColorAlpha,
+} from "./theme-utils";
 import type {
   ThemeConfig,
   ThemeMode,
@@ -135,6 +139,11 @@ function ThemeSettingsContent({
     appliedPalette,
     resolvedMode,
   );
+  const homeHeaderBackground = mixHexColor(
+    appliedPalette.bg,
+    "#ffffff",
+    resolvedMode === "dark" ? 16 : 12,
+  );
   const appliedAnimationColor = initialTheme.aniTheme ?? appliedPalette.color;
 
   useEffect(() => {
@@ -221,6 +230,9 @@ function ThemeSettingsContent({
             "--theme-page-color": appliedPalette.color,
             "--theme-page-text": appliedPalette.text,
             "--theme-page-text-muted": withColorAlpha(appliedPalette.text, 0.7),
+            "--home-header-bg": homeHeaderBackground,
+            "--home-theme-color": appliedPalette.color,
+            "--home-theme-text": appliedPalette.text,
             "--app-shell-bg": appliedShellBackground,
             "--app-texture-color": appliedAnimationColor,
             "--app-texture-text": appliedPalette.text,
@@ -232,7 +244,7 @@ function ThemeSettingsContent({
           isActive={appliedTexture === "meteor"}
           variant="shared"
         />
-        <header className="theme-settings-header grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
+        <header className="home-brand-header theme-settings-header relative z-3 grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
           <div>
             <Typography.Title className="m-0! theme-settings-title" level={4}>
               主题设置
