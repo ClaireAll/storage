@@ -261,7 +261,6 @@ function ThemeSettingsContent({
               onClick={returnHome}
             />
             <Button
-              type="primary"
               aria-label="保存主题"
               className="theme-settings-icon-button"
               icon={<SaveOutlined />}
