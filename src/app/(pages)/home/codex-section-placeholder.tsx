@@ -16,7 +16,7 @@ export function CodexSectionPlaceholder({
 }: CodexSectionPlaceholderProps) {
   return (
     <div className="flex min-h-0 w-full flex-1 items-center justify-center rounded-lg border border-[color-mix(in_srgb,var(--home-theme-color)_24%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_92%,#ffffff_8%)] p-6">
-      <div className="flex max-w-[360px] flex-col items-center text-center">
+      <div className="flex max-w-90 flex-col items-center text-center">
         <span className="mb-4 inline-flex size-14 items-center justify-center rounded-xl border border-[color-mix(in_srgb,var(--home-theme-color)_28%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-color)_14%,transparent)]">
           <CategoryIcon
             className="size-9"

@@ -232,7 +232,7 @@ function ThemeSettingsContent({
           isActive={appliedTexture === "meteor"}
           variant="shared"
         />
-        <header className="theme-settings-header grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
+        <header className="theme-settings-header grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
           <div>
             <Typography.Title className="m-0! theme-settings-title" level={4}>
               主题设置
@@ -260,7 +260,7 @@ function ThemeSettingsContent({
           </div>
         </header>
 
-        <main className="mx-auto grid w-full max-w-[1180px] flex-1 grid-cols-2 items-stretch gap-[18px] p-6 max-md:grid-cols-1 max-md:p-4">
+        <main className="mx-auto grid w-full max-w-295 flex-1 grid-cols-2 items-stretch gap-4.5 p-6 max-md:grid-cols-1 max-md:p-4">
           <section className="theme-settings-toolbar-panel col-span-full">
             <div className="theme-settings-toolbar flex items-center justify-between gap-4 px-3 pb-2.5 pt-3 max-md:flex-col max-md:items-stretch">
               <div>
@@ -313,8 +313,8 @@ function ThemeSettingsContent({
             value={draftTheme.dark}
           />
 
-          <section className="theme-live-preview grid h-[330px] grid-cols-1 grid-rows-[auto_1fr] p-0">
-            <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-[9px] max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
+          <section className="theme-live-preview grid h-82.5 grid-cols-1 grid-rows-[auto_1fr] p-0">
+            <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-2.25 max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
               <Typography.Title className="m-0! theme-choice-title" level={5}>
                 预览
               </Typography.Title>
@@ -367,7 +367,7 @@ function ThemeSettingsContent({
                 </Typography.Title>
               </div>
               <div
-                className="rounded-lg border bg-[rgb(127_127_127/10%)] px-3 py-[9px] opacity-[0.78]"
+                className="rounded-lg border bg-[rgb(127_127_127/10%)] px-3 py-2.25 opacity-78"
                 style={{
                   borderColor: withColorAlpha(previewPalette.text, 0.18),
                 }}
@@ -406,7 +406,7 @@ function ThemeSettingsContent({
               <div className="flex flex-wrap gap-2">
                 {["标签", "选中", "禁用"].map((label, index) => (
                   <span
-                    className="rounded-full px-2.5 py-[5px] text-xs"
+                    className="rounded-full px-2.5 py-1.25 text-xs"
                     key={label}
                     style={{
                       backgroundColor:
@@ -465,8 +465,8 @@ function ThemePanel({
   }
 
   return (
-    <article className="theme-choice-panel grid h-[330px] grid-rows-[auto_minmax(0,1fr)] rounded-2xl">
-      <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-[9px] max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
+    <article className="theme-choice-panel grid h-82.5 grid-rows-[auto_minmax(0,1fr)] rounded-2xl">
+      <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-2.25 max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
         <Typography.Title className="m-0! theme-choice-title" level={5}>
           {title}
         </Typography.Title>
@@ -566,8 +566,8 @@ function CustomThemePanel({
   }
 
   return (
-    <article className="theme-choice-panel grid h-[330px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-2xl">
-      <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-[9px] max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
+    <article className="theme-choice-panel grid h-82.5 grid-rows-[auto_minmax(0,1fr)_auto] rounded-2xl">
+      <div className="theme-choice-header grid grid-cols-[minmax(120px,1fr)_minmax(220px,240px)] items-center gap-3.5 px-4 py-2.25 max-md:grid-cols-1 max-md:gap-2 max-md:py-3">
         <Typography.Title className="m-0! theme-choice-title" level={5}>
           自定义配置
         </Typography.Title>
@@ -617,7 +617,7 @@ function CustomThemePanel({
           </Button>
         </div>
         <Select<ThemeConfig["texture"]>
-          className="theme-texture-select min-w-[210px]"
+          className="theme-texture-select min-w-52.5"
           onChange={changeTexture}
           options={THEME_TEXTURES.map((option) => ({
             label: option.label,
@@ -653,7 +653,7 @@ function CustomPaletteEditor({
   value: ThemePalette;
 }) {
   return (
-    <div className="theme-custom-palette grid gap-[7px] rounded-[10px] px-2.5 py-[9px]">
+    <div className="theme-custom-palette grid gap-1.75 rounded-[10px] px-2.5 py-2.25">
       <Typography.Text className="theme-custom-title">{title}</Typography.Text>
       <CustomColorInput
         label="主题色"

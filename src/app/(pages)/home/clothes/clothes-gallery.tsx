@@ -472,7 +472,7 @@ export function ClothesGallery({
           </Button>
           <Input
             allowClear
-            className="clothes-gallery-search w-[300px]!"
+            className="clothes-gallery-search w-75!"
             onChange={changeKeyword}
             onCompositionEnd={finishKeywordComposition}
             onCompositionStart={startKeywordComposition}
@@ -528,19 +528,19 @@ export function ClothesGallery({
               <RangePicker
                 allowClear
                 allowEmpty
-                className="clothes-gallery-time-filter h-8 w-full max-[900px]:max-w-[360px]"
+                className="clothes-gallery-time-filter h-8 w-full max-[900px]:max-w-90"
                 onChange={filterTimeRange}
                 placeholder={["购买开始", "购买结束"]}
                 value={timeRange}
               />
             ) : null}
             {hasPrice ? (
-              <div className="clothes-gallery-price-row col-start-3 flex h-8 min-w-0 items-center gap-[7px] max-[900px]:col-auto">
+              <div className="clothes-gallery-price-row col-start-3 flex h-8 min-w-0 items-center gap-1.75 max-[900px]:col-auto">
                 <Typography.Text className="clothes-gallery-filter-label shrink-0">
                   价格
                 </Typography.Text>
                 <InputNumber
-                  className="clothes-gallery-price-input h-8 w-[70px]"
+                  className="clothes-gallery-price-input h-8 w-17.5"
                   controls={false}
                   min={0}
                   onChange={filterMinPrice}
@@ -550,7 +550,7 @@ export function ClothesGallery({
                 />
                 <span className="clothes-gallery-price-separator">-</span>
                 <InputNumber
-                  className="clothes-gallery-price-input h-8 w-[70px]"
+                  className="clothes-gallery-price-input h-8 w-17.5"
                   controls={false}
                   min={0}
                   onChange={filterMaxPrice}
@@ -562,7 +562,7 @@ export function ClothesGallery({
             ) : null}
             {availableSortOptions.length ? (
               <Select<ClothesSortRule>
-                className="clothes-gallery-sort-select theme-texture-select col-start-1 w-[260px] max-w-full max-[900px]:max-w-[360px]"
+                className="clothes-gallery-sort-select theme-texture-select col-start-1 w-65 max-w-full max-[900px]:max-w-90"
                 getPopupContainer={(triggerNode) =>
                   triggerNode.closest(".clothes-gallery-filters") ??
                   document.body
@@ -616,7 +616,7 @@ export function ClothesGallery({
               key={item.c_id}
               role="listitem"
             >
-              <div className="clothes-gallery-detail-row grid w-full min-w-0 grid-cols-[repeat(4,minmax(0,1fr))_32px] items-center gap-2 leading-[18px]">
+              <div className="clothes-gallery-detail-row grid w-full min-w-0 grid-cols-[repeat(4,minmax(0,1fr))_32px] items-center gap-2 leading-4.5">
                 <div className="clothes-gallery-detail-name-cell flex min-w-0 items-center gap-2">
                   {hasColor && item.color ? (
                     <span
@@ -625,7 +625,7 @@ export function ClothesGallery({
                     />
                   ) : null}
                   <Typography.Text
-                    className="clothes-gallery-detail-name overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]"
+                    className="clothes-gallery-detail-name overflow-hidden text-ellipsis whitespace-nowrap leading-4.5"
                     strong
                   >
                     {renderHighlightedClothesName(
@@ -636,29 +636,29 @@ export function ClothesGallery({
                   </Typography.Text>
                 </div>
                 {hasPrice ? (
-                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-4.5">
                     ¥{(item.price ?? 0).toFixed(2)}
                   </Typography.Text>
                 ) : null}
                 {hasDate ? (
-                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-4.5">
                     购买时间：{dayjs(item.timeStamp).format("YYYY-MM-DD")}
                   </Typography.Text>
                 ) : null}
                 {hasBookCategory || itemCategoryLabels ? (
-                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-4.5">
                     分类：
                     {getItemCategoryLabel(itemCategoryLabels, item.category) ||
                       "未分类"}
                   </Typography.Text>
                 ) : null}
                 {showCount ? (
-                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-4.5">
                     数量：{item.count ?? 1}
                   </Typography.Text>
                 ) : null}
                 {hasSeason ? (
-                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-[18px]">
+                  <Typography.Text className="clothes-gallery-detail-meta overflow-hidden text-ellipsis whitespace-nowrap leading-4.5">
                     适合季节：{parseClothesSeasons(item.season ?? "").join(" ")}
                   </Typography.Text>
                 ) : null}
@@ -783,7 +783,7 @@ function ClothesImageCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt={item.name}
-            className="absolute inset-0 block h-full w-full cursor-zoom-in object-cover transition-transform duration-300 ease-out group-hover:scale-[1.2]"
+            className="absolute inset-0 block h-full w-full cursor-zoom-in object-cover transition-transform duration-300 ease-out group-hover:scale-120"
             onClick={(event) => openImagePreview(event)}
             src={coverImageUrl}
           />
@@ -816,19 +816,19 @@ function ClothesImageCard({
         </div>
       )}
       {showCount ? (
-        <span className="clothes-gallery-card-count-badge absolute left-2.5 top-2.5 z-[9] max-w-[calc(100%-20px)] overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold leading-[18px]">
+        <span className="clothes-gallery-card-count-badge absolute left-2.5 top-2.5 z-9 max-w-[calc(100%-20px)] overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold leading-4.5">
           x{item.count ?? 1}
         </span>
       ) : null}
       {itemImageUrls.length > 1 ? (
-        <span className="clothes-gallery-card-count-badge clothes-gallery-card-image-count absolute left-auto right-2.5 top-2.5 z-[9] max-w-[calc(100%-20px)] overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold leading-[18px]">
+        <span className="clothes-gallery-card-count-badge clothes-gallery-card-image-count absolute left-auto right-2.5 top-2.5 z-9 max-w-[calc(100%-20px)] overflow-hidden text-ellipsis whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold leading-4.5">
           {itemImageUrls.length}
         </span>
       ) : null}
       {item.download_url ? (
         <Button
           aria-label={`下载 ${item.name}`}
-          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button absolute bottom-2.5 right-[50px] z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-[180ms] ease-out group-hover:opacity-[0.86]"
+          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button absolute bottom-2.5 right-12.5 z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-180 ease-out group-hover:opacity-86"
           href={item.download_url}
           icon={<DownloadOutlined />}
           rel="noreferrer"
@@ -841,7 +841,7 @@ function ClothesImageCard({
       {item.url ? (
         <Button
           aria-label={`打开 ${item.name}`}
-          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button absolute bottom-2.5 right-[50px] z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-[180ms] ease-out group-hover:opacity-[0.86]"
+          className="clothes-gallery-card-download-button clothes-gallery-card-edit-button absolute bottom-2.5 right-12.5 z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-180 ease-out group-hover:opacity-86"
           href={item.url}
           icon={<LinkOutlined />}
           rel="noreferrer"
@@ -853,7 +853,7 @@ function ClothesImageCard({
       ) : null}
       <Button
         aria-label={`编辑 ${item.name}`}
-        className="clothes-gallery-card-edit-button absolute bottom-2.5 right-2.5 z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-[180ms] ease-out group-hover:opacity-[0.86]"
+        className="clothes-gallery-card-edit-button absolute bottom-2.5 right-2.5 z-10 inline-flex size-8! items-center justify-center overflow-hidden rounded-full p-0 leading-none opacity-0 transition-[opacity,background-color,border-color] duration-180 ease-out group-hover:opacity-86"
         icon={<EditOutlined />}
         onClick={() => onEdit(item)}
         shape="circle"

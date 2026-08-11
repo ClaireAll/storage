@@ -74,7 +74,7 @@ export function BlogReader({ items }: BlogReaderProps) {
 
   return (
     <div className="grid h-full min-h-0 w-full grid-cols-[minmax(220px,280px)_minmax(0,1fr)] gap-3.5 max-[900px]:grid-cols-1">
-      <aside className="flex min-h-0 min-w-0 flex-col gap-3 max-[900px]:min-h-[260px]">
+      <aside className="flex min-h-0 min-w-0 flex-col gap-3 max-[900px]:min-h-65">
         <div className="grid h-8 grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5">
           <Input
             allowClear
@@ -102,14 +102,14 @@ export function BlogReader({ items }: BlogReaderProps) {
               <article
                 aria-current={selectedItem?.c_id === item.c_id ? "true" : undefined}
                 className={cn(
-                  "blog-reader-list-item grid min-h-[42px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b",
+                  "blog-reader-list-item grid min-h-10.5 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b",
                   { "is-active": selectedItem?.c_id === item.c_id },
                 )}
                 key={item.c_id}
                 role="listitem"
               >
                 <button
-                  className="blog-reader-select grid h-full min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-2 border-0 bg-transparent px-2.5 py-[9px] text-left"
+                  className="blog-reader-select grid h-full min-w-0 cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-2 border-0 bg-transparent px-2.5 py-2.25 text-left"
                   onClick={() => setSelectedId(item.c_id)}
                   type="button"
                 >
@@ -143,7 +143,7 @@ export function BlogReader({ items }: BlogReaderProps) {
           )}
         </div>
       </aside>
-      <section className="blog-reader-preview flex min-h-0 flex-col overflow-hidden rounded-lg border max-[900px]:min-h-[460px]">
+      <section className="blog-reader-preview flex min-h-0 flex-col overflow-hidden rounded-lg border max-[900px]:min-h-115">
         {selectedItem ? (
           <>
             <div className="blog-reader-preview-header flex min-h-14 items-center justify-between gap-3 border-b px-3.5 py-2.5">

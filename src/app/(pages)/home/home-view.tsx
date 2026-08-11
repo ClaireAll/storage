@@ -249,7 +249,7 @@ export default function HomePage({
               />
               <Layout
                 className={cn(
-                  "app-shell app-textured-shell home-shell flex h-dvh min-h-dvh flex-1 flex-col overflow-hidden max-[900px]:!h-auto max-[900px]:min-h-dvh max-[900px]:overflow-visible",
+                  "app-shell app-textured-shell home-shell flex h-dvh min-h-dvh flex-1 flex-col overflow-hidden max-[900px]:h-auto! max-[900px]:min-h-dvh max-[900px]:overflow-visible",
                   isDark ? "bg-neutral-950" : "bg-neutral-100",
                   `theme-${resolvedMode}`,
                   `app-texture-${themeConfig.texture}`,
@@ -276,7 +276,7 @@ export default function HomePage({
                   isActive={themeConfig.texture === "meteor"}
                   variant="shared"
                 />
-                <header className="home-brand-header relative z-[3] flex h-11 w-full shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3">
+                <header className="home-brand-header relative z-3 flex h-11 w-full shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:h-auto max-md:flex-col max-md:items-start max-md:p-3">
                   <div className="flex h-9 min-w-0 items-center gap-2.5">
                     <HomeProfileButton
                       editor={profileEditor}

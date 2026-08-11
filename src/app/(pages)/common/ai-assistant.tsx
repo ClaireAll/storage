@@ -211,8 +211,8 @@ export function AiAssistant() {
     <div
       className={
         isOpen && isExpanded
-          ? "ai-assistant-root ai-assistant-root-expanded pointer-events-auto static z-auto h-full min-h-0 w-full self-stretch max-[640px]:h-[min(560px,calc(100dvh-96px))]"
-          : "ai-assistant-root pointer-events-none fixed bottom-6 right-6 z-[2147483000] max-[640px]:bottom-4 max-[640px]:right-4"
+          ? "ai-assistant-root ai-assistant-root-expanded pointer-events-auto static z-auto h-full min-h-0 w-full self-stretch max-sm:h-[min(560px,calc(100dvh-96px))]"
+          : "ai-assistant-root pointer-events-none fixed bottom-6 right-6 z-2147483000 max-sm:bottom-4 max-sm:right-4"
       }
       ref={assistantRootRef}
     >
@@ -221,8 +221,8 @@ export function AiAssistant() {
           aria-label="DeepSeek 助手"
           className={
             isExpanded
-              ? "ai-assistant-panel ai-assistant-panel-expanded pointer-events-auto static z-[1] flex h-full max-h-none min-h-0 w-full flex-col gap-3 rounded-lg p-3.5"
-              : "ai-assistant-panel pointer-events-auto absolute bottom-14 right-3 z-[1] flex h-[min(330px,calc(100dvh-96px))] w-[min(380px,calc(100vw-48px))] flex-col gap-3 rounded-lg p-3.5"
+              ? "ai-assistant-panel ai-assistant-panel-expanded pointer-events-auto static z-1 flex h-full max-h-none min-h-0 w-full flex-col gap-3 rounded-lg p-3.5"
+              : "ai-assistant-panel pointer-events-auto absolute bottom-14 right-3 z-1 flex h-[min(330px,calc(100dvh-96px))] w-[min(380px,calc(100vw-48px))] flex-col gap-3 rounded-lg p-3.5"
           }
           role="dialog"
         >
@@ -293,7 +293,7 @@ export function AiAssistant() {
                     <div className="ai-assistant-items mt-2 grid gap-2">
                       {message.items.map((item) => (
                         <a
-                          className="ai-assistant-item grid min-w-0 grid-cols-[34px_minmax(0,1fr)] items-center gap-2 rounded-lg border p-[7px]"
+                          className="ai-assistant-item grid min-w-0 grid-cols-[34px_minmax(0,1fr)] items-center gap-2 rounded-lg border p-1.75"
                           href={item.url}
                           key={`${item.category}-${item.id}-${item.name}`}
                           rel="noreferrer"
@@ -303,11 +303,11 @@ export function AiAssistant() {
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               alt={item.name}
-                              className="ai-assistant-item-image size-[34px] rounded-md object-cover"
+                              className="ai-assistant-item-image size-8.5 rounded-md object-cover"
                               src={item.imageUrl}
                             />
                           ) : (
-                            <span className="ai-assistant-item-placeholder inline-flex size-[34px] items-center justify-center rounded-md">
+                            <span className="ai-assistant-item-placeholder inline-flex size-8.5 items-center justify-center rounded-md">
                               {item.name.slice(0, 1)}
                             </span>
                           )}
@@ -343,7 +343,7 @@ export function AiAssistant() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             alt="搭配效果图"
-                            className="ai-assistant-generated-image block aspect-[3/4] w-full rounded-lg border object-cover"
+                            className="ai-assistant-generated-image block aspect-3/4 w-full rounded-lg border object-cover"
                             src={image}
                           />
                         </a>
@@ -419,11 +419,11 @@ export function AiAssistant() {
         className={
           isOpen && isExpanded
             ? "ai-assistant-fab ai-assistant-fab-hidden"
-            : "ai-assistant-fab pointer-events-auto relative z-[2] inline-flex size-14 min-w-14 items-center justify-center overflow-hidden rounded-full"
+            : "ai-assistant-fab pointer-events-auto relative z-2 inline-flex size-14 min-w-14 items-center justify-center overflow-hidden rounded-full"
         }
         icon={
           <CategoryIcon
-            className="ai-assistant-fab-icon size-[42px]"
+            className="ai-assistant-fab-icon size-10.5"
             iconClassName="ai-assistant-fab-symbol size-7 text-[28px] leading-none"
             mode="font"
             name="icon-deepseek"

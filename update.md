@@ -1,5 +1,10 @@
 # 版本更新
 
+## 2026-08-11 09:56:08 +08:00
+
+- 刷新本地阿里 Iconfont 资源，并同步更新 `icon-plugin` 图标字形。
+- 继续规范组件内 Tailwind CSS 写法：首页、AI 助手、图片编辑与图库、Codex 日报、笔记预览、登录页和主题设置页将可替换的任意数值与旧式写法收敛为标准 utility、现代 CSS 变量语法、`has-*` 变体和 `scrollbar-gutter-stable`；同步更新分类侧栏断言，保持既有布局与交互不变。
+
 ## 2026-08-10 20:08:00 +08:00
 
 - Stabilize scrollbar rendering in Chromium: keep the horizontal thumb independently visible, apply the active theme color through `scrollbar-color` only to the current vertical scroll container, and retain the two-second post-scroll hide behavior.

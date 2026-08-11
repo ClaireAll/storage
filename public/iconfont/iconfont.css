@@ -1,8 +1,8 @@
 @font-face {
   font-family: "iconfont"; /* Project id 4012350 */
-  src: url('iconfont.woff2?t=1786344373397') format('woff2'),
-       url('iconfont.woff?t=1786344373397') format('woff'),
-       url('iconfont.ttf?t=1786344373397') format('truetype');
+  src: url('iconfont.woff2?t=1786358805607') format('woff2'),
+       url('iconfont.woff?t=1786358805607') format('woff'),
+       url('iconfont.ttf?t=1786358805607') format('truetype');
 }
 
 .iconfont {
@@ -14,7 +14,7 @@
 }
 
 .icon-plugin:before {
-  content: "\e69d";
+  content: "\e61a";
 }
 
 .icon-skills:before {

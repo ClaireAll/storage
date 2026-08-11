@@ -226,7 +226,7 @@ export function HomeProfileButton({
       <Avatar
         alt={profile.name ?? "用户头像"}
         className={cn(
-          "home-profile-avatar size-9! text-white! text-[26px]! leading-[36px]! shrink-0",
+          "home-profile-avatar size-9! text-white! text-[26px]! leading-9! shrink-0",
           {
             "text-[#141414]!": isDark,
             "text-white!": !isDark,
@@ -234,7 +234,7 @@ export function HomeProfileButton({
         )}
         icon={
           headerAvatarUrl ? undefined : (
-            <i className="iconfont icon-avatar text-[36px]!" />
+            <i className="iconfont icon-avatar text-4xl!" />
           )
         }
         key={headerAvatarUrl ?? "default-header-avatar"}
@@ -330,7 +330,7 @@ export function HomeProfileModal({
           <Avatar
             alt={profile.name ?? "用户头像"}
             className={cn(
-              "size-28! text-white! text-[76px]! leading-[112px]! shrink-0",
+              "size-28! text-white! text-[76px]! leading-28! shrink-0",
               {
                 "text-[#141414]!": isDark,
                 "text-white!": !isDark,

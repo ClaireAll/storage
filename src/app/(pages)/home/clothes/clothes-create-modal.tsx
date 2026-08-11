@@ -122,7 +122,7 @@ type ImageDraft = {
 };
 
 const seasons = ["春", "夏", "秋", "冬"];
-const formControlWidthClassName = "w-[200px] max-w-full";
+const formControlWidthClassName = "w-50 max-w-full";
 const fallbackColor = "#8b8b8b";
 
 function getFileNameFromUrl(fileUrl: string) {
@@ -1352,7 +1352,7 @@ export function ItemEditForm({
                 ]}
               >
                 <Checkbox.Group
-                  className="clothes-create-season-checkboxes flex w-[200px] max-w-full flex-nowrap gap-2.5"
+                  className="clothes-create-season-checkboxes flex w-50 max-w-full flex-nowrap gap-2.5"
                   options={seasons}
                 />
               </Form.Item>
@@ -1501,7 +1501,7 @@ export function ImageUploader({
               <span className="clothes-multi-image-cover-badge absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[13px] font-semibold">
                 封面
               </span>
-              <div className="clothes-multi-image-preview-toolbar absolute inset-x-0 bottom-0 flex justify-center gap-[18px] p-2.5">
+              <div className="clothes-multi-image-preview-toolbar absolute inset-x-0 bottom-0 flex justify-center gap-4.5 p-2.5">
                 {!isSelectedImageCover ? (
                   <Button
                     icon={<StarOutlined />}
@@ -1533,7 +1533,7 @@ export function ImageUploader({
               <span className="clothes-multi-image-cover-badge absolute right-3 top-3 rounded-lg px-2.5 py-1 text-[13px] font-semibold">
                 封面
               </span>
-              <div className="clothes-multi-image-preview-toolbar absolute inset-x-0 bottom-0 flex justify-center gap-[18px] p-2.5">
+              <div className="clothes-multi-image-preview-toolbar absolute inset-x-0 bottom-0 flex justify-center gap-4.5 p-2.5">
                 {!isSelectedImageCover ? (
                   <Button
                     icon={<StarOutlined />}
@@ -1567,7 +1567,7 @@ export function ImageUploader({
         <div className="clothes-multi-image-strip flex gap-2.5 overflow-x-auto pb-0.5">
           {imageDrafts.map((draft, index) => (
             <button
-              className={`clothes-multi-image-thumb relative size-[72px] flex-[0_0_72px] cursor-pointer overflow-hidden rounded-lg border ${
+              className={`clothes-multi-image-thumb relative size-18 flex-[0_0_72px] cursor-pointer overflow-hidden rounded-lg border ${
                 draft.id === selectedImageDraft?.id ? "is-active" : ""
               }`}
               key={draft.id}
@@ -1581,12 +1581,12 @@ export function ImageUploader({
                 src={draft.url}
               />
               {index === 0 ? (
-                <span className="clothes-multi-image-thumb-cover absolute left-1 top-1 rounded-[5px] px-[5px] py-px text-[11px]">
+                <span className="clothes-multi-image-thumb-cover absolute left-1 top-1 rounded-[5px] px-1.25 py-px text-[11px]">
                   封面
                 </span>
               ) : null}
               <span
-                className="clothes-multi-image-thumb-delete absolute right-1 top-1 inline-flex size-[18px] items-center justify-center rounded-full"
+                className="clothes-multi-image-thumb-delete absolute right-1 top-1 inline-flex size-4.5 items-center justify-center rounded-full"
                 onClick={(event) => {
                   event.stopPropagation();
                   removeImageDraft(draft.id);
@@ -1597,7 +1597,7 @@ export function ImageUploader({
             </button>
           ))}
           <button
-            className="clothes-multi-image-add relative inline-flex size-[72px] flex-[0_0_72px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed text-[22px]"
+            className="clothes-multi-image-add relative inline-flex size-18 flex-[0_0_72px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed text-[22px]"
             onClick={prepareNewImageDraft}
             type="button"
           >

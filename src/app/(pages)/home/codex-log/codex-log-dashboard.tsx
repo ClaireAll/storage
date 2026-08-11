@@ -157,45 +157,45 @@ const tableScrollbarClassName =
 const metricToneClassNames = {
   codex: {
     card: "",
-    help: "!text-[color-mix(in_srgb,#18f83a_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#18f83a_50%,transparent)] !bg-[color-mix(in_srgb,#18f83a_14%,transparent)] !text-[#18f83a]",
-    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
-    value: "!text-[var(--home-theme-text)]",
+    help: "text-[color-mix(in_srgb,#18f83a_76%,var(--home-theme-text)_24%)]!",
+    icon: "border-[color-mix(in_srgb,#18f83a_50%,transparent)]! bg-[color-mix(in_srgb,#18f83a_14%,transparent)]! text-[#18f83a]!",
+    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
+    value: "text-(--home-theme-text)!",
   },
   neutral: {
     card: "",
-    help: "!text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]",
-    icon: "!border-[color-mix(in_srgb,#6f7378_38%,transparent)] !bg-[color-mix(in_srgb,#6f7378_12%,transparent)] !text-[#6f7378]",
-    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
-    value: "!text-[var(--home-theme-text)]",
+    help: "text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]!",
+    icon: "border-[color-mix(in_srgb,#6f7378_38%,transparent)]! bg-[color-mix(in_srgb,#6f7378_12%,transparent)]! text-[#6f7378]!",
+    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
+    value: "text-(--home-theme-text)!",
   },
   proportion: {
     card: "",
-    help: "!text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]",
-    icon: "!border-[color-mix(in_srgb,#f59e0b_52%,transparent)] !bg-[color-mix(in_srgb,#f59e0b_14%,transparent)] !text-[#f59e0b]",
-    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
-    value: "!text-[var(--home-theme-text)]",
+    help: "text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]!",
+    icon: "border-[color-mix(in_srgb,#f59e0b_52%,transparent)]! bg-[color-mix(in_srgb,#f59e0b_14%,transparent)]! text-[#f59e0b]!",
+    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
+    value: "text-(--home-theme-text)!",
   },
   store: {
     card: "",
-    help: "!text-[color-mix(in_srgb,#a78bfa_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#a855f7_52%,transparent)] !bg-[color-mix(in_srgb,#a855f7_14%,transparent)] !text-[#a855f7]",
-    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
-    value: "!text-[var(--home-theme-text)]",
+    help: "text-[color-mix(in_srgb,#a78bfa_76%,var(--home-theme-text)_24%)]!",
+    icon: "border-[color-mix(in_srgb,#a855f7_52%,transparent)]! bg-[color-mix(in_srgb,#a855f7_14%,transparent)]! text-[#a855f7]!",
+    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
+    value: "text-(--home-theme-text)!",
   },
   task: {
     card: "",
-    help: "!text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#22c55e_52%,transparent)] !bg-[color-mix(in_srgb,#22c55e_14%,transparent)] !text-[#22c55e]",
-    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
-    value: "!text-[var(--home-theme-text)]",
+    help: "text-[color-mix(in_srgb,#22c55e_76%,var(--home-theme-text)_24%)]!",
+    icon: "border-[color-mix(in_srgb,#22c55e_52%,transparent)]! bg-[color-mix(in_srgb,#22c55e_14%,transparent)]! text-[#22c55e]!",
+    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
+    value: "text-(--home-theme-text)!",
   },
   token: {
     card: "",
-    help: "!text-[color-mix(in_srgb,#22d3ee_76%,var(--home-theme-text)_24%)]",
-    icon: "!border-[color-mix(in_srgb,#22d3ee_52%,transparent)] !bg-[color-mix(in_srgb,#22d3ee_14%,transparent)] !text-[#22d3ee]",
-    label: "!text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]",
-    value: "!text-[var(--home-theme-text)]",
+    help: "text-[color-mix(in_srgb,#22d3ee_76%,var(--home-theme-text)_24%)]!",
+    icon: "border-[color-mix(in_srgb,#22d3ee_52%,transparent)]! bg-[color-mix(in_srgb,#22d3ee_14%,transparent)]! text-[#22d3ee]!",
+    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
+    value: "text-(--home-theme-text)!",
   },
 };
 
@@ -392,7 +392,7 @@ function MetricIcon({
   return (
     <span
       className={cn(
-        "codex-log-metric-icon inline-flex size-[42px] items-center justify-center rounded-lg",
+        "codex-log-metric-icon inline-flex size-10.5 items-center justify-center rounded-lg",
         metricToneClassNames[tone].icon,
         className,
       )}
@@ -499,10 +499,10 @@ function EChart({
   }, [empty, option]);
 
   return (
-    <div className="codex-log-chart-shell relative min-h-[220px] flex-1">
+    <div className="codex-log-chart-shell relative min-h-55 flex-1">
       <div
         className={cn(
-          "codex-log-chart h-full min-h-[220px] w-full",
+          "codex-log-chart h-full min-h-55 w-full",
           empty && "pointer-events-none opacity-0",
         )}
         ref={chartRef}
@@ -530,7 +530,7 @@ function ChartPanel({
   title: string;
 }) {
   return (
-    <DashboardPanel className="codex-log-chart-panel min-h-[300px]" title={title}>
+    <DashboardPanel className="codex-log-chart-panel min-h-75" title={title}>
       <EChart empty={empty} emptyText={emptyText} option={option} />
     </DashboardPanel>
   );
@@ -786,7 +786,7 @@ function SummaryPanel({ date }: { date: string }) {
 
   return (
     <DashboardPanel
-      className="codex-log-summary-panel min-h-[240px]"
+      className="codex-log-summary-panel min-h-60"
       extra={
         <Button
           icon={<ReloadOutlined />}
@@ -800,7 +800,7 @@ function SummaryPanel({ date }: { date: string }) {
       title="总结"
     >
       {summaryState.status === "loading" ? (
-        <div className="codex-log-summary-loading flex min-h-[180px] flex-1 items-center justify-center">
+        <div className="codex-log-summary-loading flex min-h-45 flex-1 items-center justify-center">
           <Skeleton active paragraph={{ rows: 4 }} title={false} />
         </div>
       ) : summaryState.status === "error" ? (
@@ -962,7 +962,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       ellipsis: { showTitle: false },
       render: (value: string) => (
         <Typography.Text
-          className="block max-w-[220px]"
+          className="block max-w-55"
           ellipsis={{ tooltip: value }}
         >
           {value}
@@ -979,7 +979,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       ellipsis: { showTitle: false },
       render: (value: string) => (
         <Typography.Text
-          className="block max-w-[240px]"
+          className="block max-w-60"
           ellipsis={{ tooltip: value }}
         >
           {value}
@@ -1080,7 +1080,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] xl:w-[720px]">
+        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] xl:w-180">
           <DatePicker
             allowClear={false}
             className="codex-log-date-picker w-full"
@@ -1163,13 +1163,13 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           option={repositoryOption}
           title="仓库占比"
         />
-        <DashboardPanel className="min-h-[300px]" title="最长会话">
+        <DashboardPanel className="min-h-75" title="最长会话">
           <TaskList emptyText="暂无会话" items={data.longestSessions} />
         </DashboardPanel>
       </section>
 
       <DashboardPanel
-        className="codex-log-table-panel min-h-[440px] overflow-visible max-[640px]:min-h-[420px]"
+        className="codex-log-table-panel min-h-110 overflow-visible max-sm:min-h-105"
         extra={
           <Typography.Text type="secondary">
             {formatNumber(tableTotal)} 条
@@ -1221,17 +1221,17 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "codex-log-metric-card min-w-0 !border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)] !bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]",
+        "codex-log-metric-card min-w-0 border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]! bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]!",
         panelClassName,
         metricToneClassNames[tone].card,
       )}
       classNames={{
-        body: "flex min-h-[118px] w-full items-center gap-4 p-4! md:px-5!",
+        body: "flex min-h-29.5 w-full items-center gap-4 p-4! md:px-5!",
       }}
     >
       <MetricIcon
         className="!size-14 !rounded-xl"
-        iconClassName="!text-[30px]"
+        iconClassName="!text-3xl"
         name={icon}
         tone={tone}
       />

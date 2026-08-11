@@ -161,8 +161,8 @@ export function HomeDashboard({
             !isCategorySidebarCollapsed;
 
           return {
-            className: cn("hover:scale-[1.1]", {
-              "scale-[1.1] font-bold": isCategoryActive,
+            className: cn("hover:scale-110", {
+              "scale-110 font-bold": isCategoryActive,
             }),
             children: category.children
               ?.filter((child) => visibleCategoryHrefs.includes(child.href))
@@ -174,8 +174,8 @@ export function HomeDashboard({
                   !isCategorySidebarCollapsed;
 
                 return {
-                  className: cn("hover:scale-[1.1]", {
-                    "scale-[1.1] font-bold": isChildActive,
+                  className: cn("hover:scale-110", {
+                    "scale-110 font-bold": isChildActive,
                   }),
                   icon: (
                     <CategoryIcon
@@ -432,8 +432,8 @@ export function HomeDashboard({
   }, [refreshFullscreenLayout]);
 
   return (
-    <main className="home-dashboard-main mx-auto flex min-h-0 w-full max-w-[1540px] flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
-      <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1180px)] justify-center gap-6 [&:has(.ai-assistant-root-expanded)]:grid-cols-[minmax(0,1180px)_minmax(320px,360px)] max-[640px]:[&:has(.ai-assistant-root-expanded)]:grid-cols-[minmax(0,1fr)]">
+    <main className="home-dashboard-main mx-auto flex min-h-0 w-full max-w-385 flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 max-[900px]:overflow-visible max-md:p-5">
+      <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1180px)] justify-center gap-6 has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1180px)_minmax(320px,360px)] max-sm:has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)]">
         <div className="home-dashboard-left-stack flex min-h-0 min-w-0 flex-col gap-5">
       <section className="grid shrink-0 grid-cols-3 gap-4 max-md:grid-cols-1">
         {homeStats.map((stat) => {
@@ -445,7 +445,7 @@ export function HomeDashboard({
               style={surfaceStyle}
             >
               {stat.label === "文章推荐" ? (
-                <div className="flex h-full min-h-[130px] flex-col gap-3">
+                <div className="flex h-full min-h-32.5 flex-col gap-3">
                   <div className="flex items-center justify-between gap-3">
                     <Typography.Text type="secondary">
                       <BulbOutlined />
@@ -485,7 +485,7 @@ export function HomeDashboard({
                   </div>
                 </div>
               ) : stat.label === "快捷功能" ? (
-                <div className="flex h-full min-h-[140px] flex-col justify-between">
+                <div className="flex h-full min-h-35 flex-col justify-between">
                   <Typography.Text type="secondary">
                     <TagsOutlined />
                     <span className="ml-1">快捷功能</span>
@@ -523,7 +523,7 @@ export function HomeDashboard({
                   </div>
                   {weather.status === "ready" ? (
                     <div className="mt-3 flex items-end gap-2">
-                      <span className="text-[30px] leading-none font-semibold">
+                      <span className="text-3xl leading-none font-semibold">
                         {weather.temp}°
                       </span>
 
@@ -548,7 +548,7 @@ export function HomeDashboard({
 
       <section
         className={cn(
-          "home-category-workspace grid min-h-0 flex-1 justify-center gap-6 transition-[grid-template-columns] duration-200 max-[900px]:min-h-[520px] max-md:grid-cols-1",
+          "home-category-workspace grid min-h-0 flex-1 justify-center gap-6 transition-[grid-template-columns] duration-200 max-[900px]:min-h-130 max-md:grid-cols-1",
           isCategorySidebarCollapsed
             ? "home-category-layout-collapsed grid-cols-[72px_minmax(0,1fr)]"
             : "grid-cols-[260px_minmax(0,1fr)]",
@@ -593,7 +593,7 @@ export function HomeDashboard({
               type="text"
             />
           </div>
-          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 scrollbar-gutter-stable">
             <Menu
               className="home-category-menu !w-full min-w-0"
               inlineCollapsed={isCategorySidebarCollapsed}
@@ -643,7 +643,7 @@ export function HomeDashboard({
         </div>
 
         {aiAssistant ? (
-          <div className="home-ai-assistant-slot contents min-h-0 [&:has(.ai-assistant-root-expanded)]:block">
+          <div className="home-ai-assistant-slot contents min-h-0 has-[.ai-assistant-root-expanded]:block">
             {aiAssistant}
           </div>
         ) : null}
