@@ -28,6 +28,8 @@ export type ThemeConfig = {
   /** 用户选择的主题显示模式。 */
   mode: ThemeMode;
   aniTheme?: string | null;
+  /** 需要从首页侧栏隐藏的稳定分类标识。 */
+  hiddenCategoryKeys: string[];
   /** 浅色模式调色板。 */
   light: ThemePalette;
   /** 深色模式调色板。 */
@@ -40,6 +42,8 @@ export type ThemeConfig = {
 export type ThemeDatabaseRow = {
   /** 用户 id，同时作为 theme 表主键。 */
   id: string;
+  /** 需要从首页侧栏隐藏的稳定分类标识。 */
+  hidden_category_keys: string[] | null;
   /** 主题显示模式，对应数据库 theme 字段。 */
   theme: string | null;
   /** 背景纹路，对应数据库 texture 字段。 */
