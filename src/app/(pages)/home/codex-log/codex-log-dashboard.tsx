@@ -61,7 +61,10 @@ import type {
   CodexLogRepositoryStat,
   CodexLogTrendPoint,
 } from "./codex-log-utils";
-import { HomeContentFullscreenButton } from "../home-content-fullscreen";
+import {
+  HomeContentFullscreenButton,
+  useHomeContentFullscreen,
+} from "../home-content-fullscreen";
 
 echarts.use([
   BarChart,
@@ -153,6 +156,8 @@ const panelClassName =
 const quietPanelClassName =
   "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]";
 const scrollbarClassName = "";
+const activeScrollbarClassName =
+  "storage-is-vertically-scrolling [scrollbar-width:thin] [scrollbar-color:color-mix(in_srgb,var(--home-theme-color)_42%,transparent)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-[color-mix(in_srgb,var(--home-theme-color)_42%,transparent)]";
 const tableScrollbarClassName =
   "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto";
 const metricToneClassNames = {
@@ -799,7 +804,7 @@ function SummaryPanel({
 
   return (
     <DashboardPanel
-      className="codex-log-summary-panel min-h-60"
+      className="codex-log-summary-panel min-h-60 shrink-0"
       extra={
         <Button
           icon={<ReloadOutlined />}
@@ -846,6 +851,7 @@ function SummaryBlock({ label, text }: { label: string; text: string }) {
 }
 
 export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
+  const fullscreen = useHomeContentFullscreen();
   const router = useRouter();
   const pathname = usePathname();
   const palette = useChartPalette();
@@ -861,7 +867,12 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     field: "time",
     order: "descend",
   });
+  const [isDashboardScrolling, setIsDashboardScrolling] = useState(false);
+  const dashboardScrollTimeoutRef = useRef<number | undefined>(undefined);
   const selectedDay = dayjs(data.selectedDate);
+  const tableScrollY = fullscreen?.isFullscreen
+    ? "clamp(260px, 36dvh, 440px)"
+    : 360;
   const trendOption = useMemo(
     () => buildTrendOption(data.trend, palette),
     [data.trend, palette],
@@ -1054,12 +1065,35 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     }
   };
 
+  const handleDashboardScroll = useCallback(() => {
+    setIsDashboardScrolling(true);
+
+    if (dashboardScrollTimeoutRef.current) {
+      window.clearTimeout(dashboardScrollTimeoutRef.current);
+    }
+
+    dashboardScrollTimeoutRef.current = window.setTimeout(() => {
+      setIsDashboardScrolling(false);
+      dashboardScrollTimeoutRef.current = undefined;
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (dashboardScrollTimeoutRef.current) {
+        window.clearTimeout(dashboardScrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       className={cn(
-        "codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-auto p-1 md:gap-5",
+        "codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-1 md:gap-5",
         scrollbarClassName,
+        isDashboardScrolling && activeScrollbarClassName,
       )}
+      onScroll={handleDashboardScroll}
     >
       <div
         className={cn(
@@ -1177,7 +1211,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       </section>
 
       <DashboardPanel
-        className="codex-log-table-panel min-h-110 overflow-visible max-sm:min-h-105"
+        className="codex-log-table-panel min-h-125 shrink-0 max-sm:min-h-115"
         extra={
           <Typography.Text type="secondary">
             {formatNumber(tableTotal)} 条
@@ -1200,7 +1234,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             total: tableTotal,
           }}
           rowKey="key"
-          scroll={{ x: 1170, y: 260 }}
+          scroll={{ x: 1170, y: tableScrollY }}
           showSorterTooltip={false}
           size="middle"
           tableLayout="fixed"

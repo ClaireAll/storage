@@ -33,8 +33,12 @@ export function HomeContentFullscreenProvider({
   );
 }
 
+export function useHomeContentFullscreen() {
+  return useContext(HomeContentFullscreenContext);
+}
+
 export function HomeContentFullscreenButton() {
-  const fullscreen = useContext(HomeContentFullscreenContext);
+  const fullscreen = useHomeContentFullscreen();
 
   if (!fullscreen) {
     return null;
