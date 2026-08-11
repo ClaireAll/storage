@@ -4,69 +4,39 @@ import { useEffect } from "react";
 
 const verticalScrollActiveClassName = "storage-is-vertically-scrolling";
 const scrollActivityRetentionMs = 2_000;
-const verticalScrollableOverflowValues = new Set(["auto", "overlay", "scroll"]);
 
-function isVerticallyScrollable(element: HTMLElement, root: HTMLElement) {
-  if (element.scrollHeight <= element.clientHeight) {
-    return false;
+function getScrollContainer(target: EventTarget | null) {
+  if (target instanceof HTMLElement) {
+    return target;
   }
 
-  return (
-    element === root ||
-    verticalScrollableOverflowValues.has(
-      window.getComputedStyle(element).overflowY,
-    )
-  );
-}
-
-function findVerticalScrollContainer(target: EventTarget | null) {
   const root = document.scrollingElement;
 
-  if (!(root instanceof HTMLElement)) {
-    return null;
-  }
-
-  let currentElement: Element | null = target instanceof Element ? target : root;
-
-  while (currentElement) {
-    if (
-      currentElement instanceof HTMLElement &&
-      isVerticallyScrollable(currentElement, root)
-    ) {
-      return currentElement;
-    }
-
-    if (currentElement === root) {
-      break;
-    }
-
-    currentElement = currentElement.parentElement;
-  }
-
-  return isVerticallyScrollable(root, root) ? root : null;
+  return root instanceof HTMLElement ? root : null;
 }
 
 export function ScrollActivityProvider() {
   useEffect(() => {
     let activeScrollContainer: HTMLElement | null = null;
-    let activeScrollTarget: EventTarget | null = null;
     let timer: number | undefined;
+    const supportsScrollEnd = "onscrollend" in window;
 
-    const clearVerticallyScrolling = () => {
+    const clearTimer = () => {
       if (timer !== undefined) {
         window.clearTimeout(timer);
         timer = undefined;
       }
+    };
+
+    const clearVerticallyScrolling = () => {
+      clearTimer();
 
       activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
       activeScrollContainer = null;
-      activeScrollTarget = null;
     };
 
-    const refreshScrollRetention = () => {
-      if (timer !== undefined) {
-        window.clearTimeout(timer);
-      }
+    const scheduleClear = () => {
+      clearTimer();
 
       timer = window.setTimeout(() => {
         clearVerticallyScrolling();
@@ -74,33 +44,43 @@ export function ScrollActivityProvider() {
     };
 
     const markVerticallyScrolling = (target: EventTarget | null) => {
-      if (activeScrollContainer && activeScrollTarget === target) {
-        refreshScrollRetention();
-        return;
-      }
-
-      const nextScrollContainer = findVerticalScrollContainer(target);
+      const nextScrollContainer = getScrollContainer(target);
 
       if (!nextScrollContainer) {
         clearVerticallyScrolling();
         return;
       }
 
-      if (
-        activeScrollContainer &&
-        activeScrollContainer !== nextScrollContainer
-      ) {
+      if (activeScrollContainer === nextScrollContainer) {
+        if (!supportsScrollEnd) {
+          scheduleClear();
+        }
+
+        return;
+      }
+
+      clearTimer();
+
+      if (activeScrollContainer) {
         activeScrollContainer.classList.remove(verticalScrollActiveClassName);
       }
 
       activeScrollContainer = nextScrollContainer;
-      activeScrollTarget = target;
       activeScrollContainer.classList.add(verticalScrollActiveClassName);
-      refreshScrollRetention();
+
+      if (!supportsScrollEnd) {
+        scheduleClear();
+      }
     };
 
     const handleScroll = (event: Event) => {
       markVerticallyScrolling(event.target);
+    };
+
+    const handleScrollEnd = (event: Event) => {
+      if (getScrollContainer(event.target) === activeScrollContainer) {
+        scheduleClear();
+      }
     };
 
     const handlePointerOver = (event: PointerEvent) => {
@@ -113,6 +93,10 @@ export function ScrollActivityProvider() {
       capture: true,
       passive: true,
     });
+    window.addEventListener("scrollend", handleScrollEnd, {
+      capture: true,
+      passive: true,
+    });
     window.addEventListener("pointerover", handlePointerOver, {
       capture: true,
       passive: true,
@@ -121,6 +105,9 @@ export function ScrollActivityProvider() {
     return () => {
       clearVerticallyScrolling();
       window.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("scrollend", handleScrollEnd, {
+        capture: true,
+      });
       window.removeEventListener("pointerover", handlePointerOver, {
         capture: true,
       });

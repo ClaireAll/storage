@@ -11,6 +11,10 @@ const providerPath = new URL(
   import.meta.url,
 );
 const globalsPath = new URL("../src/app/globals.css", import.meta.url);
+const homeStylesPath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 
 test("keeps dashboard scrolling outside React render state", async () => {
   const source = await readFile(dashboardPath, "utf8");
@@ -19,11 +23,12 @@ test("keeps dashboard scrolling outside React render state", async () => {
   assert.doesNotMatch(source, /onScroll=\{handleDashboardScroll\}/);
 });
 
-test("reuses the active scroll container before measuring layout again", async () => {
+test("uses the browser scroll target without layout reads on scroll", async () => {
   const source = await readFile(providerPath, "utf8");
 
-  assert.match(source, /activeScrollTarget === target/);
-  assert.match(source, /refreshScrollRetention\(\);\s*return;/);
+  assert.doesNotMatch(source, /getComputedStyle|scrollHeight|clientHeight/);
+  assert.match(source, /getScrollContainer\(event\.target\)/);
+  assert.match(source, /addEventListener\("scrollend", handleScrollEnd/);
 });
 
 test("shows the active scrollbar without component-local listeners", async () => {
@@ -33,5 +38,15 @@ test("shows the active scrollbar without component-local listeners", async () =>
   assert.match(
     source,
     /\.storage-is-vertically-scrolling::\-webkit-scrollbar-thumb/,
+  );
+  assert.match(source, /\.storage-is-vertically-scrolling\s*\{[^}]*scrollbar-width:\s*thin/s);
+});
+
+test("keeps the fullscreen dashboard as the visible vertical scroll container", async () => {
+  const source = await readFile(homeStylesPath, "utf8");
+
+  assert.match(
+    source,
+    /:fullscreen \.codex-log-dashboard\s*\{[^}]*overflow-y:\s*auto !important;[^}]*scrollbar-gutter:\s*stable/s,
   );
 });

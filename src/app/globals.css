@@ -100,6 +100,7 @@
 }
 
 .storage-is-vertically-scrolling {
+  scrollbar-width: thin;
   scrollbar-color: color-mix(
     in srgb,
     var(--storage-scrollbar-color, var(--primary)) 36%,
