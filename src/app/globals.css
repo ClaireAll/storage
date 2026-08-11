@@ -107,6 +107,19 @@
   ) transparent;
 }
 
+.storage-is-vertically-scrolling::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.storage-is-vertically-scrolling::-webkit-scrollbar-thumb {
+  background-color: color-mix(
+    in srgb,
+    var(--storage-scrollbar-color, var(--primary)) 36%,
+    transparent
+  ) !important;
+}
+
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-color: transparent transparent;

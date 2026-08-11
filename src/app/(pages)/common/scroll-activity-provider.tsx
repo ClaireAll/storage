@@ -49,19 +49,36 @@ function findVerticalScrollContainer(target: EventTarget | null) {
 export function ScrollActivityProvider() {
   useEffect(() => {
     let activeScrollContainer: HTMLElement | null = null;
+    let activeScrollTarget: EventTarget | null = null;
     let timer: number | undefined;
 
     const clearVerticallyScrolling = () => {
-      if (timer) {
+      if (timer !== undefined) {
         window.clearTimeout(timer);
         timer = undefined;
       }
 
       activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
       activeScrollContainer = null;
+      activeScrollTarget = null;
+    };
+
+    const refreshScrollRetention = () => {
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
+
+      timer = window.setTimeout(() => {
+        clearVerticallyScrolling();
+      }, scrollActivityRetentionMs);
     };
 
     const markVerticallyScrolling = (target: EventTarget | null) => {
+      if (activeScrollContainer && activeScrollTarget === target) {
+        refreshScrollRetention();
+        return;
+      }
+
       const nextScrollContainer = findVerticalScrollContainer(target);
 
       if (!nextScrollContainer) {
@@ -77,15 +94,9 @@ export function ScrollActivityProvider() {
       }
 
       activeScrollContainer = nextScrollContainer;
+      activeScrollTarget = target;
       activeScrollContainer.classList.add(verticalScrollActiveClassName);
-
-      if (timer) {
-        window.clearTimeout(timer);
-      }
-
-      timer = window.setTimeout(() => {
-        clearVerticallyScrolling();
-      }, scrollActivityRetentionMs);
+      refreshScrollRetention();
     };
 
     const handleScroll = (event: Event) => {

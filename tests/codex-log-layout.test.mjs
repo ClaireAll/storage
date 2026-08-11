@@ -24,12 +24,10 @@ test("keeps the Codex table tall while constraining it to fullscreen height", as
   assert.match(dashboardSource, /scroll=\{\{ x: 1170, y: tableScrollY \}\}/);
 });
 
-test("keeps the summary available through the dashboard scroll container", async () => {
+test("keeps the summary available without dashboard scroll render state", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
-  assert.match(source, /const \[isDashboardScrolling, setIsDashboardScrolling\] = useState\(false\)/);
-  assert.match(source, /onScroll=\{handleDashboardScroll\}/);
-  assert.match(source, /storage-is-vertically-scrolling/);
+  assert.doesNotMatch(source, /onScroll=\{handleDashboardScroll\}/);
   assert.match(source, /codex-log-table-panel[^"`]*shrink-0/);
   assert.match(source, /codex-log-summary-panel[^"`]*shrink-0/);
 });
