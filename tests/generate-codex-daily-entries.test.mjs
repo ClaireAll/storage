@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseCodexSessionLines } from "../scripts/generate-codex-daily-entries.mjs";
+import {
+  parseCodexSessionLines,
+  parseCodexSessionTaskEntries,
+} from "../scripts/generate-codex-daily-entries.mjs";
 
 test("uses the first real user event timestamp as created_at", () => {
   const entry = parseCodexSessionLines(
@@ -54,4 +57,35 @@ test("ignores events outside the Shanghai target date", () => {
   );
 
   assert.equal(entry, null);
+});
+
+test("keeps each accepted user event with its original timestamp", () => {
+  const entries = parseCodexSessionTaskEntries(
+    [
+      JSON.stringify({
+        timestamp: "2026-08-10T02:03:04.000Z",
+        type: "event_msg",
+        payload: { message: "First task", type: "user_message" },
+      }),
+      JSON.stringify({
+        timestamp: "2026-08-10T02:05:06.000Z",
+        type: "event_msg",
+        payload: { message: "Second task", type: "user_message" },
+      }),
+    ],
+    "2026-08-10",
+  );
+
+  assert.deepEqual(entries, [
+    {
+      created_at: "2026-08-10T02:03:04.000Z",
+      date: "2026-08-10",
+      user_tasks: "First task",
+    },
+    {
+      created_at: "2026-08-10T02:05:06.000Z",
+      date: "2026-08-10",
+      user_tasks: "Second task",
+    },
+  ]);
 });

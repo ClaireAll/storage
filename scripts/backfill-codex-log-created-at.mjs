@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
-import { generateCodexDailyEntries } from "./generate-codex-daily-entries.mjs";
+import {
+  generateCodexDailyEntries,
+  generateCodexDailyTaskEntries,
+} from "./generate-codex-daily-entries.mjs";
 
 function toText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -39,17 +42,84 @@ function groupByFingerprint(items) {
   return groups;
 }
 
+function getTaskFingerprint(entry) {
+  return [toText(entry.date), toText(entry.user_tasks)]
+    .map((value) => value.replace(/\s+/g, " "))
+    .join("\u0001");
+}
+
+function groupByTaskFingerprint(items) {
+  const groups = new Map();
+
+  for (const item of items) {
+    const fingerprint = getTaskFingerprint(item);
+    const group = groups.get(fingerprint) ?? [];
+
+    group.push(item);
+    groups.set(fingerprint, group);
+  }
+
+  return groups;
+}
+
 /** Plans only safe, unique historical created_at updates. */
-export function planCreatedAtBackfill(entries, rows) {
+export function planCreatedAtBackfill(entries, rows, taskEntries = []) {
   const entriesByFingerprint = groupByFingerprint(entries);
-  const rowsByFingerprint = groupByFingerprint(rows);
   const result = {
     ambiguous: 0,
     invalid: 0,
+    taskAmbiguous: 0,
+    taskInvalid: 0,
+    taskUnchanged: 0,
+    taskUnmatched: 0,
+    taskUpdated: 0,
     unchanged: 0,
     unmatched: 0,
     updates: [],
   };
+  const matchedRowIds = new Set();
+  const taskEntriesByFingerprint = groupByTaskFingerprint(taskEntries);
+  const rowsByTaskFingerprint = groupByTaskFingerprint(rows);
+
+  for (const [fingerprint, taskEntryGroup] of taskEntriesByFingerprint) {
+    const rowsForTask = rowsByTaskFingerprint.get(fingerprint) ?? [];
+
+    if (taskEntryGroup.length !== 1 || rowsForTask.length > 1) {
+      if (rowsForTask.length > 0) {
+        result.taskAmbiguous += 1;
+      } else {
+        result.taskUnmatched += 1;
+      }
+      continue;
+    }
+
+    if (rowsForTask.length === 0) {
+      result.taskUnmatched += 1;
+      continue;
+    }
+
+    const createdAt = toIsoTimestamp(taskEntryGroup[0].created_at);
+
+    if (!createdAt) {
+      result.taskInvalid += 1;
+      continue;
+    }
+
+    const row = rowsForTask[0];
+    matchedRowIds.add(row.r_id);
+
+    if (toIsoTimestamp(row.created_at) === createdAt) {
+      result.taskUnchanged += 1;
+      continue;
+    }
+
+    result.taskUpdated += 1;
+    result.updates.push({ created_at: createdAt, r_id: row.r_id });
+  }
+
+  const rowsByFingerprint = groupByFingerprint(
+    rows.filter((row) => !matchedRowIds.has(row.r_id)),
+  );
 
   for (const [fingerprint, entryGroup] of entriesByFingerprint) {
     const rowsForFingerprint = rowsByFingerprint.get(fingerprint) ?? [];
@@ -138,12 +208,19 @@ async function main() {
 
   const dates = [...new Set((rows ?? []).map((row) => toText(row.date)).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)))];
   const entries = [];
+  const taskEntries = [];
 
   for (const date of dates) {
-    entries.push(...(await generateCodexDailyEntries({ targetDate: date })));
+    const [dailyEntries, dailyTaskEntries] = await Promise.all([
+      generateCodexDailyEntries({ targetDate: date }),
+      generateCodexDailyTaskEntries({ targetDate: date }),
+    ]);
+
+    entries.push(...dailyEntries);
+    taskEntries.push(...dailyTaskEntries);
   }
 
-  const plan = planCreatedAtBackfill(entries, rows ?? []);
+  const plan = planCreatedAtBackfill(entries, rows ?? [], taskEntries);
 
   if (apply) {
     for (const update of plan.updates) {
@@ -165,6 +242,7 @@ async function main() {
       entries: entries.length,
       records: rows?.length ?? 0,
       sessionDates: dates.length,
+      taskEntries: taskEntries.length,
       updated: apply ? plan.updates.length : 0,
     }),
   );

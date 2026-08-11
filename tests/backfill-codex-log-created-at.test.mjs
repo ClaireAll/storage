@@ -93,3 +93,28 @@ test("skips entries with an invalid session timestamp", () => {
   assert.deepEqual(result.updates, []);
   assert.equal(result.invalid, 1);
 });
+
+test("uses a unique task match before the aggregate session fallback", () => {
+  const result = planCreatedAtBackfill(
+    [],
+    [
+      {
+        created_at: "2026-08-11T00:05:00.000Z",
+        date: "2026-08-10",
+        r_id: "row-1",
+        user_tasks: "First task",
+      },
+    ],
+    [
+      {
+        created_at: "2026-08-10T02:03:04.000Z",
+        date: "2026-08-10",
+        user_tasks: "First task",
+      },
+    ],
+  );
+
+  assert.deepEqual(result.updates, [
+    { created_at: "2026-08-10T02:03:04.000Z", r_id: "row-1" },
+  ]);
+});

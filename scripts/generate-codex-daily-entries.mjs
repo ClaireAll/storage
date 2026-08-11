@@ -51,6 +51,43 @@ function getAssistantMessage(payload) {
     .trim();
 }
 
+/** Parses the individual user tasks in one Codex session for a target date. */
+export function parseCodexSessionTaskEntries(lines, targetDate) {
+  const entries = [];
+
+  for (const line of lines) {
+    let event;
+
+    try {
+      event = JSON.parse(line);
+    } catch {
+      continue;
+    }
+
+    if (
+      event.type !== "event_msg" ||
+      event.payload?.type !== "user_message" ||
+      getShanghaiDate(event.timestamp) !== targetDate
+    ) {
+      continue;
+    }
+
+    const userTasks = cleanUserMessage(event.payload.message);
+
+    if (!userTasks) {
+      continue;
+    }
+
+    entries.push({
+      created_at: new Date(event.timestamp).toISOString(),
+      date: targetDate,
+      user_tasks: userTasks,
+    });
+  }
+
+  return entries[0]?.user_tasks.startsWith("Automation:") ? [] : entries;
+}
+
 function toTitle(value) {
   const firstLine = value
     .split(/\r?\n/)
@@ -197,6 +234,33 @@ export async function generateCodexDailyEntries({ targetDate, sessionRoots } = {
     if (entry) {
       entries.push(entry);
     }
+  }
+
+  return entries;
+}
+
+/** Reads timestamped user tasks for safely repairing legacy imported rows. */
+export async function generateCodexDailyTaskEntries({ targetDate, sessionRoots } = {}) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate ?? "")) {
+    throw new Error("targetDate must use YYYY-MM-DD");
+  }
+
+  const files = [];
+  (sessionRoots ?? getDefaultSessionRoots()).forEach((root) => visitSessionFiles(root, files));
+  const entries = [];
+
+  for (const file of files) {
+    const lines = createInterface({
+      crlfDelay: Infinity,
+      input: createReadStream(file, { encoding: "utf8" }),
+    });
+    const allLines = [];
+
+    for await (const line of lines) {
+      allLines.push(line);
+    }
+
+    entries.push(...parseCodexSessionTaskEntries(allLines, targetDate));
   }
 
   return entries;
