@@ -215,7 +215,7 @@ function ThemeSettingsContent({
       />
       <Layout
         className={cn(
-          "app-shell app-textured-shell theme-settings-shell flex min-h-dvh flex-1 flex-col",
+          "app-shell app-textured-shell theme-settings-shell flex h-dvh min-h-0 flex-1 flex-col overflow-x-hidden! overflow-y-auto! [scrollbar-gutter:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           `theme-${resolvedMode}`,
           `app-texture-${appliedTexture}`,
         )}
@@ -282,9 +282,6 @@ function ThemeSettingsContent({
                 >
                   主题
                 </Typography.Title>
-                <Typography.Text className="theme-settings-subtitle">
-                  使用浅色、深色，或匹配系统设置
-                </Typography.Text>
               </div>
               <div className="flex items-center gap-2 max-md:flex-col max-md:items-stretch">
                 <Segmented<ThemeMode>
