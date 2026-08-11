@@ -163,16 +163,14 @@ export function HomeDashboard({
         )
         .map((category) => {
           const isCategoryDirectActive = activeCategoryHref === category.href;
-          const hasActiveChild = Boolean(
-            category.children?.some((child) => activeCategoryHref === child.href),
-          );
           const isCategoryHidden = hiddenCategoryKeys.includes(category.key);
 
           return {
             className: cn({
               "hover:scale-110": !category.children?.length,
               "opacity-45": isCategoryVisibilityEditing && isCategoryHidden,
-              "scale-110": isCategoryDirectActive || hasActiveChild,
+              "scale-110":
+                isCategoryDirectActive && !category.children?.length,
               "font-bold": isCategoryDirectActive,
             }),
             children: category.children

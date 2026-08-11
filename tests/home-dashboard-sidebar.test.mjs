@@ -103,8 +103,12 @@ test("keeps content fullscreen action out of the category navigation", async () 
   assert.equal(source.includes("全屏预览Codex日报"), false);
 });
 
-test("does not inherit bold text from the Codex parent when a child is active", async () => {
+test("does not scale the Codex submenu when a child is active", async () => {
   const source = await readDashboardSource();
+  const parentMenuItemSource = source.slice(
+    source.indexOf("return {\n            className:"),
+    source.indexOf("children: category.children"),
+  );
 
   assert.equal(
     source.includes(
@@ -112,7 +116,11 @@ test("does not inherit bold text from the Codex parent when a child is active", 
     ),
     true,
   );
-  assert.equal(source.includes("const hasActiveChild = Boolean("), true);
+  assert.equal(source.includes("const hasActiveChild = Boolean("), false);
+  assert.match(
+    parentMenuItemSource,
+    /"scale-110":\s+isCategoryDirectActive && !category\.children\?\.length,/,
+  );
   assert.equal(source.includes('"font-bold": isCategoryDirectActive'), true);
   assert.equal(source.includes('"scale-110 font-bold": isCategoryActive'), false);
 });
