@@ -6,6 +6,10 @@ const dashboardPath = new URL(
   "../src/app/(pages)/home/codex-log/codex-log-dashboard.tsx",
   import.meta.url,
 );
+const homeStylePath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 const fullscreenPath = new URL(
   "../src/app/(pages)/home/home-content-fullscreen.tsx",
   import.meta.url,
@@ -51,4 +55,19 @@ test("uses the daily report symbol and keeps mobile toolbar actions compact", as
   assert.match(source, /codex-log-date-picker col-span-2 w-full sm:col-span-1/);
   assert.match(source, /codex-log-repo-select col-span-2 w-full sm:col-span-1/);
   assert.match(source, /className="col-span-1 w-full sm:col-span-1"/);
+});
+
+test("stacks the toolbar until the dashboard has enough room beside the sidebar", async () => {
+  const [source, homeStyleSource] = await Promise.all([
+    readFile(dashboardPath, "utf8"),
+    readFile(homeStylePath, "utf8"),
+  ]);
+
+  assert.match(source, /codex-log-toolbar grid grid-cols-1[^"`]*2xl:flex 2xl:items-center 2xl:justify-between/);
+  assert.match(source, /sm:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\] 2xl:w-180/);
+  assert.doesNotMatch(source, /xl:flex xl:items-center xl:justify-between/);
+  assert.doesNotMatch(
+    homeStyleSource,
+    /@media \(min-width: 1280px\) \{\s+\.codex-log-toolbar/,
+  );
 });

@@ -438,19 +438,54 @@ async function cacheDesktopUsageTotals(
   dates: string[],
   totals: Map<string, number> | null,
 ) {
-  if (!dates.length) {
+  const reports = dates.flatMap((date) => {
+    const tokenTotal = toTokenCount(totals?.get(date));
+
+    return tokenTotal > 0
+      ? [
+          {
+            date,
+            desktop_token_total: tokenTotal,
+            id: userId,
+            token_calculated_at: new Date().toISOString(),
+          },
+        ]
+      : [];
+  });
+
+  if (!reports.length) {
     return;
   }
 
   await supabase.from("codex_daily_report").upsert(
-    dates.map((date) => ({
-      date,
-      desktop_token_total: totals?.get(date) ?? 0,
-      id: userId,
-      token_calculated_at: new Date().toISOString(),
-    })),
+    reports,
     { onConflict: "id,date" },
   );
+}
+
+function buildRecordTokenTotalsByDate(rows: CodexLogRow[]) {
+  const totals = new Map<string, number>();
+
+  rows.forEach((row) => {
+    if (!row.date) {
+      return;
+    }
+
+    totals.set(
+      row.date,
+      (totals.get(row.date) ?? 0) + toTokenCount(row.token_count),
+    );
+  });
+
+  return totals;
+}
+
+function hasUsableCachedDesktopTokenTotal(
+  report: CodexDailyReportRow | undefined,
+  databaseTokenTotal: number,
+) {
+  return Boolean(report?.token_calculated_at) &&
+    (toTokenCount(report?.desktop_token_total) > 0 || databaseTokenTotal === 0);
 }
 
 function getTaskLabel(record: CodexLogRecord) {
@@ -602,6 +637,7 @@ export async function listCodexLogDashboard(
     .map(mapCodexLogRow);
   const repositoryDistribution = buildRepositoryDistribution(records);
   const trendDates = getTrendDates(selectedDate);
+  const databaseTokenTotals = buildRecordTokenTotalsByDate(recordRows);
   const cachedReportsByDate = new Map(
     (dailyReportResult.data ?? [])
       .filter((report): report is CodexDailyReportRow & { date: string } =>
@@ -610,15 +646,24 @@ export async function listCodexLogDashboard(
       .map((report) => [report.date, report]),
   );
   const missingTokenDates = trendDates.filter(
-    (trendDate) => !cachedReportsByDate.get(trendDate)?.token_calculated_at,
+    (trendDate) =>
+      !hasUsableCachedDesktopTokenTotal(
+        cachedReportsByDate.get(trendDate),
+        databaseTokenTotals.get(trendDate) ?? 0,
+      ),
   );
   const desktopUsageTotals = new Map<string, number>();
 
   cachedReportsByDate.forEach((report, reportDate) => {
-    if (report.token_calculated_at) {
+    if (
+      hasUsableCachedDesktopTokenTotal(
+        report,
+        databaseTokenTotals.get(reportDate) ?? 0,
+      )
+    ) {
       desktopUsageTotals.set(
         reportDate,
-        toTokenCount(report.desktop_token_total),
+        toTokenCount(report?.desktop_token_total),
       );
     }
   });
@@ -630,10 +675,11 @@ export async function listCodexLogDashboard(
     );
 
     missingTokenDates.forEach((missingDate) => {
-      desktopUsageTotals.set(
-        missingDate,
-        generatedTotals?.get(missingDate) ?? 0,
-      );
+      const tokenTotal = toTokenCount(generatedTotals?.get(missingDate));
+
+      if (tokenTotal > 0) {
+        desktopUsageTotals.set(missingDate, tokenTotal);
+      }
     });
     await cacheDesktopUsageTotals(
       supabase,

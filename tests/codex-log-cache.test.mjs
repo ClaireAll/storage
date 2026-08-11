@@ -29,6 +29,21 @@ test("reads cached daily reports before scanning Codex desktop sessions", async 
   );
 });
 
+test("does not let an empty desktop cache override nonzero log tokens", async () => {
+  const source = await readFile(dashboardUtilsPath, "utf8");
+
+  assert.equal(source.includes("function buildRecordTokenTotalsByDate("), true);
+  assert.equal(source.includes("function hasUsableCachedDesktopTokenTotal("), true);
+  assert.match(
+    source,
+    /toTokenCount\(report\?\.desktop_token_total\) > 0 \|\| databaseTokenTotal === 0/,
+  );
+  assert.match(source, /const tokenTotal = toTokenCount\(generatedTotals\?\.get\(missingDate\)\);/);
+  assert.match(source, /if \(tokenTotal > 0\) \{\s+desktopUsageTotals\.set\(missingDate, tokenTotal\);/);
+  assert.match(source, /const reports = dates\.flatMap\(\(date\) => \{/);
+  assert.match(source, /if \(!reports\.length\) \{\s+return;/);
+});
+
 test("passes an existing cached summary into the dashboard", async () => {
   const [dashboardSource, utilsSource] = await Promise.all([
     readFile(dashboardPath, "utf8"),

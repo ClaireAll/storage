@@ -1064,7 +1064,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     >
       <div
         className={cn(
-          "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 xl:flex xl:items-center xl:justify-between",
+          "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 2xl:flex 2xl:items-center 2xl:justify-between",
           panelClassName,
         )}
       >
@@ -1093,7 +1093,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-[minmax(0,1fr)_40px] gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] xl:w-180">
+        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-[minmax(0,1fr)_40px] gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] 2xl:w-180">
           <DatePicker
             allowClear={false}
             className="codex-log-date-picker col-span-2 w-full sm:col-span-1"
