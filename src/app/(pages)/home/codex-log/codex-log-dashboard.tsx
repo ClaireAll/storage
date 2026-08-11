@@ -1,5 +1,6 @@
 "use client";
 
+import { CategoryIcon } from "@/app/(pages)/common/category-icon";
 import { cn } from "@/lib/utils";
 import {
   ArrowDownOutlined,
@@ -1068,11 +1069,15 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         )}
       >
         <div className="codex-log-page-title flex min-w-0 items-center gap-3">
-          <MetricIcon
-            className="shrink-0"
-            name="icon-daily-report"
-            tone="codex"
-          />
+          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-[color-mix(in_srgb,#18f83a_50%,transparent)] bg-[color-mix(in_srgb,#18f83a_14%,transparent)]">
+            <CategoryIcon
+              className="size-7"
+              hasPadding={false}
+              iconClassName="size-7"
+              mode="symbol"
+              name="icon-daily-report"
+            />
+          </span>
           <div className="min-w-0">
             <div className="mb-1 flex min-w-0 items-center gap-2">
               <Typography.Title className="!mb-0 !text-xl text-balance" level={4}>
@@ -1088,10 +1093,10 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] xl:w-180">
+        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-[minmax(0,1fr)_40px] gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] xl:w-180">
           <DatePicker
             allowClear={false}
-            className="codex-log-date-picker w-full"
+            className="codex-log-date-picker col-span-2 w-full sm:col-span-1"
             disabledDate={(current) =>
               !data.availableDates.includes(current.format("YYYY-MM-DD"))
             }
@@ -1099,7 +1104,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             value={selectedDay.isValid() ? selectedDay : undefined}
           />
           <Select
-            className="codex-log-repo-select w-full"
+            className="codex-log-repo-select col-span-2 w-full sm:col-span-1"
             onChange={(value) => {
               setRepository(value);
               setTablePage(1);
@@ -1109,7 +1114,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           />
           <Input
             allowClear
-            className="codex-log-search w-full"
+            className="codex-log-search col-span-1 w-full sm:col-span-1"
             onChange={(event) => {
               setKeyword(event.target.value);
               setTablePage(1);
@@ -1120,7 +1125,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           />
           <Button
             aria-label="刷新日报"
-            className="w-full"
+            className="col-span-1 w-full sm:col-span-1"
             icon={<SyncOutlined />}
             onClick={() => router.refresh()}
             type="text"

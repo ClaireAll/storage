@@ -31,3 +31,24 @@ test("keeps the summary available without dashboard scroll render state", async 
   assert.match(source, /codex-log-table-panel[^"`]*shrink-0/);
   assert.match(source, /codex-log-summary-panel[^"`]*shrink-0/);
 });
+
+test("uses the daily report symbol and keeps mobile toolbar actions compact", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+
+  assert.match(source, /import \{ CategoryIcon \} from "@\/app\/\(pages\)\/common\/category-icon"/);
+  assert.match(
+    source,
+    /inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-\[color-mix\(in_srgb,#18f83a_50%,transparent\)\] bg-\[color-mix\(in_srgb,#18f83a_14%,transparent\)\]/,
+  );
+  assert.match(
+    source,
+    /<CategoryIcon\s+className="size-7"\s+hasPadding=\{false\}\s+iconClassName="size-7"\s+mode="symbol"\s+name="icon-daily-report"\s+\/>/,
+  );
+  assert.match(
+    source,
+    /grid-cols-\[minmax\(0,1fr\)_40px\][^"`]*sm:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/,
+  );
+  assert.match(source, /codex-log-date-picker col-span-2 w-full sm:col-span-1/);
+  assert.match(source, /codex-log-repo-select col-span-2 w-full sm:col-span-1/);
+  assert.match(source, /className="col-span-1 w-full sm:col-span-1"/);
+});
