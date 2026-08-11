@@ -117,6 +117,20 @@ test("does not inherit bold text from the Codex parent when a child is active", 
   assert.equal(source.includes('"scale-110 font-bold": isCategoryActive'), false);
 });
 
+test("does not scale Codex child items while hovering the parent", async () => {
+  const source = await readDashboardSource();
+  const parentMenuItemSource = source.slice(
+    source.indexOf("return {\n            className:"),
+    source.indexOf("children: category.children"),
+  );
+
+  assert.equal(
+    parentMenuItemSource.includes('"hover:scale-110": !category.children?.length'),
+    true,
+  );
+  assert.equal(parentMenuItemSource.includes('cn("hover:scale-110"'), false);
+});
+
 test("edits category visibility from the expanded sidebar only", async () => {
   const source = await readDashboardSource();
 

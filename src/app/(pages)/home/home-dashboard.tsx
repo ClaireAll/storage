@@ -169,7 +169,8 @@ export function HomeDashboard({
           const isCategoryHidden = hiddenCategoryKeys.includes(category.key);
 
           return {
-            className: cn("hover:scale-110", {
+            className: cn({
+              "hover:scale-110": !category.children?.length,
               "opacity-45": isCategoryVisibilityEditing && isCategoryHidden,
               "scale-110": isCategoryDirectActive || hasActiveChild,
               "font-bold": isCategoryDirectActive,
