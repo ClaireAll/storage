@@ -244,16 +244,16 @@ function ThemeSettingsContent({
           isActive={appliedTexture === "meteor"}
           variant="shared"
         />
-        <header className="home-brand-header theme-settings-header relative z-3 grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-3.5 px-6 py-3 max-md:grid-cols-1 max-md:items-stretch">
-          <div>
-            <Typography.Title className="m-0! theme-settings-title" level={4}>
+        <header className="home-brand-header theme-settings-header relative z-3 flex h-11 w-full shrink-0 items-center justify-between gap-4 border-b px-8 py-0 max-md:px-3">
+          <div className="min-w-0">
+            <Typography.Title
+              className="m-0! text-balance theme-settings-title"
+              level={4}
+            >
               主题设置
             </Typography.Title>
-            <Typography.Text className="theme-settings-subtitle">
-              使用浅色、深色，或匹配系统设置
-            </Typography.Text>
           </div>
-          <div className="inline-flex items-center justify-end gap-2 max-md:flex-col max-md:items-stretch">
+          <div className="inline-flex shrink-0 items-center justify-end gap-2">
             <Button
               aria-label="返回首页"
               className="theme-settings-icon-button"

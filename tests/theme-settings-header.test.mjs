@@ -21,6 +21,20 @@ test("uses the home glass header for theme settings", async () => {
   assert.equal(pageSource.includes('"--home-header-bg": homeHeaderBackground,'), true);
   assert.equal(pageSource.includes('"--home-theme-color": appliedPalette.color,'), true);
   assert.equal(pageSource.includes('"--home-theme-text": appliedPalette.text,'), true);
-  assert.equal(pageSource.includes("home-brand-header theme-settings-header"), true);
+  const headerStart = pageSource.indexOf("<header");
+  const headerEnd = pageSource.indexOf("</header>", headerStart);
+  const headerSource = pageSource.slice(headerStart, headerEnd);
+
+  assert.equal(
+    headerSource.includes(
+      "home-brand-header theme-settings-header relative z-3 flex h-11",
+    ),
+    true,
+  );
+  assert.equal(
+    headerSource.includes("使用浅色、深色，或匹配系统设置"),
+    false,
+  );
+  assert.equal(headerSource.includes("max-md:flex-col"), false);
   assert.equal(stylesSource.includes(".theme-settings-header {"), false);
 });
