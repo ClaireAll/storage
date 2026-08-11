@@ -15,6 +15,14 @@ const typesPath = new URL(
   "../src/app/(pages)/theme/types.ts",
   import.meta.url,
 );
+const constantPath = new URL(
+  "../src/app/(pages)/home/constant.ts",
+  import.meta.url,
+);
+const homeViewPath = new URL(
+  "../src/app/(pages)/home/home-view.tsx",
+  import.meta.url,
+);
 
 test("persists hidden category keys in the theme contract", async () => {
   const [constants, database, migration, types] = await Promise.all([
@@ -33,4 +41,19 @@ test("persists hidden category keys in the theme contract", async () => {
     migration,
     /add column if not exists hidden_category_keys text\[\] not null default '\{\}'::text\[\]/,
   );
+});
+
+test("keeps category visibility as a theme-backed key draft", async () => {
+  const [constants, homeView] = await Promise.all([
+    readFile(constantPath, "utf8"),
+    readFile(homeViewPath, "utf8"),
+  ]);
+
+  assert.equal(constants.includes('key: "clothes"'), true);
+  assert.equal(constants.includes('key: "daily-report"'), true);
+  assert.equal(homeView.includes("draftHiddenCategoryKeys"), true);
+  assert.equal(homeView.includes("hiddenCategoryKeys"), true);
+  assert.equal(homeView.includes("updateTheme({"), true);
+  assert.equal(homeView.includes("onToggleAllCategoriesVisible"), false);
+  assert.equal(homeView.includes("onToggleCategoryVisible"), false);
 });

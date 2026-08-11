@@ -1,6 +1,7 @@
 import type { ElementType } from "react";
 
 export type HomeCategory = {
+  key: string;
   label: string;
   href: string;
   Icon?: ElementType;
@@ -60,61 +61,73 @@ export const homeCategories: HomeCategory[] = [
   {
     href: "/home/clothes",
     iconClassName: "icon-clothes",
+    key: "clothes",
     label: "衣服",
   },
   {
     href: "/home/pants",
     iconClassName: "icon-pants",
+    key: "pants",
     label: "裤子",
   },
   {
     href: "/home/toiletries",
     iconClassName: "icon-toiletries",
+    key: "toiletries",
     label: "日用品",
   },
   {
     href: "/home/books",
     iconClassName: "icon-book",
+    key: "books",
     label: "图书",
   },
   {
     href: "/home/hobby",
     iconClassName: "icon-hobby",
+    key: "hobby",
     label: "爱好",
   },
   {
     href: "/home/cosmetic",
     iconClassName: "icon-cosmetic",
+    key: "cosmetic",
     label: "化妆品",
   },
   {
     href: "/home/skincare",
     iconClassName: "icon-skincare",
+    key: "skincare",
     label: "护肤品",
   },
   {
     href: "/home/blog",
     iconClassName: "icon-blog",
+    key: "blog",
     label: "笔记",
   },
   {
     href: "codex",
     iconClassName: "icon-codex",
+    key: "codex",
     label: "Codex",
     children: [
       {
         href: "/home/codex-log",
         iconClassName: "icon-daily-report",
+        key: "daily-report",
         label: "日报",
       },
       {
         href: "/home/codex-plugin",
         iconClassName: "icon-plugin",
+        key: "plugin",
         label: "Plugin",
       },
       {
         href: "/home/codex-skills",
         iconClassName: "icon-skills",
+        key: "skills",
         label: "Skills",
       },
     ],

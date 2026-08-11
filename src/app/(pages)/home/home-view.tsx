@@ -19,12 +19,13 @@ import {
 } from "@/app/(pages)/theme/theme-utils";
 import type { ThemeConfig } from "@/app/(pages)/theme/types";
 import { cn } from "@/lib/utils";
-import { Empty, Layout, Space } from "antd";
+import { App, Empty, Layout, Space } from "antd";
 import { SessionProvider } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
   useTransition,
   type CSSProperties,
@@ -45,6 +46,25 @@ type HomeContentActions = {
   /** 打开当前分类可用的编辑文章推荐弹窗。 */
   openClothesEditModal: (item: ClothesItem) => void;
 };
+
+type CategoryVisibilityErrorMessageProps = {
+  errorMessage?: string;
+};
+
+/** 在 Ant Design App 上下文内提示分类设置保存失败。 */
+function CategoryVisibilityErrorMessage({
+  errorMessage,
+}: CategoryVisibilityErrorMessageProps) {
+  const { message } = App.useApp();
+
+  useEffect(() => {
+    if (errorMessage) {
+      message.error(errorMessage);
+    }
+  }, [errorMessage, message]);
+
+  return null;
+}
 
 const HomeContentActionsContext = createContext<HomeContentActions | null>(
   null,
@@ -100,11 +120,20 @@ export default function HomePage({
     useState<string>();
   const [shouldShowItemCategorySelect, setShouldShowItemCategorySelect] =
     useState(false);
-  const [visibleCategoryHrefs, setVisibleCategoryHrefs] = useState(() =>
-    homeLeafCategories.map((category) => category.href),
+  const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState(
+    () => initialTheme.hiddenCategoryKeys,
   );
-  const isAllCategoriesVisible =
-    visibleCategoryHrefs.length === homeLeafCategories.length;
+  const [draftHiddenCategoryKeys, setDraftHiddenCategoryKeys] = useState<
+    string[]
+  >([]);
+  const [isCategoryVisibilityEditing, setIsCategoryVisibilityEditing] =
+    useState(false);
+  const [categoryVisibilityError, setCategoryVisibilityError] = useState<
+    string | undefined
+  >();
+  const visibleCategoryHrefs = homeLeafCategories
+    .filter((category) => !hiddenCategoryKeys.includes(category.key))
+    .map((category) => category.href);
   const pendingCategoryHref =
     categoryNavigation.fromCategoryHref === activeCategoryHref
       ? categoryNavigation.pendingCategoryHref
@@ -129,22 +158,73 @@ export default function HomePage({
     ? `${activeCategory.label}分类暂未添加内容`
     : "请选择左侧分类";
 
-  /** 切换分类复选按钮，并控制左侧分类列表显示哪些项。 */
-  function toggleCategoryVisible(categoryHref: string) {
-    setVisibleCategoryHrefs((currentHrefs) =>
-      currentHrefs.includes(categoryHref)
-        ? currentHrefs.filter((href) => href !== categoryHref)
-        : [...currentHrefs, categoryHref],
+  /** 进入分类可见性设置，并用当前已保存的配置初始化草稿。 */
+  function startCategoryVisibilityEditing() {
+    setCategoryVisibilityError(undefined);
+    setDraftHiddenCategoryKeys(hiddenCategoryKeys);
+    setIsCategoryVisibilityEditing(true);
+  }
+
+  /** 取消分类可见性设置，并丢弃尚未保存的草稿。 */
+  function cancelCategoryVisibilityEditing() {
+    setDraftHiddenCategoryKeys(hiddenCategoryKeys);
+    setIsCategoryVisibilityEditing(false);
+  }
+
+  /** 切换分类在当前设置草稿中的隐藏状态。 */
+  function toggleCategoryVisibility(categoryKey: string) {
+    setDraftHiddenCategoryKeys((currentKeys) =>
+      currentKeys.includes(categoryKey)
+        ? currentKeys.filter((key) => key !== categoryKey)
+        : [...currentKeys, categoryKey],
     );
   }
 
-  /** 切换全部分类复选按钮，全选时再次点击会清空左侧分类列表。 */
-  function toggleAllCategoriesVisible() {
-    setVisibleCategoryHrefs((currentHrefs) =>
-      currentHrefs.length === homeLeafCategories.length
-        ? []
-        : homeLeafCategories.map((category) => category.href),
-    );
+  /** 退出分类设置并保存草稿，保存失败时恢复上一次已保存的状态。 */
+  async function finishCategoryVisibilityEditing(
+    themeConfig: ThemeConfig,
+    updateTheme: (nextConfig: ThemeConfig) => Promise<void>,
+  ) {
+    const previousHiddenCategoryKeys = hiddenCategoryKeys;
+    const nextHiddenCategoryKeys = draftHiddenCategoryKeys;
+
+    setIsCategoryVisibilityEditing(false);
+    setHiddenCategoryKeys(nextHiddenCategoryKeys);
+
+    try {
+      await updateTheme({
+        ...themeConfig,
+        hiddenCategoryKeys: nextHiddenCategoryKeys,
+      });
+
+      const activeLeafCategory = homeLeafCategories.find(
+        (category) => category.href === activeCategoryHref,
+      );
+
+      if (!activeLeafCategory || !nextHiddenCategoryKeys.includes(activeLeafCategory.key)) {
+        return;
+      }
+
+      const nextVisibleCategory = homeLeafCategories.find(
+        (category) => !nextHiddenCategoryKeys.includes(category.key),
+      );
+
+      if (nextVisibleCategory) {
+        navigateItemCategory(nextVisibleCategory.href);
+        return;
+      }
+
+      setCategoryNavigation({});
+      startCategoryTransition(() => {
+        router.push("/home");
+      });
+    } catch (error) {
+      setDraftHiddenCategoryKeys(previousHiddenCategoryKeys);
+      setHiddenCategoryKeys(previousHiddenCategoryKeys);
+      setCategoryVisibilityError(
+        error instanceof Error ? error.message : "分类设置保存失败",
+      );
+    }
   }
 
   function navigateItemCategory(categoryHref: string) {
@@ -204,7 +284,7 @@ export default function HomePage({
   return (
     <SessionProvider>
       <ThemeProvider initialTheme={initialTheme}>
-        {({ activePalette, resolvedMode, themeConfig }) => {
+        {({ activePalette, resolvedMode, themeConfig, updateTheme }) => {
           const isDark = resolvedMode === "dark";
           const homeShellBackground = getThemeShellBackground(
             activePalette,
@@ -237,6 +317,9 @@ export default function HomePage({
             <HomeContentActionsContext.Provider
               value={{ openClothesCreateModal, openClothesEditModal }}
             >
+              <CategoryVisibilityErrorMessage
+                errorMessage={categoryVisibilityError}
+              />
               <ThemeShellBackground
                 color={homeShellBackground}
                 scrollbarColor={activePalette.color}
@@ -301,13 +384,26 @@ export default function HomePage({
                 <HomeDashboard
                   activeCategoryHref={displayActiveCategoryHref}
                   aiAssistant={<AiAssistant />}
+                  hiddenCategoryKeys={
+                    isCategoryVisibilityEditing
+                      ? draftHiddenCategoryKeys
+                      : hiddenCategoryKeys
+                  }
                   isCategoryContentLoading={isCategoryContentLoading}
-                  isAllCategoriesVisible={isAllCategoriesVisible}
+                  isCategoryVisibilityEditing={isCategoryVisibilityEditing}
                   itemCount={itemCount}
+                  onCancelCategoryVisibilityEditing={
+                    cancelCategoryVisibilityEditing
+                  }
                   onCategoryNavigate={navigateItemCategory}
+                  onFinishCategoryVisibilityEditing={() => {
+                    void finishCategoryVisibilityEditing(themeConfig, updateTheme);
+                  }}
                   onOpenQuickItemCreate={openQuickItemCreateModal}
-                  onToggleAllCategoriesVisible={toggleAllCategoriesVisible}
-                  onToggleCategoryVisible={toggleCategoryVisible}
+                  onStartCategoryVisibilityEditing={
+                    startCategoryVisibilityEditing
+                  }
+                  onToggleCategoryVisibility={toggleCategoryVisibility}
                   surfaceBackground={activePalette.bg}
                   surfaceBorderColor={homeBorderColor}
                   visibleCategoryHrefs={visibleCategoryHrefs}

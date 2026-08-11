@@ -65,16 +65,19 @@ type HomeDashboardProps = {
   activeCategoryHref?: string;
   aiAssistant?: ReactNode;
   children?: ReactNode;
+  hiddenCategoryKeys: string[];
   itemCount: number;
+  isCategoryVisibilityEditing: boolean;
   visibleCategoryHrefs: string[];
   isCategoryContentLoading: boolean;
-  isAllCategoriesVisible: boolean;
   surfaceBackground: string;
   surfaceBorderColor: string;
+  onCancelCategoryVisibilityEditing: () => void;
   onCategoryNavigate: (categoryHref: string) => void;
+  onFinishCategoryVisibilityEditing: () => void;
   onOpenQuickItemCreate: () => void;
-  onToggleAllCategoriesVisible: () => void;
-  onToggleCategoryVisible: (categoryHref: string) => void;
+  onStartCategoryVisibilityEditing: () => void;
+  onToggleCategoryVisibility: (categoryKey: string) => void;
 };
 
 export function HomeDashboard({
