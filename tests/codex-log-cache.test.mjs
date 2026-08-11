@@ -37,6 +37,13 @@ test("passes an existing cached summary into the dashboard", async () => {
 
   assert.equal(utilsSource.includes("dailySummary:"), true);
   assert.equal(dashboardSource.includes("initialSummary={data.dailySummary}"), true);
+  assert.equal(dashboardSource.includes("key={data.selectedDate}"), true);
+  assert.equal(
+    dashboardSource.includes(
+      "if (initialSummary) {\n      setSummaryState({ result: initialSummary, status: \"ready\" });",
+    ),
+    false,
+  );
 });
 
 test("loads the dashboard record range with one Codex log query", async () => {

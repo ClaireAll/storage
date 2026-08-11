@@ -783,12 +783,10 @@ function SummaryPanel({
 
   useEffect(() => {
     if (initialSummary) {
-      setSummaryState({ result: initialSummary, status: "ready" });
       return;
     }
 
     const controller = new AbortController();
-    setSummaryState({ status: "idle" });
     const timerId = window.setTimeout(() => {
       void loadSummary(controller.signal);
     });
@@ -797,13 +795,7 @@ function SummaryPanel({
       window.clearTimeout(timerId);
       controller.abort();
     };
-  }, [
-    date,
-    initialSummary?.growth,
-    initialSummary?.shortage,
-    initialSummary?.summary,
-    loadSummary,
-  ]);
+  }, [initialSummary, loadSummary]);
 
   return (
     <DashboardPanel
@@ -1225,6 +1217,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       <SummaryPanel
         date={data.selectedDate}
         initialSummary={data.dailySummary}
+        key={data.selectedDate}
       />
     </div>
   );
