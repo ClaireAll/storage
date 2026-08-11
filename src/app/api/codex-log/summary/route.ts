@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import type { DatabaseClient } from "@/app/utils/database";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
@@ -25,6 +27,13 @@ type CodexDailySummary = {
   growth: string;
   shortage: string;
   summary: string;
+};
+
+type CodexDailyReportSummaryRow = {
+  growth: string | null;
+  shortage: string | null;
+  summary: string | null;
+  summary_generated_at: string | null;
 };
 
 const deepSeekEndpoint = "https://api.deepseek.com/chat/completions";
@@ -98,20 +107,53 @@ function buildDailySummaryPrompt(date: string, rows: CodexLogSummaryRow[]) {
   ].join("\n");
 }
 
+function getCachedDailySummary(
+  report: CodexDailyReportSummaryRow | null,
+): CodexDailySummary | null {
+  if (!report?.summary_generated_at) {
+    return null;
+  }
+
+  const summary = toCleanText(report.summary);
+  const growth = toCleanText(report.growth);
+  const shortage = toCleanText(report.shortage);
+
+  return summary && growth && shortage ? { growth, shortage, summary } : null;
+}
+
+function createSummaryFingerprint(rows: CodexLogSummaryRow[]) {
+  return createHash("sha256")
+    .update(JSON.stringify(rows))
+    .digest("hex");
+}
+
+async function cacheDailySummary(
+  supabase: DatabaseClient,
+  userId: string,
+  date: string,
+  summary: CodexDailySummary,
+  sourceFingerprint: string,
+) {
+  await supabase.from("codex_daily_report").upsert(
+    {
+      date,
+      growth: summary.growth,
+      id: userId,
+      shortage: summary.shortage,
+      source_fingerprint: sourceFingerprint,
+      summary: summary.summary,
+      summary_generated_at: new Date().toISOString(),
+      summary_model: "deepseek-v4-flash",
+    },
+    { onConflict: "id,date" },
+  );
+}
+
 export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ message: "请先登录" }, { status: 401 });
-  }
-
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-
-  if (!apiKey) {
-    return NextResponse.json(
-      { message: "缺少 DEEPSEEK_API_KEY" },
-      { status: 500 },
-    );
   }
 
   const payload = (await request.json().catch(() => null)) as {
@@ -124,6 +166,27 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClient();
+  const { data: cachedReport } = await supabase
+    .from("codex_daily_report")
+    .select("summary,growth,shortage,summary_generated_at")
+    .eq("id", session.user.id)
+    .eq("date", date)
+    .maybeSingle<CodexDailyReportSummaryRow>();
+  const cachedSummary = getCachedDailySummary(cachedReport);
+
+  if (cachedSummary) {
+    return NextResponse.json(cachedSummary);
+  }
+
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+
+  if (!apiKey) {
+    return NextResponse.json(
+      { message: "缺少 DEEPSEEK_API_KEY" },
+      { status: 500 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("codex_log")
     .select("thread_title,user_tasks,assistant_summary,category,token_count")
@@ -140,11 +203,20 @@ export async function POST(request: Request) {
   }
 
   if (!data?.length) {
-    return NextResponse.json({
+    const summary = {
       growth: "今天还没有可分析的会话记录。",
       shortage: "暂无数据时先不用复盘不足。",
       summary: "今天暂无 Codex 日报数据。",
-    } satisfies CodexDailySummary);
+    } satisfies CodexDailySummary;
+
+    await cacheDailySummary(
+      supabase,
+      session.user.id,
+      date,
+      summary,
+      createSummaryFingerprint([]),
+    );
+    return NextResponse.json(summary);
   }
 
   const response = await fetch(deepSeekEndpoint, {
@@ -180,7 +252,15 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(
-    parseDeepSeekSummary(result.choices?.[0]?.message?.content),
+  const summary = parseDeepSeekSummary(result.choices?.[0]?.message?.content);
+
+  await cacheDailySummary(
+    supabase,
+    session.user.id,
+    date,
+    summary,
+    createSummaryFingerprint(data),
   );
+
+  return NextResponse.json(summary);
 }

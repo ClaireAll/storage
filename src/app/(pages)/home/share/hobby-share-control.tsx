@@ -17,13 +17,13 @@ export function HobbyShareControl({ portalHost }: HobbyShareControlProps) {
   return (
     <>
       <span className="home-hobby-share-control">
-        <Tooltip title="分享爱好页面">
+        <Tooltip title="分享">
           <Button
-            aria-label="分享爱好页面"
+            aria-label="分享"
             className="home-hobby-share-trigger"
             icon={<ShareAltOutlined />}
             onClick={() => setOpen(true)}
-            type="primary"
+            variant="outlined"
           />
         </Tooltip>
       </span>

@@ -61,6 +61,7 @@ import type {
   CodexLogRepositoryStat,
   CodexLogTrendPoint,
 } from "./codex-log-utils";
+import { HomeContentFullscreenButton } from "../home-content-fullscreen";
 
 echarts.use([
   BarChart,
@@ -724,10 +725,18 @@ function TaskList({
   );
 }
 
-function SummaryPanel({ date }: { date: string }) {
-  const [summaryState, setSummaryState] = useState<SummaryState>({
-    status: "idle",
-  });
+function SummaryPanel({
+  date,
+  initialSummary,
+}: {
+  date: string;
+  initialSummary: CodexDailySummary | null;
+}) {
+  const [summaryState, setSummaryState] = useState<SummaryState>(() =>
+    initialSummary
+      ? { result: initialSummary, status: "ready" }
+      : { status: "idle" },
+  );
 
   const loadSummary = useCallback(
     async (signal?: AbortSignal) => {
@@ -773,7 +782,13 @@ function SummaryPanel({ date }: { date: string }) {
   );
 
   useEffect(() => {
+    if (initialSummary) {
+      setSummaryState({ result: initialSummary, status: "ready" });
+      return;
+    }
+
     const controller = new AbortController();
+    setSummaryState({ status: "idle" });
     const timerId = window.setTimeout(() => {
       void loadSummary(controller.signal);
     });
@@ -782,7 +797,13 @@ function SummaryPanel({ date }: { date: string }) {
       window.clearTimeout(timerId);
       controller.abort();
     };
-  }, [loadSummary]);
+  }, [
+    date,
+    initialSummary?.growth,
+    initialSummary?.shortage,
+    initialSummary?.summary,
+    loadSummary,
+  ]);
 
   return (
     <DashboardPanel
@@ -1069,9 +1090,12 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             tone="codex"
           />
           <div className="min-w-0">
-            <Typography.Title className="!mb-1 !text-xl text-balance" level={4}>
-              日报
-            </Typography.Title>
+            <div className="mb-1 flex min-w-0 items-center gap-2">
+              <Typography.Title className="!mb-0 !text-xl text-balance" level={4}>
+                日报
+              </Typography.Title>
+              <HomeContentFullscreenButton />
+            </div>
             <Typography.Title className="!hidden" level={4}>
               Codex日报
             </Typography.Title>
@@ -1198,7 +1222,10 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           tableLayout="fixed"
         />
       </DashboardPanel>
-      <SummaryPanel date={data.selectedDate} />
+      <SummaryPanel
+        date={data.selectedDate}
+        initialSummary={data.dailySummary}
+      />
     </div>
   );
 }

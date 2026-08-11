@@ -18,10 +18,10 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent,
   type ReactNode,
 } from "react";
 import { homeCategories, homeStats } from "./constant";
+import { HomeContentFullscreenProvider } from "./home-content-fullscreen";
 import {
   fetchTodayWeather,
   resolveCurrentWeatherLocation,
@@ -45,7 +45,6 @@ const initialWeather: WeatherState = {
   description: "获取中",
   status: "loading",
 };
-const codexLogCategoryHref = "/home/codex-log";
 const codexCategoryKey = "codex";
 
 const homeDashboardCache: {
@@ -101,7 +100,8 @@ export function HomeDashboard({
   const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false);
   const [isCategorySidebarCollapsed, setIsCategorySidebarCollapsed] =
     useState(false);
-  const [isCodexLogFullscreen, setIsCodexLogFullscreen] = useState(false);
+  const [isCategoryContentFullscreen, setIsCategoryContentFullscreen] =
+    useState(false);
   const [openCategoryKeys, setOpenCategoryKeys] = useState<string[]>([
     codexCategoryKey,
   ]);
@@ -117,11 +117,8 @@ export function HomeDashboard({
     window.setTimeout(() => window.dispatchEvent(new Event("resize")), 120);
     window.setTimeout(() => window.dispatchEvent(new Event("resize")), 280);
   }, []);
-  const handleCodexLogFullscreenClick = useCallback(
-    async (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-
+  const toggleCategoryContentFullscreen = useCallback(
+    async () => {
       const element = categoryContentRef.current;
 
       if (!element?.requestFullscreen) {
@@ -138,6 +135,13 @@ export function HomeDashboard({
     },
     [refreshFullscreenLayout],
   );
+  const fullscreenContextValue = useMemo(
+    () => ({
+      isFullscreen: isCategoryContentFullscreen,
+      toggleFullscreen: toggleCategoryContentFullscreen,
+    }),
+    [isCategoryContentFullscreen, toggleCategoryContentFullscreen],
+  );
   const menuItems = useMemo(
     () =>
       homeCategories
@@ -148,31 +152,20 @@ export function HomeDashboard({
             ) ?? visibleCategoryHrefs.includes(category.href),
         )
         .map((category) => {
-          const isCategoryActive =
-            activeCategoryHref === category.href ||
-            Boolean(
-              category.children?.some(
-                (child) => activeCategoryHref === child.href,
-              ),
-            );
-          const shouldShowFullscreenButton =
-            category.href === codexLogCategoryHref &&
-            isCategoryActive &&
-            !isCategorySidebarCollapsed;
+          const isCategoryDirectActive = activeCategoryHref === category.href;
+          const hasActiveChild = Boolean(
+            category.children?.some((child) => activeCategoryHref === child.href),
+          );
 
           return {
             className: cn("hover:scale-110", {
-              "scale-110 font-bold": isCategoryActive,
+              "scale-110": isCategoryDirectActive || hasActiveChild,
+              "font-bold": isCategoryDirectActive,
             }),
             children: category.children
               ?.filter((child) => visibleCategoryHrefs.includes(child.href))
               .map((child) => {
                 const isChildActive = activeCategoryHref === child.href;
-                const shouldShowChildFullscreenButton =
-                  child.href === codexLogCategoryHref &&
-                  isChildActive &&
-                  !isCategorySidebarCollapsed;
-
                 return {
                   className: cn("hover:scale-110", {
                     "scale-110 font-bold": isChildActive,
@@ -185,27 +178,7 @@ export function HomeDashboard({
                     />
                   ),
                   key: child.href,
-                  label: shouldShowChildFullscreenButton ? (
-                    <span className="codex-log-fullscreen-menu-label">
-                      <span className="codex-log-fullscreen-menu-text">
-                        {child.label}
-                      </span>
-                      <button
-                        aria-label="全屏预览日报"
-                        className={cn("codex-log-fullscreen-button", {
-                          "is-active": isCodexLogFullscreen,
-                        })}
-                        onClick={handleCodexLogFullscreenClick}
-                        title={isCodexLogFullscreen ? "退出全屏" : "全屏"}
-                        type="button"
-                      >
-                        <i aria-hidden className="iconfont icon-fullscreen" />
-                      </button>
-                    </span>
-                  ) : (
-                    child.label
-                  ),
-                  title: child.label,
+                  label: child.label,
                 };
               }),
             icon: (
@@ -216,34 +189,11 @@ export function HomeDashboard({
               />
             ),
             key: category.href,
-            label: shouldShowFullscreenButton ? (
-              <span className="codex-log-fullscreen-menu-label">
-                <span className="codex-log-fullscreen-menu-text">
-                  {category.label}
-                </span>
-                <button
-                  aria-label="全屏预览Codex日报"
-                  className={cn("codex-log-fullscreen-button", {
-                    "is-active": isCodexLogFullscreen,
-                  })}
-                  onClick={handleCodexLogFullscreenClick}
-                  title={isCodexLogFullscreen ? "退出全屏" : "全屏"}
-                  type="button"
-                >
-                  <i aria-hidden className="iconfont icon-fullscreen" />
-                </button>
-              </span>
-            ) : (
-              category.label
-            ),
-            title: category.label,
+            label: category.label,
           };
         }),
     [
       activeCategoryHref,
-      handleCodexLogFullscreenClick,
-      isCategorySidebarCollapsed,
-      isCodexLogFullscreen,
       visibleCategoryHrefs,
     ],
   );
@@ -418,7 +368,7 @@ export function HomeDashboard({
 
   useEffect(() => {
     function handleFullscreenChange() {
-      setIsCodexLogFullscreen(
+      setIsCategoryContentFullscreen(
         document.fullscreenElement === categoryContentRef.current,
       );
       refreshFullscreenLayout();
@@ -593,7 +543,12 @@ export function HomeDashboard({
               type="text"
             />
           </div>
-          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 scrollbar-gutter-stable">
+          <div
+            className={cn(
+              "home-category-menu-scroll min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto",
+              isCategorySidebarCollapsed ? "px-0" : "pr-1",
+            )}
+          >
             <Menu
               className="home-category-menu !w-full min-w-0"
               inlineCollapsed={isCategorySidebarCollapsed}
@@ -620,7 +575,7 @@ export function HomeDashboard({
         <Card
           className={cn(
             "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden",
-            isCodexLogFullscreen && "codex-log-dashboard-fullscreen",
+            isCategoryContentFullscreen && "home-category-content-fullscreen",
           )}
           classNames={{
             body: "flex h-full min-h-0 w-full p-4!",
@@ -636,7 +591,9 @@ export function HomeDashboard({
               <Spin />
             </div>
           ) : (
-            children
+            <HomeContentFullscreenProvider value={fullscreenContextValue}>
+              {children}
+            </HomeContentFullscreenProvider>
           )}
         </Card>
       </section>

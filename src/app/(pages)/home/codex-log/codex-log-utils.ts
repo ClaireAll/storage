@@ -39,8 +39,15 @@ export type CodexLogRepositoryStat = {
   tokenTotal: number;
 };
 
+export type CodexDailySummary = {
+  growth: string;
+  shortage: string;
+  summary: string;
+};
+
 export type CodexLogDashboardData = {
   availableDates: string[];
+  dailySummary: CodexDailySummary | null;
   highFrequencyTasks: CodexLogTaskStat[];
   longestSessions: CodexLogRecord[];
   records: CodexLogRecord[];
@@ -72,6 +79,16 @@ type CodexLogRow = {
   thread_title: string | null;
   token_count: number | null;
   user_tasks: string | null;
+};
+
+type CodexDailyReportRow = {
+  date: string | null;
+  desktop_token_total: number | null;
+  growth: string | null;
+  shortage: string | null;
+  summary: string | null;
+  summary_generated_at: string | null;
+  token_calculated_at: string | null;
 };
 
 type CodexSessionUsageEvent = {
@@ -395,6 +412,47 @@ function buildTrend(
   return Array.from(dayMap.values());
 }
 
+function getTrendDates(selectedDate: string) {
+  return Array.from({ length: trendDayCount }, (_, index) =>
+    addDays(selectedDate, -(trendDayCount - 1 - index)),
+  );
+}
+
+function getCachedDailySummary(
+  report: CodexDailyReportRow | undefined,
+): CodexDailySummary | null {
+  if (!report?.summary_generated_at) {
+    return null;
+  }
+
+  const summary = toCleanText(report.summary);
+  const growth = toCleanText(report.growth);
+  const shortage = toCleanText(report.shortage);
+
+  return summary && growth && shortage ? { growth, shortage, summary } : null;
+}
+
+async function cacheDesktopUsageTotals(
+  supabase: DatabaseClient,
+  userId: string,
+  dates: string[],
+  totals: Map<string, number> | null,
+) {
+  if (!dates.length) {
+    return;
+  }
+
+  await supabase.from("codex_daily_report").upsert(
+    dates.map((date) => ({
+      date,
+      desktop_token_total: totals?.get(date) ?? 0,
+      id: userId,
+      token_calculated_at: new Date().toISOString(),
+    })),
+    { onConflict: "id,date" },
+  );
+}
+
 function getTaskLabel(record: CodexLogRecord) {
   const source = record.user_tasks || record.thread_title;
   const firstSentence =
@@ -449,6 +507,7 @@ function buildStatSnapshot(
 function getEmptyDashboardData(selectedDate = getShanghaiToday()): CodexLogDashboardData {
   return {
     availableDates: [selectedDate],
+    dailySummary: null,
     highFrequencyTasks: [],
     longestSessions: [],
     records: [],
@@ -501,22 +560,16 @@ export async function listCodexLogDashboard(
   const previousDate = addDays(selectedDate, -1);
   const trendStartDate = addDays(selectedDate, -(trendDayCount - 1));
 
-  const [dailyResult, trendResult, dateResult, previousResult] = await Promise.all([
+  const [recordRangeResult, dateResult, dailyReportResult] = await Promise.all([
     supabase
       .from("codex_log")
       .select(
         "r_id,id,date,thread_title,user_tasks,assistant_summary,created_at,category,token_count",
       )
       .eq("id", userId)
-      .eq("date", selectedDate)
-      .order("created_at", { ascending: true })
-      .returns<CodexLogRow[]>(),
-    supabase
-      .from("codex_log")
-      .select("date,token_count")
-      .eq("id", userId)
       .gte("date", trendStartDate)
       .lte("date", selectedDate)
+      .order("created_at", { ascending: true })
       .returns<CodexLogRow[]>(),
     supabase
       .from("codex_log")
@@ -526,27 +579,70 @@ export async function listCodexLogDashboard(
       .limit(recentDateLimit)
       .returns<Pick<CodexLogRow, "date">[]>(),
     supabase
-      .from("codex_log")
+      .from("codex_daily_report")
       .select(
-        "r_id,id,date,thread_title,user_tasks,assistant_summary,created_at,category,token_count",
+        "date,desktop_token_total,token_calculated_at,summary,growth,shortage,summary_generated_at",
       )
       .eq("id", userId)
-      .eq("date", previousDate)
-      .order("created_at", { ascending: true })
-      .returns<CodexLogRow[]>(),
+      .gte("date", trendStartDate)
+      .lte("date", selectedDate)
+      .returns<CodexDailyReportRow[]>(),
   ]);
 
-  if (dailyResult.error) {
+  if (recordRangeResult.error) {
     return getEmptyDashboardData(selectedDate);
   }
 
-  const records = (dailyResult.data ?? []).map(mapCodexLogRow);
-  const previousRecords = (previousResult.data ?? []).map(mapCodexLogRow);
+  const recordRows = recordRangeResult.data ?? [];
+  const records = recordRows
+    .filter((row) => row.date === selectedDate)
+    .map(mapCodexLogRow);
+  const previousRecords = recordRows
+    .filter((row) => row.date === previousDate)
+    .map(mapCodexLogRow);
   const repositoryDistribution = buildRepositoryDistribution(records);
-  const desktopUsageTotals = await readCodexDesktopUsageTotals(
-    trendStartDate,
-    selectedDate,
+  const trendDates = getTrendDates(selectedDate);
+  const cachedReportsByDate = new Map(
+    (dailyReportResult.data ?? [])
+      .filter((report): report is CodexDailyReportRow & { date: string } =>
+        Boolean(report.date),
+      )
+      .map((report) => [report.date, report]),
   );
+  const missingTokenDates = trendDates.filter(
+    (trendDate) => !cachedReportsByDate.get(trendDate)?.token_calculated_at,
+  );
+  const desktopUsageTotals = new Map<string, number>();
+
+  cachedReportsByDate.forEach((report, reportDate) => {
+    if (report.token_calculated_at) {
+      desktopUsageTotals.set(
+        reportDate,
+        toTokenCount(report.desktop_token_total),
+      );
+    }
+  });
+
+  if (missingTokenDates.length) {
+    const generatedTotals = await readCodexDesktopUsageTotals(
+      trendStartDate,
+      selectedDate,
+    );
+
+    missingTokenDates.forEach((missingDate) => {
+      desktopUsageTotals.set(
+        missingDate,
+        generatedTotals?.get(missingDate) ?? 0,
+      );
+    });
+    await cacheDesktopUsageTotals(
+      supabase,
+      userId,
+      missingTokenDates,
+      generatedTotals,
+    );
+  }
+
   const desktopTokenTotal = desktopUsageTotals?.get(selectedDate);
   const previousDesktopTokenTotal = desktopUsageTotals?.get(previousDate);
   const currentStats = buildStatSnapshot(records, desktopTokenTotal);
@@ -565,6 +661,9 @@ export async function listCodexLogDashboard(
           .map((row) => row.date)
           .filter((value): value is string => Boolean(value)),
       ]),
+    ),
+    dailySummary: getCachedDailySummary(
+      cachedReportsByDate.get(selectedDate),
     ),
     highFrequencyTasks: buildHighFrequencyTasks(records),
     longestSessions: [...records]
@@ -587,6 +686,6 @@ export async function listCodexLogDashboard(
       tokenSource: desktopUsageTotals && tokenSource === "desktop" ? "desktop" : "database",
       tokenTotal: currentStats.tokenTotal,
     },
-    trend: buildTrend(trendResult.data ?? [], selectedDate, desktopUsageTotals),
+    trend: buildTrend(recordRows, selectedDate, desktopUsageTotals),
   };
 }

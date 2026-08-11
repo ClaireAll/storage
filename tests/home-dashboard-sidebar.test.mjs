@@ -6,9 +6,17 @@ const dashboardPath = new URL(
   "../src/app/(pages)/home/home-dashboard.tsx",
   import.meta.url,
 );
+const homeStylesPath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 
 async function readDashboardSource() {
   return readFile(dashboardPath, "utf8");
+}
+
+async function readHomeStylesSource() {
+  return readFile(homeStylesPath, "utf8");
 }
 
 test("keeps the Codex submenu user-controlled on an active child route", async () => {
@@ -30,13 +38,81 @@ test("keeps the category menu vertically scrollable without horizontal overflow"
     true,
   );
   assert.equal(
-    source.includes(
-      "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 scrollbar-gutter-stable",
-    ),
+    source.includes("home-category-menu-scroll"),
     true,
   );
+  assert.equal(
+    source.includes("overflow-x-hidden overflow-y-auto"),
+    true,
+  );
+  assert.equal(source.includes("scrollbar-gutter-stable"), false);
   assert.equal(
     source.includes('className="home-category-menu !w-full min-w-0"'),
     true,
   );
+});
+
+test("keeps collapsed category labels in Tooltip instead of native title", async () => {
+  const source = await readDashboardSource();
+
+  assert.equal(source.includes("title: child.label"), false);
+  assert.equal(source.includes("title: category.label"), false);
+});
+
+test("keeps collapsed category menu spacing symmetrical", async () => {
+  const source = await readDashboardSource();
+  const styles = await readHomeStylesSource();
+
+  assert.equal(
+    source.includes("home-category-menu-scroll"),
+    true,
+  );
+  assert.equal(
+    source.includes('isCategorySidebarCollapsed ? "px-0" : "pr-1"'),
+    true,
+  );
+  assert.equal(
+    styles.includes(
+      ".home-category-layout-collapsed .home-category-menu-scroll",
+    ),
+    true,
+  );
+  assert.equal(styles.includes("scrollbar-gutter: auto;"), true);
+  assert.equal(styles.includes("scrollbar-width: none;"), true);
+  assert.equal(
+    styles.includes(
+      ".home-category-layout-collapsed .home-category-menu-scroll::-webkit-scrollbar",
+    ),
+    true,
+  );
+  assert.equal(
+    source.includes(
+      '"min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto pr-1 scrollbar-gutter-stable"',
+    ),
+    false,
+  );
+});
+
+test("keeps content fullscreen action out of the category navigation", async () => {
+  const source = await readDashboardSource();
+
+  assert.equal(source.includes("HomeContentFullscreenProvider"), true);
+  assert.equal(source.includes("codex-log-fullscreen-menu-label"), false);
+  assert.equal(source.includes("codex-log-fullscreen-button"), false);
+  assert.equal(source.includes("全屏预览日报"), false);
+  assert.equal(source.includes("全屏预览Codex日报"), false);
+});
+
+test("does not inherit bold text from the Codex parent when a child is active", async () => {
+  const source = await readDashboardSource();
+
+  assert.equal(
+    source.includes(
+      "const isCategoryDirectActive = activeCategoryHref === category.href;",
+    ),
+    true,
+  );
+  assert.equal(source.includes("const hasActiveChild = Boolean("), true);
+  assert.equal(source.includes('"font-bold": isCategoryDirectActive'), true);
+  assert.equal(source.includes('"scale-110 font-bold": isCategoryActive'), false);
 });

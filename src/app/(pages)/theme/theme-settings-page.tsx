@@ -261,14 +261,14 @@ function ThemeSettingsContent({
               onClick={returnHome}
             />
             <Button
-              className="theme-settings-save"
+              type="primary"
+              aria-label="保存主题"
+              className="theme-settings-icon-button"
               icon={<SaveOutlined />}
               loading={isSaving}
               onClick={saveTheme}
-              type="primary"
-            >
-              保存
-            </Button>
+              variant="solid"
+            />
           </div>
         </header>
 

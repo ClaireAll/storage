@@ -14,6 +14,10 @@ const previewPath = new URL(
   "../src/app/(pages)/home/github-readme-preview.tsx",
   import.meta.url,
 );
+const previewContentPath = new URL(
+  "../src/app/(pages)/home/github-readme-preview-content.tsx",
+  import.meta.url,
+);
 
 test("renders the chrome-plugin README in the Plugin section", async () => {
   const source = await readFile(pluginPagePath, "utf8");
@@ -40,4 +44,14 @@ test("keeps server fetching separate from Ant Design README rendering", async ()
     source.includes('from "./github-readme-preview-content"'),
     true,
   );
+});
+
+test("adds the shared fullscreen action to Plugin and Skills README previews", async () => {
+  const source = await readFile(previewContentPath, "utf8");
+
+  assert.equal(
+    source.includes('from "./home-content-fullscreen"'),
+    true,
+  );
+  assert.equal(source.includes("<HomeContentFullscreenButton />"), true);
 });

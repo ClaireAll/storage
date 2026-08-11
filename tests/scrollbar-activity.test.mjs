@@ -12,7 +12,7 @@ const themeShellBackgroundPath = new URL(
   import.meta.url,
 );
 
-test("keeps only the active vertical scrollbar visible for two seconds", async () => {
+test("keeps vertical scroll activity tracking lightweight", async () => {
   const source = await readFile(scrollActivityProviderPath, "utf8");
 
   assert.equal(source.includes("const scrollActivityRetentionMs = 2_000;"), true);
@@ -30,41 +30,44 @@ test("keeps only the active vertical scrollbar visible for two seconds", async (
   assert.equal(source.includes("event.target instanceof HTMLIFrameElement"), true);
 });
 
-test("uses a lighter theme color for active vertical and persistent horizontal scrollbars", async () => {
+test("prevents scrollbars from reserving layout space", async () => {
   const source = await readFile(globalStylesPath, "utf8");
   const universalRule = source.slice(
     source.indexOf("* {"),
     source.indexOf("[class*=\"overflow-auto\"]"),
   );
+  const overflowRule = source.slice(
+    source.indexOf("[class*=\"overflow-auto\"]"),
+    source.indexOf("::-webkit-scrollbar"),
+  );
+  const webkitScrollbarRule = source.slice(
+    source.indexOf("::-webkit-scrollbar {"),
+    source.indexOf("::-webkit-scrollbar-button"),
+  );
 
   assert.equal(
-    source.includes(
-      ".storage-is-vertically-scrolling {\n  scrollbar-color: color-mix(",
-    ),
+    source.includes("scrollbar-gutter: stable"),
+    false,
+  );
+  assert.equal(overflowRule.includes("scrollbar-gutter: auto;"), true);
+  assert.equal(
+    source.includes("scrollbar-width: none;"),
+    true,
+  );
+  assert.equal(
+    webkitScrollbarRule.includes("height: 0;"),
+    true,
+  );
+  assert.equal(
+    webkitScrollbarRule.includes("width: 0;"),
     true,
   );
   assert.equal(
     source.includes("::-webkit-scrollbar-thumb:horizontal"),
-    true,
-  );
-  assert.equal(
-    source.includes(
-      "var(--storage-scrollbar-color, var(--primary)) 36%",
-    ),
-    true,
-  );
-  assert.equal(
-    source.includes("var(--storage-scrollbar-color, var(--primary)) 26%"),
-    true,
-  );
-  assert.equal(
-    source.includes(
-      ".storage-is-vertically-scrolling::-webkit-scrollbar-thumb:vertical",
-    ),
     false,
   );
   assert.equal(source.includes("html.storage-is-scrolling"), false);
-  assert.equal(universalRule.includes("scrollbar-width"), false);
+  assert.equal(universalRule.includes("scrollbar-width"), true);
   assert.equal(
     source.includes("@supports not selector(::-webkit-scrollbar)"),
     true,

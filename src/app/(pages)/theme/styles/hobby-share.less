@@ -20,24 +20,32 @@
   pointer-events: auto;
 }
 
-.home-hobby-share-trigger.ant-btn-primary {
+.home-hobby-share-trigger {
   align-items: center;
-  border-radius: 8px;
+  background: color-mix(
+    in srgb,
+    var(--home-theme-bg) 88%,
+    var(--home-theme-color) 12%
+  );
+  border-color: color-mix(in srgb, var(--home-theme-color) 42%, transparent);
+  color: var(--home-theme-text);
   display: inline-flex;
   height: 32px;
   justify-content: center;
   min-width: 32px;
   padding: 0;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 120ms ease;
   width: 32px;
 }
 
-.home-hobby-share-trigger.ant-btn-primary:active {
-  transform: scale(0.96);
+.home-hobby-share-trigger:hover,
+.home-hobby-share-trigger:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-bg) 80%,
+    var(--home-theme-color) 20%
+  ) !important;
+  border-color: var(--home-theme-color) !important;
+  color: var(--home-theme-text) !important;
 }
 
 .hobby-share-dialog .ant-modal-content {

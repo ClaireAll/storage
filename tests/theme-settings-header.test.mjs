@@ -38,3 +38,28 @@ test("uses the home glass header for theme settings", async () => {
   assert.equal(headerSource.includes("max-md:flex-col"), false);
   assert.equal(stylesSource.includes(".theme-settings-header {"), false);
 });
+
+test("uses an icon-only save button aligned with the home header actions", async () => {
+  const [pageSource, stylesSource] = await Promise.all([
+    readFile(pagePath, "utf8"),
+    readFile(stylesPath, "utf8"),
+  ]);
+  const saveIconIndex = pageSource.indexOf("icon={<SaveOutlined />}");
+  const saveButtonStart = pageSource.lastIndexOf("<Button", saveIconIndex);
+  const saveButtonEnd = pageSource.indexOf("\n            />", saveIconIndex);
+  const saveButtonSource = pageSource.slice(saveButtonStart, saveButtonEnd);
+
+  assert.notEqual(saveIconIndex, -1);
+  assert.equal(
+    saveButtonSource.includes('className="theme-settings-icon-button"'),
+    true,
+  );
+  assert.equal(saveButtonSource.includes('aria-label="保存主题"'), true);
+  assert.equal(saveButtonSource.includes('type="primary"'), false);
+  assert.equal(saveButtonSource.includes('variant="solid"'), true);
+  assert.equal(saveButtonSource.includes('variant="outlined"'), false);
+  assert.notEqual(saveButtonEnd, -1);
+  assert.equal(pageSource.slice(saveButtonEnd + 13, saveButtonEnd + 15), "/>");
+  assert.equal(pageSource.includes('className="theme-settings-save"'), false);
+  assert.equal(stylesSource.includes(".theme-settings-save"), false);
+});
