@@ -14,30 +14,33 @@ type ThemeFrostTextureProps = {
 };
 
 const frostOptions = {
-  brightness: 0.96,
-  crispness: 1.15,
-  detail: 1.4,
-  edgeFade: 0.16,
-  frost: 0.12,
-  highlight: 0.24,
-  highlightStrength: 0.68,
-  introDuration: 1.4,
-  meltEdges: false,
-  meltNoise: 0.32,
-  meltRadius: 0.18,
-  meltStrength: 0.78,
-  opacity: 0.72,
+  brightness: 0.78,
+  contrast: 3.8,
+  crispness: 2.1,
+  detail: 1.7,
+  edgeFade: 0.06,
+  frost: 0.28,
+  haze: 0.62,
+  highlight: 0.58,
+  highlightStrength: 0.94,
+  introDuration: 2.2,
+  meltEdges: true,
+  meltNoise: 0.42,
+  meltRadius: 0.22,
+  meltStrength: 0.82,
+  opacity: 0.96,
   observeScroll: false,
   pixelRatio: 1,
   quality: 0.4,
-  refraction: 0.76,
-  refreeze: 2.6,
+  refraction: 0.92,
+  refreeze: 2.4,
+  saturation: 0.84,
   shimmer: 0,
-  strength: 0.78,
-  textureScale: 2.4,
-  tintStrength: 0.38,
-  tintThick: [0.9, 0.95, 1] as [number, number, number],
-  tintThin: [0.58, 0.7, 0.96] as [number, number, number],
+  strength: 1.15,
+  textureScale: 1.7,
+  tintStrength: 0.82,
+  tintThick: [0.27, 0.33, 0.41] as [number, number, number],
+  tintThin: [0.02, 0.03, 0.06] as [number, number, number],
 } satisfies FrostOptions;
 
 const frostInteractiveSelector = [
@@ -58,7 +61,7 @@ const frostInteractiveSelector = [
   ".ant-drawer",
 ].join(",");
 
-/** Canvas UI Frost adapted as a background-only texture without DOM capture. */
+/** Canvas UI Frost styled as a dark ice texture without capturing application UI. */
 export function ThemeFrostTexture({
   texture,
   variant,
@@ -164,7 +167,7 @@ export function ThemeFrostTexture({
       aria-hidden="true"
       className="theme-frost-texture pointer-events-none absolute inset-0 z-0 overflow-hidden"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_20%,rgb(255_255_255_/_45%),transparent_32%),radial-gradient(circle_at_82%_76%,rgb(176_202_255_/_32%),transparent_36%),linear-gradient(135deg,rgb(202_222_255_/_34%),rgb(118_153_222_/_12%)_46%,rgb(255_255_255_/_24%))]" />
+      <div className="absolute inset-0 bg-[#04070c]" />
       <canvas className="hidden" ref={sourceRef} />
       <div className="hidden" ref={contentRef} />
       <canvas className="absolute inset-0 h-full w-full" ref={outputRef} />

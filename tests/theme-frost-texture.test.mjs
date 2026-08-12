@@ -53,6 +53,14 @@ test("keeps Frost behind application content without a scroll hot path", async (
   assert.equal(frostTexture.includes("quality: 0.4"), true);
   assert.equal(frostTexture.includes("observeScroll: false"), true);
   assert.equal(frostTexture.includes("pixelRatio: 1"), true);
+  assert.equal(frostTexture.includes("bg-[#04070c]"), true);
+  assert.equal(frostTexture.includes("contrast: 3.8"), true);
+  assert.equal(frostTexture.includes("frost: 0.28"), true);
+  assert.equal(frostTexture.includes("meltEdges: true"), true);
+  assert.equal(
+    frostTexture.includes("tintThin: [0.02, 0.03, 0.06]"),
+    true,
+  );
   assert.equal(frostTexture.includes("addEventListener(\"scroll\""), false);
   assert.equal(frostTexture.includes("pointer-events-none"), true);
   assert.equal(frostRenderer.includes("pixelRatio?: number"), true);
