@@ -815,19 +815,59 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       return;
     }
 
-    const syncScrollportHeight = () => {
-      dashboard.style.setProperty(
-        "--codex-log-scrollport-height",
-        `${scrollContainer.clientHeight}px`,
-      );
-    };
-    const resizeObserver = new ResizeObserver(syncScrollportHeight);
+    let frameId: number | undefined;
+    const updateScrollbarMetrics = () => {
+      frameId = undefined;
+      const trackHeight = Math.max(scrollContainer.clientHeight - 16, 0);
+      const hasOverflow = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+      const thumbHeight = hasOverflow
+        ? Math.min(
+            trackHeight,
+            Math.max(
+              40,
+              (trackHeight * scrollContainer.clientHeight) /
+                scrollContainer.scrollHeight,
+            ),
+          )
+        : 0;
 
-    syncScrollportHeight();
+      dashboard.style.setProperty(
+        "--codex-log-scrollbar-track-height",
+        `${trackHeight}px`,
+      );
+      dashboard.style.setProperty(
+        "--codex-log-scrollbar-thumb-height",
+        `${thumbHeight}px`,
+      );
+      dashboard.style.setProperty(
+        "--codex-log-scrollbar-travel",
+        `${Math.max(trackHeight - thumbHeight, 0)}px`,
+      );
+      dashboard.toggleAttribute("data-codex-log-scrollable", hasOverflow);
+    };
+    const scheduleScrollbarMetrics = () => {
+      if (frameId !== undefined) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(updateScrollbarMetrics);
+    };
+    const resizeObserver = new ResizeObserver(scheduleScrollbarMetrics);
+
+    updateScrollbarMetrics();
     resizeObserver.observe(scrollContainer);
+    Array.from(dashboard.children).forEach((child) => {
+      if (!child.classList.contains("codex-log-scrollbar")) {
+        resizeObserver.observe(child);
+      }
+    });
 
     return () => {
       resizeObserver.disconnect();
+
+      if (frameId !== undefined) {
+        window.cancelAnimationFrame(frameId);
+      }
     };
   }, [getScrollbarScrollContainer]);
   const handleScrollbarPointerDown = useCallback(

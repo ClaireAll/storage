@@ -1,3 +1,6 @@
+## 2026-08-12 18:59:19 +08:00
+
+- Fix Codex daily-report overlay scrollbar geometry: derive the thumb height from the visible-to-total content ratio and its travel distance from the exact track length, instead of fixed viewport values. The track now aligns to the report scrollport with consistent 8px top and bottom insets.
 ## 2026-08-12 18:41:12 +08:00
 
 - Fix Codex daily-report scrollbar visibility in normal preview: render the draggable overlay inside the report dashboard, bind it to the dashboard scrollport in preview and the fullscreen card scrollport in fullscreen, and synchronize only its track height through ResizeObserver.

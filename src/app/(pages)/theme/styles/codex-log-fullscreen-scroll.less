@@ -28,12 +28,12 @@
   background: transparent;
   border: 0;
   cursor: grab;
-  height: calc(var(--codex-log-scrollport-height, 0px) - 36px);
+  height: var(--codex-log-scrollbar-track-height, 0px);
   padding: 0;
   pointer-events: auto;
   position: absolute;
   right: 8px;
-  top: 18px;
+  top: 8px;
   touch-action: none;
   width: 12px;
 
@@ -48,11 +48,15 @@
   background: color-mix(in srgb, var(--home-theme-color) 58%, transparent);
   border-radius: 999px;
   display: block;
-  height: 64px;
+  height: var(--codex-log-scrollbar-thumb-height, 64px);
   margin-inline: auto;
   opacity: 0;
   transition: opacity 160ms ease;
   width: 4px;
+}
+
+.codex-log-dashboard:not([data-codex-log-scrollable]) .codex-log-scrollbar {
+  display: none;
 }
 
 .home-category-content-card.storage-scroll-surface-active .codex-log-scrollbar-thumb,
@@ -99,6 +103,6 @@
   }
 
   to {
-    transform: translateY(calc(100dvh - 100px));
+    transform: translateY(var(--codex-log-scrollbar-travel, 0px));
   }
 }

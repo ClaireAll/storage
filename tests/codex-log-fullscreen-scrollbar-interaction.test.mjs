@@ -26,13 +26,26 @@ test("renders a draggable overlay thumb for the Codex log in preview and fullscr
   assert.match(dashboard, /onPointerDown=\{handleScrollbarPointerDown\}/);
   assert.match(dashboard, /onPointerMove=\{handleScrollbarPointerMove\}/);
   assert.match(dashboard, /scrollContainer\.scrollTo\(\{ top:/);
-  assert.match(dashboard, /new ResizeObserver\(syncScrollportHeight\)/);
+  assert.match(dashboard, /new ResizeObserver\(scheduleScrollbarMetrics\)/);
+  assert.match(dashboard, /--codex-log-scrollbar-thumb-height/);
+  assert.match(dashboard, /--codex-log-scrollbar-track-height/);
+  assert.match(dashboard, /--codex-log-scrollbar-travel/);
+  assert.match(dashboard, /const updateScrollbarMetrics = \(\) =>/);
+  assert.match(dashboard, /requestAnimationFrame\(updateScrollbarMetrics\)/);
   assert.match(
     styles,
     /\.codex-log-dashboard\s*\{[\s\S]*?scroll-timeline-name:\s*--codex-log-scrollbar-timeline;/,
   );
   assert.match(styles, /\.codex-log-scrollbar-track\s*\{[\s\S]*?pointer-events:\s*auto;/);
-  assert.match(styles, /animation-timeline:\s*--codex-log-scrollbar-timeline;/);
+  assert.match(
+    styles,
+    /height:\s*var\(--codex-log-scrollbar-thumb-height, 64px\);/,
+  );
+  assert.match(
+    styles,
+    /transform:\s*translateY\(var\(--codex-log-scrollbar-travel, 0px\)\);/,
+  );
+  assert.doesNotMatch(styles, /100dvh - 100px/);
   assert.doesNotMatch(styles, /storage-scroll-surface-active::after/);
   assert.doesNotMatch(
     provider,
