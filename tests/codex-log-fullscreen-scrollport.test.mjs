@@ -27,10 +27,7 @@ test("uses the full fullscreen card body as the Codex log scrollport", async () 
     readFile(themeStylesPath, "utf8"),
   ]);
 
-  assert.match(
-    dashboard,
-    /data-scroll-pauses-background=\{\s*isCategoryContentFullscreen \? "true" : undefined\s*\}/s,
-  );
+  assert.match(dashboard, /data-scroll-surface="true"/);
   assert.match(
     styles,
     /\.home-category-content-card:fullscreen\s*\{[\s\S]*\.ant-card-body\s*\{[\s\S]*overflow-y:\s*auto !important;/,
@@ -43,11 +40,11 @@ test("uses the full fullscreen card body as the Codex log scrollport", async () 
     styles,
     /\.codex-log-dashboard\s*\{[\s\S]*flex:\s*0 0 auto !important;[\s\S]*min-height:\s*100%;/,
   );
-  assert.match(styles, /::-webkit-scrollbar\s*\{[\s\S]*width:\s*0;/);
+  assert.match(styles, /::-webkit-scrollbar\s*\{[\s\S]*width:\s*0 !important;/);
   assert.match(styles, /\.ant-card-body\s*\{[\s\S]*padding:\s*16px !important;/);
   assert.match(
     styles,
-    /\.home-category-content-card:fullscreen\.storage-scroll-surface-active::after/,
+    /\.home-category-content-card\.storage-scroll-surface-active::after/,
   );
   assert.match(provider, /const scrollSurfaceActiveClassName/);
   assert.ok(

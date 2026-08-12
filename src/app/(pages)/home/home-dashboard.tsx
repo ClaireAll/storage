@@ -710,9 +710,7 @@ export function HomeDashboard({
           data-scroll-pauses-background={
             isCategoryContentFullscreen ? "true" : undefined
           }
-          data-scroll-surface={
-            isCategoryContentFullscreen ? "true" : undefined
-          }
+          data-scroll-surface="true"
           ref={categoryContentRef}
           style={surfaceStyle}
         >

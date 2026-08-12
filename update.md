@@ -1,3 +1,7 @@
+## 2026-08-12 15:28:27 +08:00
+
+- Fix Codex daily-report preview and fullscreen scrolling: native scrollbars no longer reserve content width, while a single overlay activity indicator remains visible during scrolling and hides two seconds after it stops.
+
 # 版本更新
 
 ## 2026-08-12 10:34:15 +08:00
