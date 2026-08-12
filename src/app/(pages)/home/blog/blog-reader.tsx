@@ -253,28 +253,30 @@ export function BlogReader({ items }: BlogReaderProps) {
   );
 
   return (
-    <div
-      className={cn(
-        "relative grid h-full min-h-0 w-full",
-        isListCollapsed
-          ? "grid-cols-1"
-          : "grid-cols-[minmax(220px,280px)_minmax(0,1fr)] gap-3.5 max-[900px]:grid-cols-1",
-      )}
-    >
+    <div className="relative h-full min-h-0 w-full">
+      <div
+        className={cn(
+          "grid h-full min-h-0 w-full",
+          isListCollapsed
+            ? "grid-cols-1"
+            : "grid-cols-[minmax(220px,280px)_minmax(0,1fr)] gap-3.5 max-[900px]:grid-cols-1",
+        )}
+      >
+        <div hidden={isListCollapsed} id="blog-reader-list-panel">
+          {!isListCollapsed ? readerList : null}
+        </div>
+        {preview}
+      </div>
       <Button
         aria-controls="blog-reader-list-panel"
         aria-expanded={!isListCollapsed}
         aria-label={isListCollapsed ? "展开笔记列表" : "收起笔记列表"}
-        className="blog-reader-list-toggle absolute -left-8 top-6 z-10 size-9 rounded-full p-0 shadow-sm"
+        className="blog-reader-list-toggle !absolute -left-8 top-6 z-10 size-9 rounded-full p-0 shadow-sm"
         icon={isListCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         onClick={() => setIsListCollapsed((collapsed) => !collapsed)}
         shape="circle"
         type="primary"
       />
-      <div hidden={isListCollapsed} id="blog-reader-list-panel">
-        {!isListCollapsed ? readerList : null}
-      </div>
-      {preview}
     </div>
   );
 }

@@ -20,7 +20,10 @@ test("uses an accessible circular icon control to toggle the note list", async (
   );
   assert.match(source, /aria-controls="blog-reader-list-panel"/);
   assert.match(source, /aria-expanded=\{!isListCollapsed\}/);
-  assert.match(source, /className="blog-reader-list-toggle[^\"]*rounded-full/);
+  assert.match(
+    source,
+    /className="blog-reader-list-toggle[^\"]*!absolute[^\"]*rounded-full/,
+  );
   assert.match(
     source,
     /icon=\{isListCollapsed \? <MenuUnfoldOutlined \/> : <MenuFoldOutlined \/>\}/,
@@ -33,8 +36,20 @@ test("hides the note list while keeping the reader at full width", async () => {
   assert.match(source, /id="blog-reader-list-panel"/);
   assert.match(source, /hidden=\{isListCollapsed\}/);
   assert.match(source, /\{!isListCollapsed \? readerList : null\}/);
-  assert.match(source, /isListCollapsed\s*\?\s*"grid-cols-1"/);
+  assert.match(
+    source,
+    /<div className="relative h-full min-h-0 w-full">[\s\S]*<div[\s\S]*isListCollapsed\s*\?\s*"grid-cols-1"/,
+  );
   assert.doesNotMatch(source, /<Peel|supportsHtmlInCanvas|useSyncExternalStore/);
+});
+
+test("keeps the toggle outside the reader grid auto-placement", async () => {
+  const source = await readFile(readerPath, "utf8");
+
+  assert.match(
+    source,
+    /<div hidden=\{isListCollapsed\} id="blog-reader-list-panel">[\s\S]*\{preview\}[\s\S]*<\/div>[\s\S]*<Button[\s\S]*className="blog-reader-list-toggle/,
+  );
 });
 
 test("keeps the reader toggle visible in the card gutter", async () => {
