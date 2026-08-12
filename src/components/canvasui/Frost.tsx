@@ -82,6 +82,8 @@ export interface FrostElements {
 export interface FrostInstance {
   /** Melt a spot at (x, y) in [0,1] space, top-left origin. */
   melt: (x: number, y: number) => void;
+  /** Temporarily pause rendering without releasing GPU resources. */
+  setPaused: (isPaused: boolean) => void;
   /** Update options live. */
   setOptions: (options: FrostOptions) => void;
   /** Re-read canvas size. Call when the element is resized. */
@@ -1029,6 +1031,7 @@ export function createFrost(
 
   let raf = 0;
   let destroyed = false;
+  let paused = false;
   let running = false;
   let visible = true;
   let activeUntil = 0;
@@ -1047,7 +1050,10 @@ export function createFrost(
   }
 
   function frame(now: number) {
-    if (destroyed) return;
+    if (destroyed || paused) {
+      running = false;
+      return;
+    }
     if (!visible) {
       running = false;
       return;
@@ -1077,7 +1083,7 @@ export function createFrost(
   }
 
   function start() {
-    if (destroyed || running || !visible) return;
+    if (destroyed || paused || running || !visible) return;
     running = true;
     raf = requestAnimationFrame(frame);
   }
@@ -1090,12 +1096,12 @@ export function createFrost(
 
   function onMotionChange() {
     reducedMotion = motionQuery.matches;
-    if (!reducedMotion) start();
+    if (!reducedMotion && !paused) start();
   }
   motionQuery.addEventListener("change", onMotionChange);
 
   function onPointerMove(event: PointerEvent) {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) return;
     const rect = output.getBoundingClientRect();
     pointerX = (event.clientX - rect.left) / Math.max(rect.width, 1);
     pointerY = (event.clientY - rect.top) / Math.max(rect.height, 1);
@@ -1105,6 +1111,7 @@ export function createFrost(
   }
 
   function onPointerLeave() {
+    if (paused) return;
     pointerOn = false;
     activeUntil = performance.now() + refreezeDelayMs();
     start();
@@ -1123,6 +1130,7 @@ export function createFrost(
   );
 
   function onScroll() {
+    if (paused) return;
     activeUntil = Math.max(activeUntil, performance.now() + 400);
     if (htmlInCanvas) paintable.requestPaint?.();
     start();
@@ -1145,9 +1153,25 @@ export function createFrost(
 
   return {
     melt(x, y) {
-      if (reducedMotion) return;
+      if (reducedMotion || paused) return;
       queuedMelts.push([x, y]);
       activeUntil = performance.now() + refreezeDelayMs();
+      start();
+    },
+    setPaused(isPaused) {
+      if (paused === isPaused) return;
+
+      paused = isPaused;
+
+      if (paused) {
+        cancelAnimationFrame(raf);
+        running = false;
+        pointerOn = false;
+        activeUntil = 0;
+        queuedMelts.length = 0;
+        return;
+      }
+
       start();
     },
     setOptions(next) {

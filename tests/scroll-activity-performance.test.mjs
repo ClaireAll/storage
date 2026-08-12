@@ -31,6 +31,18 @@ test("uses the browser scroll target without layout reads on scroll", async () =
   assert.match(source, /addEventListener\("scrollend", handleScrollEnd/);
 });
 
+test("publishes scroll activity without adding dashboard-local listeners", async () => {
+  const [dashboard, provider] = await Promise.all([
+    readFile(dashboardPath, "utf8"),
+    readFile(providerPath, "utf8"),
+  ]);
+
+  assert.match(provider, /scrollActivityChangeEventName/);
+  assert.match(provider, /new CustomEvent<ScrollActivityChangeDetail>/);
+  assert.match(provider, /scheduleFrostResume/);
+  assert.doesNotMatch(dashboard, /addEventListener\("scroll"/);
+});
+
 test("shows the active scrollbar without component-local listeners", async () => {
   const source = await readFile(globalsPath, "utf8");
 

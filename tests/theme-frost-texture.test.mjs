@@ -57,3 +57,16 @@ test("keeps Frost behind application content without a scroll hot path", async (
   assert.equal(frostTexture.includes("pointer-events-none"), true);
   assert.equal(frostRenderer.includes("pixelRatio?: number"), true);
 });
+
+test("pauses shared Frost rendering while the app is scrolling", async () => {
+  const [frostTexture, frostRenderer] = await Promise.all([
+    readFile(frostTexturePath, "utf8"),
+    readFile(frostRendererPath, "utf8"),
+  ]);
+
+  assert.equal(frostTexture.includes("scrollActivityChangeEventName"), true);
+  assert.equal(frostTexture.includes("frostInstance.setPaused"), true);
+  assert.equal(frostTexture.includes("addEventListener(\"scroll\""), false);
+  assert.equal(frostRenderer.includes("setPaused(isPaused)"), true);
+  assert.equal(frostRenderer.includes("if (destroyed || paused)"), true);
+});

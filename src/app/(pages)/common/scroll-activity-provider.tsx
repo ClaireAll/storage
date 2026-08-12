@@ -4,6 +4,13 @@ import { useEffect } from "react";
 
 const verticalScrollActiveClassName = "storage-is-vertically-scrolling";
 const scrollActivityRetentionMs = 2_000;
+const frostResumeDelayMs = 160;
+
+export const scrollActivityChangeEventName = "storage-scroll-activity-change";
+
+export type ScrollActivityChangeDetail = {
+  isScrolling: boolean;
+};
 
 function getScrollContainer(target: EventTarget | null) {
   if (target instanceof HTMLElement) {
@@ -19,6 +26,8 @@ export function ScrollActivityProvider() {
   useEffect(() => {
     let activeScrollContainer: HTMLElement | null = null;
     let timer: number | undefined;
+    let frostResumeTimer: number | undefined;
+    let isFrostPaused = false;
     const supportsScrollEnd = "onscrollend" in window;
 
     const clearTimer = () => {
@@ -28,8 +37,40 @@ export function ScrollActivityProvider() {
       }
     };
 
+    const clearFrostResumeTimer = () => {
+      if (frostResumeTimer !== undefined) {
+        window.clearTimeout(frostResumeTimer);
+        frostResumeTimer = undefined;
+      }
+    };
+
+    const setFrostPaused = (isPaused: boolean) => {
+      if (isFrostPaused === isPaused) {
+        return;
+      }
+
+      isFrostPaused = isPaused;
+      window.dispatchEvent(
+        new CustomEvent<ScrollActivityChangeDetail>(
+          scrollActivityChangeEventName,
+          { detail: { isScrolling: isPaused } },
+        ),
+      );
+    };
+
+    const scheduleFrostResume = () => {
+      clearFrostResumeTimer();
+
+      frostResumeTimer = window.setTimeout(() => {
+        frostResumeTimer = undefined;
+        setFrostPaused(false);
+      }, frostResumeDelayMs);
+    };
+
     const clearVerticallyScrolling = () => {
       clearTimer();
+      clearFrostResumeTimer();
+      setFrostPaused(false);
 
       activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
       activeScrollContainer = null;
@@ -52,6 +93,9 @@ export function ScrollActivityProvider() {
       }
 
       if (activeScrollContainer === nextScrollContainer) {
+        setFrostPaused(true);
+        scheduleFrostResume();
+
         if (!supportsScrollEnd) {
           scheduleClear();
         }
@@ -67,6 +111,8 @@ export function ScrollActivityProvider() {
 
       activeScrollContainer = nextScrollContainer;
       activeScrollContainer.classList.add(verticalScrollActiveClassName);
+      setFrostPaused(true);
+      scheduleFrostResume();
 
       if (!supportsScrollEnd) {
         scheduleClear();
@@ -79,6 +125,8 @@ export function ScrollActivityProvider() {
 
     const handleScrollEnd = (event: Event) => {
       if (getScrollContainer(event.target) === activeScrollContainer) {
+        clearFrostResumeTimer();
+        setFrostPaused(false);
         scheduleClear();
       }
     };

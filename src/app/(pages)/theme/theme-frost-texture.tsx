@@ -2,6 +2,10 @@
 
 import { createFrost, type FrostOptions } from "@/components/canvasui/Frost";
 import { useEffect, useRef } from "react";
+import {
+  scrollActivityChangeEventName,
+  type ScrollActivityChangeDetail,
+} from "../common/scroll-activity-provider";
 import type { ThemeTexture } from "./types";
 
 type ThemeFrostTextureProps = {
@@ -86,11 +90,12 @@ export function ThemeFrostTexture({
     const outputCanvas = output;
     let frameId = 0;
     let latestPoint: { x: number; y: number } | null = null;
+    let isScrolling = false;
 
     function flushMelt() {
       frameId = 0;
 
-      if (!latestPoint) {
+      if (isScrolling || !latestPoint) {
         return;
       }
 
@@ -105,7 +110,7 @@ export function ThemeFrostTexture({
     }
 
     function requestMelt(event: PointerEvent) {
-      if (isFrostInteractiveTarget(event.target)) {
+      if (isScrolling || isFrostInteractiveTarget(event.target)) {
         return;
       }
 
@@ -116,13 +121,36 @@ export function ThemeFrostTexture({
       }
     }
 
+    function handleScrollActivityChange(event: Event) {
+      const { isScrolling: nextIsScrolling } = (
+        event as CustomEvent<ScrollActivityChangeDetail>
+      ).detail;
+
+      isScrolling = nextIsScrolling;
+      frostInstance.setPaused(nextIsScrolling);
+
+      if (nextIsScrolling) {
+        latestPoint = null;
+        window.cancelAnimationFrame(frameId);
+        frameId = 0;
+      }
+    }
+
     window.addEventListener("pointermove", requestMelt, { passive: true });
     window.addEventListener("pointerdown", requestMelt, { passive: true });
+    window.addEventListener(
+      scrollActivityChangeEventName,
+      handleScrollActivityChange,
+    );
 
     return () => {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("pointermove", requestMelt);
       window.removeEventListener("pointerdown", requestMelt);
+      window.removeEventListener(
+        scrollActivityChangeEventName,
+        handleScrollActivityChange,
+      );
       frostInstance.destroy();
     };
   }, [texture, variant]);
