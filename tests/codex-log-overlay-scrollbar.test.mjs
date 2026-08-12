@@ -36,10 +36,10 @@ test("limits the outer overlay scrollbar to the Codex daily report", async () =>
   );
   assert.match(
     styles,
-    /\.home-category-content-card\.storage-scroll-surface-active::after/,
+    /&\.storage-scroll-surface-active \.home-fullscreen-scrollbar-thumb/,
   );
   assert.doesNotMatch(
     styles,
-    /\.home-category-content-card:fullscreen\.storage-scroll-surface-active::after/,
+    /storage-scroll-surface-active::after/,
   );
 });

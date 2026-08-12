@@ -1,3 +1,6 @@
+## 2026-08-12 17:42:24 +08:00
+
+- Fix Codex daily-report fullscreen scrollbar dragging: replace the non-interactive activity pseudo-element with an overlay track and draggable thumb. The thumb follows the fullscreen card scroll timeline, while track clicks and pointer dragging scroll the card without reserving layout width.
 ## 2026-08-12 16:42:00 +08:00
 
 - Fix Codex daily-report fullscreen scrolling: move the only vertical scrollport from the centered dashboard body to the fullscreen card itself, so the content and both side gutters respond to the mouse wheel together. The overlay activity indicator is slightly wider, taller, and more visible without consuming layout width.
