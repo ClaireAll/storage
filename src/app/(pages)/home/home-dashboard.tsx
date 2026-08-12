@@ -710,7 +710,9 @@ export function HomeDashboard({
           data-scroll-pauses-background={
             isCategoryContentFullscreen ? "true" : undefined
           }
-          data-scroll-surface="true"
+          data-scroll-surface={
+            activeCategoryHref === "/home/codex-log" ? "true" : undefined
+          }
           ref={categoryContentRef}
           style={surfaceStyle}
         >

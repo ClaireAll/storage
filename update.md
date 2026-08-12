@@ -1,3 +1,7 @@
+## 2026-08-12 15:38:00 +08:00
+
+- Fix nested scroll feedback in the Skills preview: the outer overlay scrollbar is now enabled only for /home/codex-log, so scrolling a Markdown preview no longer draws a second indicator beside the page header.
+
 ## 2026-08-12 15:28:27 +08:00
 
 - Fix Codex daily-report preview and fullscreen scrolling: native scrollbars no longer reserve content width, while a single overlay activity indicator remains visible during scrolling and hides two seconds after it stops.

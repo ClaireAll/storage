@@ -27,7 +27,10 @@ test("uses the full fullscreen card body as the Codex log scrollport", async () 
     readFile(themeStylesPath, "utf8"),
   ]);
 
-  assert.match(dashboard, /data-scroll-surface="true"/);
+  assert.match(
+    dashboard,
+    /data-scroll-surface=\{\s*activeCategoryHref === "\/home\/codex-log" \? "true" : undefined\s*\}/s,
+  );
   assert.match(
     styles,
     /\.home-category-content-card:fullscreen\s*\{[\s\S]*\.ant-card-body\s*\{[\s\S]*overflow-y:\s*auto !important;/,

@@ -11,13 +11,17 @@ const stylesPath = new URL(
   import.meta.url,
 );
 
-test("uses one overlay scrollbar treatment for preview and fullscreen Codex logs", async () => {
+test("limits the outer overlay scrollbar to the Codex daily report", async () => {
   const [dashboard, styles] = await Promise.all([
     readFile(homeDashboardPath, "utf8"),
     readFile(stylesPath, "utf8"),
   ]);
 
-  assert.match(dashboard, /data-scroll-surface="true"/);
+  assert.match(
+    dashboard,
+    /data-scroll-surface=\{\s*activeCategoryHref === "\/home\/codex-log" \? "true" : undefined\s*\}/s,
+  );
+  assert.doesNotMatch(dashboard, /data-scroll-surface="true"/);
   assert.match(
     styles,
     /\.home-category-content-card\s*\{[\s\S]*\.codex-log-dashboard\s*\{[\s\S]*scrollbar-width:\s*none !important;/,
