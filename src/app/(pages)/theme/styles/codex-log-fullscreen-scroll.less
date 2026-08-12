@@ -2,13 +2,10 @@
 .home-category-content-card {
   position: relative;
 
-  .home-fullscreen-scrollbar {
-    display: none;
-  }
-
   .codex-log-dashboard {
     scrollbar-gutter: auto !important;
     scrollbar-width: none !important;
+    scroll-timeline-name: --codex-log-scrollbar-timeline;
   }
 
   .codex-log-dashboard::-webkit-scrollbar {
@@ -18,12 +15,59 @@
   }
 }
 
+.codex-log-scrollbar {
+  height: 0;
+  pointer-events: none;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.codex-log-scrollbar-track {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: grab;
+  height: calc(var(--codex-log-scrollport-height, 0px) - 36px);
+  padding: 0;
+  pointer-events: auto;
+  position: absolute;
+  right: 8px;
+  top: 18px;
+  touch-action: none;
+  width: 12px;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.codex-log-scrollbar-thumb {
+  animation: codex-log-scrollbar-thumb-position 1ms linear both;
+  animation-timeline: --codex-log-scrollbar-timeline;
+  background: color-mix(in srgb, var(--home-theme-color) 58%, transparent);
+  border-radius: 999px;
+  display: block;
+  height: 64px;
+  margin-inline: auto;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  width: 4px;
+}
+
+.home-category-content-card.storage-scroll-surface-active .codex-log-scrollbar-thumb,
+.codex-log-scrollbar-track:focus-visible .codex-log-scrollbar-thumb,
+.codex-log-scrollbar-track:hover .codex-log-scrollbar-thumb {
+  opacity: 1;
+}
+
 .home-category-content-card:fullscreen {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   padding: 0;
   scrollbar-gutter: auto !important;
   scrollbar-width: none !important;
+  scroll-timeline-name: --codex-log-scrollbar-timeline;
 
   .ant-card-body {
     display: block !important;
@@ -39,53 +83,7 @@
     min-height: 100%;
     overflow-x: visible !important;
     overflow-y: visible !important;
-  }
-
-  .home-fullscreen-scrollbar {
-    display: block;
-    height: 0;
-    pointer-events: none;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-  }
-
-  .home-fullscreen-scrollbar-track {
-    appearance: none;
-    background: transparent;
-    border: 0;
-    cursor: grab;
-    height: calc(100dvh - 36px);
-    padding: 0;
-    pointer-events: auto;
-    position: absolute;
-    right: 8px;
-    top: 18px;
-    touch-action: none;
-    width: 12px;
-
-    &:active {
-      cursor: grabbing;
-    }
-  }
-
-  .home-fullscreen-scrollbar-thumb {
-    animation: home-fullscreen-scrollbar-thumb-position 1ms linear both;
-    animation-timeline: scroll(nearest block);
-    background: color-mix(in srgb, var(--home-theme-color) 58%, transparent);
-    border-radius: 999px;
-    display: block;
-    height: 64px;
-    margin-inline: auto;
-    opacity: 0;
-    transition: opacity 160ms ease;
-    width: 4px;
-  }
-
-  &.storage-scroll-surface-active .home-fullscreen-scrollbar-thumb,
-  .home-fullscreen-scrollbar-track:focus-visible .home-fullscreen-scrollbar-thumb,
-  .home-fullscreen-scrollbar-track:hover .home-fullscreen-scrollbar-thumb {
-    opacity: 1;
+    scroll-timeline-name: none;
   }
 
   &::-webkit-scrollbar {
@@ -95,7 +93,7 @@
   }
 }
 
-@keyframes home-fullscreen-scrollbar-thumb-position {
+@keyframes codex-log-scrollbar-thumb-position {
   from {
     transform: translateY(0);
   }

@@ -18,7 +18,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { homeCategories, homeStats } from "./constant";
@@ -80,15 +79,6 @@ type HomeDashboardProps = {
   onToggleCategoryVisibility: (categoryKey: string) => void;
 };
 
-type FullscreenScrollbarDrag = {
-  maxScrollTop: number;
-  pointerId: number;
-  scrollContainer: HTMLDivElement;
-  startClientY: number;
-  startScrollTop: number;
-  trackTravel: number;
-};
-
 export function HomeDashboard({
   activeCategoryHref,
   aiAssistant,
@@ -123,9 +113,6 @@ export function HomeDashboard({
     codexCategoryKey,
   ]);
   const categoryContentRef = useRef<HTMLDivElement>(null);
-  const fullscreenScrollbarDragRef = useRef<FullscreenScrollbarDrag | null>(
-    null,
-  );
   const surfaceStyle = {
     backgroundColor: surfaceBackground,
     borderColor: surfaceBorderColor,
@@ -137,92 +124,6 @@ export function HomeDashboard({
     window.setTimeout(() => window.dispatchEvent(new Event("resize")), 120);
     window.setTimeout(() => window.dispatchEvent(new Event("resize")), 280);
   }, []);
-  const handleFullscreenScrollbarPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>) => {
-      if (!isCategoryContentFullscreen) {
-        return;
-      }
-
-      const scrollContainer = categoryContentRef.current;
-      const thumb = event.currentTarget.firstElementChild;
-
-      if (!(thumb instanceof HTMLElement) || !scrollContainer) {
-        return;
-      }
-
-      const maxScrollTop =
-        scrollContainer.scrollHeight - scrollContainer.clientHeight;
-      const trackTravel =
-        event.currentTarget.clientHeight - thumb.clientHeight;
-
-      if (maxScrollTop <= 0 || trackTravel <= 0) {
-        return;
-      }
-
-      const trackBounds = event.currentTarget.getBoundingClientRect();
-      const nextScrollTop = Math.max(
-        0,
-        Math.min(
-          maxScrollTop,
-          ((event.clientY - trackBounds.top - thumb.clientHeight / 2) /
-            trackTravel) *
-            maxScrollTop,
-        ),
-      );
-
-      fullscreenScrollbarDragRef.current = {
-        maxScrollTop,
-        pointerId: event.pointerId,
-        scrollContainer,
-        startClientY: event.clientY,
-        startScrollTop: nextScrollTop,
-        trackTravel,
-      };
-      event.currentTarget.setPointerCapture(event.pointerId);
-      event.preventDefault();
-      scrollContainer.scrollTo({ top: nextScrollTop });
-    },
-    [isCategoryContentFullscreen],
-  );
-  const handleFullscreenScrollbarPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>) => {
-      const dragState = fullscreenScrollbarDragRef.current;
-
-      if (!dragState || dragState.pointerId !== event.pointerId) {
-        return;
-      }
-
-      const nextScrollTop = Math.max(
-        0,
-        Math.min(
-          dragState.maxScrollTop,
-          dragState.startScrollTop +
-            ((event.clientY - dragState.startClientY) /
-              dragState.trackTravel) *
-              dragState.maxScrollTop,
-        ),
-      );
-
-      dragState.scrollContainer.scrollTo({ top: nextScrollTop });
-    },
-    [],
-  );
-  const handleFullscreenScrollbarPointerEnd = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>) => {
-      const dragState = fullscreenScrollbarDragRef.current;
-
-      if (!dragState || dragState.pointerId !== event.pointerId) {
-        return;
-      }
-
-      fullscreenScrollbarDragRef.current = null;
-
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }
-    },
-    [],
-  );
   const toggleCategoryContentFullscreen = useCallback(
     async () => {
       const element = categoryContentRef.current;
@@ -815,21 +716,6 @@ export function HomeDashboard({
           ref={categoryContentRef}
           style={surfaceStyle}
         >
-          {activeCategoryHref === "/home/codex-log" ? (
-            <div className="home-fullscreen-scrollbar">
-              <button
-                aria-label="Drag daily report scrollbar"
-                className="home-fullscreen-scrollbar-track"
-                onPointerCancel={handleFullscreenScrollbarPointerEnd}
-                onPointerDown={handleFullscreenScrollbarPointerDown}
-                onPointerMove={handleFullscreenScrollbarPointerMove}
-                onPointerUp={handleFullscreenScrollbarPointerEnd}
-                type="button"
-              >
-                <span className="home-fullscreen-scrollbar-thumb" />
-              </button>
-            </div>
-          ) : null}
           {isCategoryContentLoading ? (
             <div
               aria-busy="true"

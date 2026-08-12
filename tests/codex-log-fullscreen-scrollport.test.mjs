@@ -45,7 +45,7 @@ test("uses the full fullscreen card as the Codex log scrollport", async () => {
   );
   assert.match(styles, /::-webkit-scrollbar\s*\{[\s\S]*width:\s*0 !important;/);
   assert.match(styles, /\.ant-card-body\s*\{[\s\S]*min-height:\s*100%;/);
-  assert.match(styles, /\.home-fullscreen-scrollbar-track\s*\{/);
+  assert.match(styles, /\.codex-log-scrollbar-track\s*\{/);
   assert.match(provider, /const scrollSurfaceActiveClassName/);
   assert.ok(
     themeStyles.indexOf('"./styles/home.less"') <

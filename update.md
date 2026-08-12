@@ -1,3 +1,6 @@
+## 2026-08-12 18:41:12 +08:00
+
+- Fix Codex daily-report scrollbar visibility in normal preview: render the draggable overlay inside the report dashboard, bind it to the dashboard scrollport in preview and the fullscreen card scrollport in fullscreen, and synchronize only its track height through ResizeObserver.
 ## 2026-08-12 17:42:24 +08:00
 
 - Fix Codex daily-report fullscreen scrollbar dragging: replace the non-interactive activity pseudo-element with an overlay track and draggable thumb. The thumb follows the fullscreen card scroll timeline, while track clicks and pointer dragging scroll the card without reserving layout width.

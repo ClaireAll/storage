@@ -47,10 +47,12 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import type {
@@ -85,6 +87,15 @@ type ChartOption = ComposeOption<
 
 type CodexLogDashboardProps = {
   data: CodexLogDashboardData;
+};
+
+type CodexLogScrollbarDrag = {
+  maxScrollTop: number;
+  pointerId: number;
+  scrollContainer: HTMLElement;
+  startClientY: number;
+  startScrollTop: number;
+  trackTravel: number;
 };
 
 type CodexDailySummary = {
@@ -532,6 +543,15 @@ function buildTrendOption(
   trend: CodexLogTrendPoint[],
   palette: ChartPalette,
 ): ChartOption {
+  const taskBarColors = [
+    palette.accent,
+    "#38bdf8",
+    "#f59e0b",
+    "#a78bfa",
+    "#f472b6",
+    "#2dd4bf",
+  ];
+
   return {
     color: [palette.accent, "#60a5fa"],
     grid: {
@@ -552,7 +572,10 @@ function buildTrendOption(
     series: [
       {
         barMaxWidth: 22,
-        data: trend.map((item) => item.taskCount),
+        data: trend.map((item, index) => ({
+          itemStyle: { color: taskBarColors[index % taskBarColors.length] },
+          value: item.taskCount,
+        })),
         name: "任务",
         type: "bar",
       },
@@ -753,6 +776,8 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const fullscreen = useHomeContentFullscreen();
   const router = useRouter();
   const pathname = usePathname();
+  const dashboardRef = useRef<HTMLDivElement>(null);
+  const scrollbarDragRef = useRef<CodexLogScrollbarDrag | null>(null);
   const palette = useChartPalette();
   const [keyword, setKeyword] = useState("");
   const [repository, setRepository] = useState<string>("all");
@@ -767,6 +792,126 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     order: "descend",
   });
   const selectedDay = dayjs(data.selectedDate);
+  const getScrollbarScrollContainer = useCallback(() => {
+    const dashboard = dashboardRef.current;
+
+    if (!dashboard) {
+      return null;
+    }
+
+    if (!fullscreen?.isFullscreen) {
+      return dashboard;
+    }
+
+    const fullscreenCard = dashboard.closest(".home-category-content-card");
+
+    return fullscreenCard instanceof HTMLElement ? fullscreenCard : null;
+  }, [fullscreen?.isFullscreen]);
+  useEffect(() => {
+    const dashboard = dashboardRef.current;
+    const scrollContainer = getScrollbarScrollContainer();
+
+    if (!dashboard || !scrollContainer) {
+      return;
+    }
+
+    const syncScrollportHeight = () => {
+      dashboard.style.setProperty(
+        "--codex-log-scrollport-height",
+        `${scrollContainer.clientHeight}px`,
+      );
+    };
+    const resizeObserver = new ResizeObserver(syncScrollportHeight);
+
+    syncScrollportHeight();
+    resizeObserver.observe(scrollContainer);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [getScrollbarScrollContainer]);
+  const handleScrollbarPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const scrollContainer = getScrollbarScrollContainer();
+      const thumb = event.currentTarget.firstElementChild;
+
+      if (!(thumb instanceof HTMLElement) || !scrollContainer) {
+        return;
+      }
+
+      const maxScrollTop =
+        scrollContainer.scrollHeight - scrollContainer.clientHeight;
+      const trackTravel =
+        event.currentTarget.clientHeight - thumb.clientHeight;
+
+      if (maxScrollTop <= 0 || trackTravel <= 0) {
+        return;
+      }
+
+      const trackBounds = event.currentTarget.getBoundingClientRect();
+      const nextScrollTop = Math.max(
+        0,
+        Math.min(
+          maxScrollTop,
+          ((event.clientY - trackBounds.top - thumb.clientHeight / 2) /
+            trackTravel) *
+            maxScrollTop,
+        ),
+      );
+
+      scrollbarDragRef.current = {
+        maxScrollTop,
+        pointerId: event.pointerId,
+        scrollContainer,
+        startClientY: event.clientY,
+        startScrollTop: nextScrollTop,
+        trackTravel,
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      scrollContainer.scrollTo({ top: nextScrollTop });
+    },
+    [getScrollbarScrollContainer],
+  );
+  const handleScrollbarPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const dragState = scrollbarDragRef.current;
+
+      if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      const nextScrollTop = Math.max(
+        0,
+        Math.min(
+          dragState.maxScrollTop,
+          dragState.startScrollTop +
+            ((event.clientY - dragState.startClientY) /
+              dragState.trackTravel) *
+              dragState.maxScrollTop,
+        ),
+      );
+
+      dragState.scrollContainer.scrollTo({ top: nextScrollTop });
+    },
+    [],
+  );
+  const handleScrollbarPointerEnd = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const dragState = scrollbarDragRef.current;
+
+      if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      scrollbarDragRef.current = null;
+
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    },
+    [],
+  );
   const tableScrollY = fullscreen?.isFullscreen
     ? "clamp(260px, 36dvh, 440px)"
     : 360;
@@ -968,7 +1113,21 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       data-scroll-pauses-background={
         fullscreen?.isFullscreen ? "true" : undefined
       }
+      ref={dashboardRef}
     >
+      <div className="codex-log-scrollbar">
+        <button
+          aria-label="拖动 Codex 日报滚动条"
+          className="codex-log-scrollbar-track"
+          onPointerCancel={handleScrollbarPointerEnd}
+          onPointerDown={handleScrollbarPointerDown}
+          onPointerMove={handleScrollbarPointerMove}
+          onPointerUp={handleScrollbarPointerEnd}
+          type="button"
+        >
+          <span className="codex-log-scrollbar-thumb" />
+        </button>
+      </div>
       <div
         className={cn(
           "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 2xl:flex 2xl:items-center 2xl:justify-between",

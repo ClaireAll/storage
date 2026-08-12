@@ -36,7 +36,7 @@ test("limits the outer overlay scrollbar to the Codex daily report", async () =>
   );
   assert.match(
     styles,
-    /&\.storage-scroll-surface-active \.home-fullscreen-scrollbar-thumb/,
+    /\.home-category-content-card\.storage-scroll-surface-active \.codex-log-scrollbar-thumb/,
   );
   assert.doesNotMatch(
     styles,
