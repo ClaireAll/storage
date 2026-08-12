@@ -9,8 +9,7 @@ export type ThemeTexture =
   | "none"
   | "bokeh"
   | "geometry"
-  | "meteor"
-  | "frost";
+  | "meteor";
 
 /** 单个明暗模式下使用的主题调色板。 */
 export type ThemePalette = {

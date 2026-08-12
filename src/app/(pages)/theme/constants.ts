@@ -22,7 +22,6 @@ export const THEME_TEXTURES: Array<{ label: string; value: ThemeTexture }> = [
   { label: "散景动画", value: "bokeh" },
   { label: "几何动画", value: "geometry" },
   { label: "流星动画", value: "meteor" },
-  { label: "霜冻", value: "frost" },
 ];
 
 /** 浅色主题。 */
@@ -86,8 +85,7 @@ export function isThemeTexture(value: string): value is ThemeTexture {
     value === "none" ||
     value === "bokeh" ||
     value === "geometry" ||
-    value === "meteor" ||
-    value === "frost"
+    value === "meteor"
   );
 }
 
