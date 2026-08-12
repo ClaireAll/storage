@@ -15,24 +15,29 @@
 }
 
 .home-category-content-card:fullscreen {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   padding: 0;
+  scrollbar-gutter: auto !important;
+  scrollbar-width: none !important;
 
   .ant-card-body {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+    display: block !important;
+    height: auto !important;
+    min-height: 100%;
+    overflow: visible !important;
     padding: 16px !important;
-    scrollbar-gutter: auto !important;
-    scrollbar-width: none !important;
   }
 
   .codex-log-dashboard {
     flex: 0 0 auto !important;
     height: auto;
     min-height: 100%;
+    overflow-x: visible !important;
     overflow-y: visible !important;
   }
 
-  .ant-card-body::-webkit-scrollbar {
+  &::-webkit-scrollbar {
     display: none !important;
     height: 0 !important;
     width: 0 !important;
@@ -41,18 +46,14 @@
 
 /* 使用伪元素绘制滚动反馈，因此不会占用或挤压内容区的宽度。 */
 .home-category-content-card.storage-scroll-surface-active::after {
-  background: color-mix(
-    in srgb,
-    var(--home-theme-color) 48%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--home-theme-color) 76%, transparent);
   border-radius: 999px;
   content: "";
-  height: 48px;
+  height: 64px;
   pointer-events: none;
   position: absolute;
-  right: 5px;
+  right: 8px;
   top: 18px;
-  width: 3px;
+  width: 4px;
   z-index: 4;
 }

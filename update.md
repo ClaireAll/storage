@@ -1,3 +1,7 @@
+## 2026-08-12 16:42:00 +08:00
+
+- Fix Codex daily-report fullscreen scrolling: move the only vertical scrollport from the centered dashboard body to the fullscreen card itself, so the content and both side gutters respond to the mouse wheel together. The overlay activity indicator is slightly wider, taller, and more visible without consuming layout width.
+
 ## 2026-08-12 15:38:00 +08:00
 
 - Fix nested scroll feedback in the Skills preview: the outer overlay scrollbar is now enabled only for /home/codex-log, so scrolling a Markdown preview no longer draws a second indicator beside the page header.

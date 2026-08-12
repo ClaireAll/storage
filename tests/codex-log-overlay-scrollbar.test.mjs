@@ -32,7 +32,7 @@ test("limits the outer overlay scrollbar to the Codex daily report", async () =>
   );
   assert.match(
     styles,
-    /\.ant-card-body::-webkit-scrollbar\s*\{[\s\S]*display:\s*none !important;[\s\S]*width:\s*0 !important;/,
+    /&::-webkit-scrollbar\s*\{[\s\S]*display:\s*none !important;[\s\S]*width:\s*0 !important;/,
   );
   assert.match(
     styles,

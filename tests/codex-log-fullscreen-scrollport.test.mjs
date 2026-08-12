@@ -19,7 +19,7 @@ const themeStylesPath = new URL(
   import.meta.url,
 );
 
-test("uses the full fullscreen card body as the Codex log scrollport", async () => {
+test("uses the full fullscreen card as the Codex log scrollport", async () => {
   const [dashboard, provider, styles, themeStyles] = await Promise.all([
     readFile(homeDashboardPath, "utf8"),
     readFile(providerPath, "utf8"),
@@ -33,18 +33,18 @@ test("uses the full fullscreen card body as the Codex log scrollport", async () 
   );
   assert.match(
     styles,
-    /\.home-category-content-card:fullscreen\s*\{[\s\S]*\.ant-card-body\s*\{[\s\S]*overflow-y:\s*auto !important;/,
+    /\.home-category-content-card:fullscreen\s*\{\s*overflow-x:\s*hidden !important;\s*overflow-y:\s*auto !important;/,
+  );
+  assert.match(
+    styles,
+    /\.home-category-content-card:fullscreen\s*\{[\s\S]*?\.ant-card-body\s*\{\s*display:\s*block !important;[\s\S]*?overflow-y:\s*visible !important;/,
   );
   assert.match(
     styles,
     /\.home-category-content-card:fullscreen\s*\{[\s\S]*\.codex-log-dashboard\s*\{[\s\S]*overflow-y:\s*visible !important;/,
   );
-  assert.match(
-    styles,
-    /\.codex-log-dashboard\s*\{[\s\S]*flex:\s*0 0 auto !important;[\s\S]*min-height:\s*100%;/,
-  );
   assert.match(styles, /::-webkit-scrollbar\s*\{[\s\S]*width:\s*0 !important;/);
-  assert.match(styles, /\.ant-card-body\s*\{[\s\S]*padding:\s*16px !important;/);
+  assert.match(styles, /\.ant-card-body\s*\{[\s\S]*min-height:\s*100%;/);
   assert.match(
     styles,
     /\.home-category-content-card\.storage-scroll-surface-active::after/,
