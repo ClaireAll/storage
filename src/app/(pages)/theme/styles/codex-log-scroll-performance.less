@@ -1,0 +1,17 @@
+/* 全屏日报滚动时冻结整屏背景，避免持续动画抢占表格的主线程。 */
+html.storage-scroll-background-paused {
+  .theme-shared-texture-root,
+  .app-textured-shell::before,
+  .app-textured-shell::after {
+    visibility: hidden;
+  }
+
+  .app-textured-shell::before,
+  .app-textured-shell::after,
+  .theme-shared-texture,
+  .theme-meteor-line,
+  .theme-meteor-spark,
+  .theme-geometry-item {
+    animation-play-state: paused;
+  }
+}

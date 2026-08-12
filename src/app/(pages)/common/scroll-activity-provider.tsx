@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 
 const verticalScrollActiveClassName = "storage-is-vertically-scrolling";
+const sharedBackgroundPausedClassName = "storage-scroll-background-paused";
+const sharedBackgroundPauseSelector = "[data-scroll-pauses-background]";
 const scrollActivityRetentionMs = 2_000;
 
 function getScrollContainer(target: EventTarget | null) {
@@ -18,8 +20,21 @@ function getScrollContainer(target: EventTarget | null) {
 export function ScrollActivityProvider() {
   useEffect(() => {
     let activeScrollContainer: HTMLElement | null = null;
+    let isSharedBackgroundPaused = false;
     let timer: number | undefined;
     const supportsScrollEnd = "onscrollend" in window;
+
+    const setSharedBackgroundPaused = (isPaused: boolean) => {
+      if (isSharedBackgroundPaused === isPaused) {
+        return;
+      }
+
+      isSharedBackgroundPaused = isPaused;
+      document.documentElement.classList.toggle(
+        sharedBackgroundPausedClassName,
+        isPaused,
+      );
+    };
 
     const clearTimer = () => {
       if (timer !== undefined) {
@@ -33,6 +48,7 @@ export function ScrollActivityProvider() {
 
       activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
       activeScrollContainer = null;
+      setSharedBackgroundPaused(false);
     };
 
     const scheduleClear = () => {
@@ -52,6 +68,8 @@ export function ScrollActivityProvider() {
       }
 
       if (activeScrollContainer === nextScrollContainer) {
+        clearTimer();
+
         if (!supportsScrollEnd) {
           scheduleClear();
         }
@@ -67,6 +85,9 @@ export function ScrollActivityProvider() {
 
       activeScrollContainer = nextScrollContainer;
       activeScrollContainer.classList.add(verticalScrollActiveClassName);
+      setSharedBackgroundPaused(
+        nextScrollContainer.closest(sharedBackgroundPauseSelector) !== null,
+      );
 
       if (!supportsScrollEnd) {
         scheduleClear();

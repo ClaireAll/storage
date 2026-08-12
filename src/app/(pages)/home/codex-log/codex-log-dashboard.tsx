@@ -965,6 +965,9 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   return (
     <div
       className="codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-1 md:gap-5"
+      data-scroll-pauses-background={
+        fullscreen?.isFullscreen ? "true" : undefined
+      }
     >
       <div
         className={cn(
