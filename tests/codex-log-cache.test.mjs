@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 const dashboardUtilsPath = new URL(
@@ -10,38 +10,23 @@ const dashboardPath = new URL(
   "../src/app/(pages)/home/codex-log/codex-log-dashboard.tsx",
   import.meta.url,
 );
-const summaryRoutePath = new URL(
-  "../src/app/api/codex-log/summary/route.ts",
-  import.meta.url,
-);
-
-test("reads cached daily reports before scanning Codex desktop sessions", async () => {
+test("reads daily reports without writing token cache from the dashboard", async () => {
   const source = await readFile(dashboardUtilsPath, "utf8");
 
   assert.equal(source.includes('from("codex_daily_report")'), true);
-  assert.equal(source.includes("const missingTokenDates = trendDates.filter("), true);
-  assert.equal(source.includes("if (missingTokenDates.length)"), true);
   assert.equal(source.includes("token_calculated_at"), true);
-  assert.equal(source.includes('onConflict: "id,date"'), true);
-  assert.ok(
-    source.indexOf('from("codex_daily_report")') <
-      source.indexOf("await readCodexDesktopUsageTotals("),
-  );
+  assert.doesNotMatch(source, /readCodexDesktopUsageTotals/);
+  assert.doesNotMatch(source, /cacheDesktopUsageTotals/);
+  assert.doesNotMatch(source, /\.upsert\(/);
 });
 
-test("does not let an empty desktop cache override nonzero log tokens", async () => {
+test("uses only automated desktop token totals", async () => {
   const source = await readFile(dashboardUtilsPath, "utf8");
 
-  assert.equal(source.includes("function buildRecordTokenTotalsByDate("), true);
-  assert.equal(source.includes("function hasUsableCachedDesktopTokenTotal("), true);
-  assert.match(
-    source,
-    /toTokenCount\(report\?\.desktop_token_total\) > 0 \|\| databaseTokenTotal === 0/,
-  );
-  assert.match(source, /const tokenTotal = toTokenCount\(generatedTotals\?\.get\(missingDate\)\);/);
-  assert.match(source, /if \(tokenTotal > 0\) \{\s+desktopUsageTotals\.set\(missingDate, tokenTotal\);/);
-  assert.match(source, /const reports = dates\.flatMap\(\(date\) => \{/);
-  assert.match(source, /if \(!reports\.length\) \{\s+return;/);
+  assert.match(source, /if \(report\.token_calculated_at\) \{/);
+  assert.match(source, /toTokenCount\(report\?\.desktop_token_total\)/);
+  assert.doesNotMatch(source, /missingTokenDates/);
+  assert.doesNotMatch(source, /generatedTotals/);
 });
 
 test("passes an existing cached summary into the dashboard", async () => {
@@ -52,13 +37,8 @@ test("passes an existing cached summary into the dashboard", async () => {
 
   assert.equal(utilsSource.includes("dailySummary:"), true);
   assert.equal(dashboardSource.includes("initialSummary={data.dailySummary}"), true);
-  assert.equal(dashboardSource.includes("key={data.selectedDate}"), true);
-  assert.equal(
-    dashboardSource.includes(
-      "if (initialSummary) {\n      setSummaryState({ result: initialSummary, status: \"ready\" });",
-    ),
-    false,
-  );
+  assert.match(dashboardSource, /function SummaryPanel\(\{ initialSummary \}/);
+  assert.doesNotMatch(dashboardSource, /summaryState/);
 });
 
 test("loads the dashboard record range with one Codex log query", async () => {
@@ -69,15 +49,14 @@ test("loads the dashboard record range with one Codex log query", async () => {
   assert.equal(source.includes("const previousRecords = recordRows"), true);
 });
 
-test("returns cached summaries before calling DeepSeek and stores generated results", async () => {
-  const source = await readFile(summaryRoutePath, "utf8");
+test("only renders the automated daily summary", async () => {
+  const dashboardSource = await readFile(dashboardPath, "utf8");
+  const summaryRoutePath = new URL(
+    "../src/app/api/codex-log/summary/route.ts",
+    import.meta.url,
+  );
 
-  const dailyReportRead = source.indexOf('from("codex_daily_report")');
-  const apiKeyRead = source.indexOf("process.env.DEEPSEEK_API_KEY");
-
-  assert.notEqual(dailyReportRead, -1);
-  assert.notEqual(apiKeyRead, -1);
-  assert.ok(dailyReportRead < apiKeyRead);
-  assert.equal(source.includes("summary_generated_at"), true);
-  assert.equal(source.includes('onConflict: "id,date"'), true);
+  await assert.rejects(access(summaryRoutePath));
+  assert.doesNotMatch(dashboardSource, /\/api\/codex-log\/summary/);
+  assert.doesNotMatch(dashboardSource, /loadSummary/);
 });

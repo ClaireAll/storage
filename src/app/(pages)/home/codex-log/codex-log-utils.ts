@@ -1,7 +1,4 @@
-import { createReadStream, existsSync, readdirSync, statSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
-import { createInterface } from "node:readline";
+
 import type { DatabaseClient } from "@/app/utils/database";
 
 export type CodexLogRecord = {
@@ -91,19 +88,6 @@ type CodexDailyReportRow = {
   token_calculated_at: string | null;
 };
 
-type CodexSessionUsageEvent = {
-  payload?: {
-    info?: {
-      last_token_usage?: {
-        total_tokens?: unknown;
-      };
-    };
-    type?: unknown;
-  };
-  timestamp?: unknown;
-  type?: unknown;
-};
-
 const codexLogCategoryLabels: Record<number, string> = {
   1: "fx-data-web / fv-web2",
   2: "skills",
@@ -148,143 +132,6 @@ function toTokenCount(value: number | null | undefined) {
   return Number.isFinite(value) ? Math.max(0, Math.round(Number(value))) : 0;
 }
 
-function getCodexHome() {
-  return process.env.CODEX_HOME?.trim() || join(homedir(), ".codex");
-}
-
-function getDefaultCodexSessionRoots() {
-  const configuredRoot = process.env.CODEX_SESSIONS_DIR?.trim();
-
-  if (configuredRoot) {
-    return [configuredRoot];
-  }
-
-  const codexHome = getCodexHome();
-
-  return [
-    join(codexHome, "sessions"),
-    join(codexHome, "archived_sessions"),
-  ];
-}
-
-function collectCodexSessionFiles(root: string, startTime: number) {
-  if (!existsSync(root)) {
-    return [];
-  }
-
-  const files: string[] = [];
-  const visit = (target: string) => {
-    let entries;
-
-    try {
-      entries = readdirSync(target, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    entries.forEach((entry) => {
-      const entryPath = join(target, entry.name);
-
-      if (entry.isDirectory()) {
-        visit(entryPath);
-        return;
-      }
-
-      if (!entry.isFile() || !entry.name.endsWith(".jsonl")) {
-        return;
-      }
-
-      try {
-        if (statSync(entryPath).mtimeMs >= startTime) {
-          files.push(entryPath);
-        }
-      } catch {
-        // Ignore files that disappear while the desktop app is writing.
-      }
-    });
-  };
-
-  visit(root);
-
-  return files;
-}
-
-function getShanghaiDateFromTimestamp(timestamp: string) {
-  const date = new Date(timestamp);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-  }).format(date);
-}
-
-function parseCodexSessionUsageLine(line: string) {
-  try {
-    const event = JSON.parse(line) as CodexSessionUsageEvent;
-
-    if (event.type !== "event_msg" || event.payload?.type !== "token_count") {
-      return null;
-    }
-
-    const timestamp = String(event.timestamp ?? "");
-    const date = getShanghaiDateFromTimestamp(timestamp);
-    const tokenCount = toTokenCount(
-      Number(event.payload.info?.last_token_usage?.total_tokens ?? 0),
-    );
-
-    return date && tokenCount > 0 ? { date, tokenCount } : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function readCodexDesktopUsageTotals(
-  startDate: string,
-  endDate: string,
-) {
-  const dates = new Set<string>();
-  let cursorDate = startDate;
-
-  while (cursorDate <= endDate) {
-    dates.add(cursorDate);
-    cursorDate = addDays(cursorDate, 1);
-  }
-
-  const startTime = new Date(`${startDate}T00:00:00+08:00`).getTime();
-  const totals = new Map<string, number>();
-  const files = getDefaultCodexSessionRoots().flatMap((root) =>
-    collectCodexSessionFiles(root, startTime),
-  );
-
-  for (const file of files) {
-    try {
-      const lines = createInterface({
-        crlfDelay: Infinity,
-        input: createReadStream(file, { encoding: "utf8" }),
-      });
-
-      for await (const line of lines) {
-        const usage = parseCodexSessionUsageLine(line);
-
-        if (!usage || !dates.has(usage.date)) {
-          continue;
-        }
-
-        totals.set(usage.date, (totals.get(usage.date) ?? 0) + usage.tokenCount);
-      }
-    } catch {
-      // Ignore files that are being rotated or rewritten by Codex Desktop.
-    }
-  }
-
-  return totals.size ? totals : null;
-}
 
 function getCategoryLabel(category: number | null | undefined) {
   return codexLogCategoryLabels[category ?? 10000] ?? codexLogCategoryLabels[10000];
@@ -412,12 +259,6 @@ function buildTrend(
   return Array.from(dayMap.values());
 }
 
-function getTrendDates(selectedDate: string) {
-  return Array.from({ length: trendDayCount }, (_, index) =>
-    addDays(selectedDate, -(trendDayCount - 1 - index)),
-  );
-}
-
 function getCachedDailySummary(
   report: CodexDailyReportRow | undefined,
 ): CodexDailySummary | null {
@@ -430,62 +271,6 @@ function getCachedDailySummary(
   const shortage = toCleanText(report.shortage);
 
   return summary && growth && shortage ? { growth, shortage, summary } : null;
-}
-
-async function cacheDesktopUsageTotals(
-  supabase: DatabaseClient,
-  userId: string,
-  dates: string[],
-  totals: Map<string, number> | null,
-) {
-  const reports = dates.flatMap((date) => {
-    const tokenTotal = toTokenCount(totals?.get(date));
-
-    return tokenTotal > 0
-      ? [
-          {
-            date,
-            desktop_token_total: tokenTotal,
-            id: userId,
-            token_calculated_at: new Date().toISOString(),
-          },
-        ]
-      : [];
-  });
-
-  if (!reports.length) {
-    return;
-  }
-
-  await supabase.from("codex_daily_report").upsert(
-    reports,
-    { onConflict: "id,date" },
-  );
-}
-
-function buildRecordTokenTotalsByDate(rows: CodexLogRow[]) {
-  const totals = new Map<string, number>();
-
-  rows.forEach((row) => {
-    if (!row.date) {
-      return;
-    }
-
-    totals.set(
-      row.date,
-      (totals.get(row.date) ?? 0) + toTokenCount(row.token_count),
-    );
-  });
-
-  return totals;
-}
-
-function hasUsableCachedDesktopTokenTotal(
-  report: CodexDailyReportRow | undefined,
-  databaseTokenTotal: number,
-) {
-  return Boolean(report?.token_calculated_at) &&
-    (toTokenCount(report?.desktop_token_total) > 0 || databaseTokenTotal === 0);
 }
 
 function getTaskLabel(record: CodexLogRecord) {
@@ -636,8 +421,6 @@ export async function listCodexLogDashboard(
     .filter((row) => row.date === previousDate)
     .map(mapCodexLogRow);
   const repositoryDistribution = buildRepositoryDistribution(records);
-  const trendDates = getTrendDates(selectedDate);
-  const databaseTokenTotals = buildRecordTokenTotalsByDate(recordRows);
   const cachedReportsByDate = new Map(
     (dailyReportResult.data ?? [])
       .filter((report): report is CodexDailyReportRow & { date: string } =>
@@ -645,49 +428,16 @@ export async function listCodexLogDashboard(
       )
       .map((report) => [report.date, report]),
   );
-  const missingTokenDates = trendDates.filter(
-    (trendDate) =>
-      !hasUsableCachedDesktopTokenTotal(
-        cachedReportsByDate.get(trendDate),
-        databaseTokenTotals.get(trendDate) ?? 0,
-      ),
-  );
   const desktopUsageTotals = new Map<string, number>();
 
   cachedReportsByDate.forEach((report, reportDate) => {
-    if (
-      hasUsableCachedDesktopTokenTotal(
-        report,
-        databaseTokenTotals.get(reportDate) ?? 0,
-      )
-    ) {
+    if (report.token_calculated_at) {
       desktopUsageTotals.set(
         reportDate,
         toTokenCount(report?.desktop_token_total),
       );
     }
   });
-
-  if (missingTokenDates.length) {
-    const generatedTotals = await readCodexDesktopUsageTotals(
-      trendStartDate,
-      selectedDate,
-    );
-
-    missingTokenDates.forEach((missingDate) => {
-      const tokenTotal = toTokenCount(generatedTotals?.get(missingDate));
-
-      if (tokenTotal > 0) {
-        desktopUsageTotals.set(missingDate, tokenTotal);
-      }
-    });
-    await cacheDesktopUsageTotals(
-      supabase,
-      userId,
-      missingTokenDates,
-      generatedTotals,
-    );
-  }
 
   const desktopTokenTotal = desktopUsageTotals?.get(selectedDate);
   const previousDesktopTokenTotal = desktopUsageTotals?.get(previousDate);

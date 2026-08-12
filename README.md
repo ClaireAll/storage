@@ -73,7 +73,7 @@ WAN_IMAGE_MODEL=
 
 - `NEXT_PUBLIC_*` 变量会暴露给浏览器，只能放公开可用的配置。
 - `SUPABASE_SERVICE_ROLE_KEY` 只能在服务端使用，目前用于分享链接创建、查询、删除等高权限操作。
-- `DEEPSEEK_API_KEY` 用于页面右下角 AI 助手和 Codex 日报总结。
+- `DEEPSEEK_API_KEY` 用于页面右下角 AI 助手。
 - `DASHSCOPE_API_KEY` 用于万相生成搭配效果图。
 
 ## 引入阿里图标库
@@ -162,6 +162,7 @@ const supabase = createAdminClient();
 - `skincare`：护肤品。
 - `blog`：笔记链接。
 - `codex_log`：Codex 日报数据。
+- `codex_daily_report`：Codex 自动化生成的每日统计与总结。
 - `hobby_shares`：爱好分享快照。
 
 ### 分享表：`hobby_shares`
@@ -271,15 +272,11 @@ src/app/api/ai/tools
 
 它可以读取当前账号下的库存列表、搜索库存、查缺失字段、汇总库存和推荐搭配。
 
-### Codex 日报总结
+### Codex 日报生成
 
-Codex 日报页面调用：
+Codex 定时任务每天 00:01 导入前一天的 `codex_log` 后，使用 `human-writing` Skill 基于已入库记录生成“总结 / 成长 / 不足”，再写入 `codex_daily_report`。日报页面只读取已生成数据，不再即时调用总结接口。
 
-```txt
-POST /api/codex-log/summary
-```
-
-它会基于 `codex_log` 中的每日会话记录，请 DeepSeek 生成“总结 / 成长 / 不足”。
+自动化会补齐 `desktop_token_total`、`session_count`、`summary_model`、`token_calculated_at` 等字段；每次执行也会回填已有日志但日报不完整的日期。没有当日日志时不会创建日报。
 
 ### 万相搭配图
 
@@ -396,7 +393,6 @@ wan2.7-image-pro
 - `ai/chat`：DeepSeek 助手。
 - `ai/outfit-image`：万相搭配图生成。
 - `blog`、`books`、`clothes`、`cosmetic`、`hobby`、`pants`、`skincare`、`toiletries`：库存分类增删改接口。
-- `codex-log/summary`：Codex 日报总结。
 - `knowledge`：文章推荐。
 - `oss/policy`：浏览器直传 OSS policy。
 - `oss/upload`：服务端 OSS 上传 fallback。
@@ -423,6 +419,8 @@ wan2.7-image-pro
 
 - `next-with-env-port.mjs`：启动 Next.js 时读取 `.env.local` 里的端口。
 - `import-codex-daily-reports.mjs`：导入 Codex 日报数据。
+- `save-codex-daily-report.mjs`：基于已入库日志写入单日统计与总结，也可回读指定日报。
+- `list-codex-daily-report-backfill-dates.mjs`：列出需要自动回填的日报日期。
 - `rename-oss-images.mjs`：按命名规则整理 OSS 图片及数据库 URL。
 
 ### `supabase/migrations`
@@ -433,3 +431,4 @@ wan2.7-image-pro
 - `20260731_secure_hobby_share_creation.sql`：收紧分享 RPC 权限。
 - `20260803_create_codex_log.sql`：创建 Codex 日报表。
 - `20260804_add_codex_log_token_count.sql`：给 Codex 日报补充 token 统计字段。
+- `20260812_create_codex_daily_report.sql`：创建每日统计与总结表，并补齐自动化字段。

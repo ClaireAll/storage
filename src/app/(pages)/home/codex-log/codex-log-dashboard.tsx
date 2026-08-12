@@ -7,7 +7,6 @@ import {
   ArrowUpOutlined,
   MinusOutlined,
   QuestionCircleOutlined,
-  ReloadOutlined,
   SearchOutlined,
   SyncOutlined,
 } from "@ant-design/icons";
@@ -18,7 +17,6 @@ import {
   Empty,
   Input,
   Select,
-  Skeleton,
   Statistic,
   Table,
   Tag,
@@ -49,7 +47,6 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -89,15 +86,6 @@ type ChartOption = ComposeOption<
 type CodexLogDashboardProps = {
   data: CodexLogDashboardData;
 };
-
-type SummaryState =
-  | { status: "idle" | "loading"; error?: never; result?: never }
-  | {
-      status: "ready";
-      error?: never;
-      result: CodexDailySummary;
-    }
-  | { status: "error"; error: string; result?: never };
 
 type CodexDailySummary = {
   growth: string;
@@ -725,106 +713,22 @@ function TaskList({
   );
 }
 
-function SummaryPanel({
-  date,
-  initialSummary,
-}: {
-  date: string;
-  initialSummary: CodexDailySummary | null;
-}) {
-  const [summaryState, setSummaryState] = useState<SummaryState>(() =>
-    initialSummary
-      ? { result: initialSummary, status: "ready" }
-      : { status: "idle" },
-  );
-
-  const loadSummary = useCallback(
-    async (signal?: AbortSignal) => {
-      setSummaryState({ status: "loading" });
-
-      try {
-        const response = await fetch("/api/codex-log/summary", {
-          body: JSON.stringify({ date }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          signal,
-        });
-        const result = (await response.json().catch(() => ({}))) as
-          | (Partial<CodexDailySummary> & { message?: string })
-          | null;
-
-        if (!response.ok) {
-          throw new Error(result?.message ?? "总结生成失败");
-        }
-
-        setSummaryState({
-          result: {
-            growth: result?.growth?.trim() || "暂无成长总结",
-            shortage: result?.shortage?.trim() || "暂无不足总结",
-            summary: result?.summary?.trim() || "暂无工作总结",
-          },
-          status: "ready",
-        });
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-
-        setSummaryState({
-          error: error instanceof Error ? error.message : "总结生成失败",
-          status: "error",
-        });
-      }
-    },
-    [date],
-  );
-
-  useEffect(() => {
-    if (initialSummary) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const timerId = window.setTimeout(() => {
-      void loadSummary(controller.signal);
-    });
-
-    return () => {
-      window.clearTimeout(timerId);
-      controller.abort();
-    };
-  }, [initialSummary, loadSummary]);
-
+function SummaryPanel({ initialSummary }: { initialSummary: CodexDailySummary | null }) {
   return (
     <DashboardPanel
       className="codex-log-summary-panel min-h-60 shrink-0"
-      extra={
-        <Button
-          icon={<ReloadOutlined />}
-          loading={summaryState.status === "loading"}
-          onClick={() => void loadSummary()}
-          size="small"
-          type="text"
-        />
-      }
       icon={<MetricIcon name="icon-codex" tone="codex" />}
       title="总结"
     >
-      {summaryState.status === "loading" ? (
-        <div className="codex-log-summary-loading flex min-h-45 flex-1 items-center justify-center">
-          <Skeleton active paragraph={{ rows: 4 }} title={false} />
-        </div>
-      ) : summaryState.status === "error" ? (
-        <Typography.Text type="danger">{summaryState.error}</Typography.Text>
-      ) : summaryState.status === "ready" ? (
+      {initialSummary ? (
         <div className="codex-log-summary-grid grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <SummaryBlock label="总结" text={summaryState.result.summary} />
-          <SummaryBlock label="成长" text={summaryState.result.growth} />
-          <SummaryBlock label="不足" text={summaryState.result.shortage} />
+          <SummaryBlock label="总结" text={initialSummary.summary} />
+          <SummaryBlock label="成长" text={initialSummary.growth} />
+          <SummaryBlock label="不足" text={initialSummary.shortage} />
         </div>
-      ) : null}
+      ) : (
+        <Empty description="暂无日报总结" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      )}
     </DashboardPanel>
   );
 }
@@ -1211,11 +1115,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           tableLayout="fixed"
         />
       </DashboardPanel>
-      <SummaryPanel
-        date={data.selectedDate}
-        initialSummary={data.dailySummary}
-        key={data.selectedDate}
-      />
+      <SummaryPanel initialSummary={data.dailySummary} />
     </div>
   );
 }
