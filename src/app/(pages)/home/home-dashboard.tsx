@@ -707,6 +707,12 @@ export function HomeDashboard({
           classNames={{
             body: "flex h-full min-h-0 w-full p-4!",
           }}
+          data-scroll-pauses-background={
+            isCategoryContentFullscreen ? "true" : undefined
+          }
+          data-scroll-surface={
+            isCategoryContentFullscreen ? "true" : undefined
+          }
           ref={categoryContentRef}
           style={surfaceStyle}
         >

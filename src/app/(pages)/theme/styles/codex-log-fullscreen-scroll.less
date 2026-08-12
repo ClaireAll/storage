@@ -1,0 +1,42 @@
+/* 全屏时将滚动面扩大到完整卡片，以便左右留白同样能够滚动。 */
+.home-category-content-card:fullscreen {
+  padding: 0;
+  position: relative;
+
+  .ant-card-body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    scrollbar-width: none;
+  }
+
+  .codex-log-dashboard {
+    flex: 0 0 auto !important;
+    height: auto;
+    min-height: 100%;
+    overflow-y: visible !important;
+  }
+
+  .ant-card-body::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+}
+
+/* 使用伪元素绘制滚动反馈，因此不会占用或挤压内容区的宽度。 */
+.home-category-content-card:fullscreen.storage-scroll-surface-active::after {
+  background: color-mix(
+    in srgb,
+    var(--home-theme-color) 48%,
+    transparent
+  );
+  border-radius: 999px;
+  content: "";
+  height: 48px;
+  pointer-events: none;
+  position: absolute;
+  right: 5px;
+  top: 18px;
+  width: 3px;
+  z-index: 4;
+}
