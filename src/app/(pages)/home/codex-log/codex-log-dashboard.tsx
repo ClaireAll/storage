@@ -1,6 +1,7 @@
 "use client";
 
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
+import { themeConfigChangeEventName } from "@/app/(pages)/theme/constants";
 import {
   OverlayScrollArea,
   OverlayScrollbarHost,
@@ -100,6 +101,7 @@ type CodexDailySummary = {
 type ChartPalette = {
   accent: string;
   border: string;
+  columns: string[];
   muted: string;
   surface: string;
   text: string;
@@ -140,6 +142,16 @@ const tokenFilters = [
 const defaultPalette: ChartPalette = {
   accent: "#22c55e",
   border: "rgba(34, 197, 94, 0.32)",
+  columns: [
+    "#22c55e",
+    "#38bdf8",
+    "#f59e0b",
+    "#a78bfa",
+    "#f472b6",
+    "#2dd4bf",
+    "#fb7185",
+    "#84cc16",
+  ],
   muted: "rgba(107, 114, 128, 0.78)",
   surface: "#ffffff",
   text: "#111827",
@@ -187,6 +199,15 @@ const metricToneClassNames = {
     value: "text-(--home-theme-text)!",
   },
 };
+
+function getChartColumns(value: string) {
+  const columns = value
+    .split(",")
+    .map((color) => color.trim())
+    .filter(Boolean);
+
+  return columns.length > 0 ? columns : defaultPalette.columns;
+}
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("zh-CN").format(value);
@@ -337,6 +358,9 @@ function readThemePalette(): ChartPalette {
       "--home-theme-text",
       defaultPalette.text,
     )} 56%, transparent)`,
+    columns: getChartColumns(
+      readVar("--home-theme-columns", defaultPalette.columns.join(",")),
+    ),
     surface: readVar("--home-theme-bg", defaultPalette.surface),
     text: readVar("--home-theme-text", defaultPalette.text),
   };
@@ -346,12 +370,25 @@ function useChartPalette() {
   const [palette, setPalette] = useState<ChartPalette>(defaultPalette);
 
   useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
+    const syncPalette = () => {
       setPalette(readThemePalette());
+    };
+    const root =
+      document.querySelector<HTMLElement>(".home-shell") ??
+      document.documentElement;
+    const frameId = window.requestAnimationFrame(syncPalette);
+    const observer = new MutationObserver(syncPalette);
+
+    observer.observe(root, {
+      attributeFilter: ["style"],
+      attributes: true,
     });
+    window.addEventListener(themeConfigChangeEventName, syncPalette);
 
     return () => {
       window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+      window.removeEventListener(themeConfigChangeEventName, syncPalette);
     };
   }, []);
 
@@ -520,17 +557,10 @@ function buildTrendOption(
   trend: CodexLogTrendPoint[],
   palette: ChartPalette,
 ): ChartOption {
-  const taskBarColors = [
-    palette.accent,
-    "#38bdf8",
-    "#f59e0b",
-    "#a78bfa",
-    "#f472b6",
-    "#2dd4bf",
-  ];
+  const chartColumns = getChartColumns(palette.columns.join(","));
 
   return {
-    color: [palette.accent, "#60a5fa"],
+    color: [chartColumns[0], chartColumns[1] ?? chartColumns[0]],
     grid: {
       bottom: 32,
       left: 42,
@@ -550,7 +580,9 @@ function buildTrendOption(
       {
         barMaxWidth: 22,
         data: trend.map((item, index) => ({
-          itemStyle: { color: taskBarColors[index % taskBarColors.length] },
+          itemStyle: {
+            color: chartColumns[index % chartColumns.length],
+          },
           value: item.taskCount,
         })),
         name: "任务",

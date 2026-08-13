@@ -21,10 +21,24 @@ export type ThemePalette = {
   text: string;
 };
 
+/** 图表使用的八色主题序列。 */
+export type ThemeColumns = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+];
+
 /** 可供用户选择的单模式主题配置。 */
 export type ThemeOption = ThemePalette & {
   /** 预设展示名称。 */
   name: string;
+  /** 图表数据列使用的颜色序列。 */
+  columns: ThemeColumns;
 };
 
 /** 用户完整主题配置。 */

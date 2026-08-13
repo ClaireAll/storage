@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-13 12:04:12 +08:00
+
+- Fix Codex daily-report chart column colors. The trend bar chart now reads the current theme's `columns` through the home theme CSS variable, cleans empty color entries before handing them to ECharts, and keeps preset theme matching stable when stored colors use different hex casing.
+
 ## 2026-08-13 11:41:41 +08:00
 
 - Adjust the Codex daily-report metric row. Today tasks, Token, and repository cards now use one flex row with equal-width cards across the available dashboard width.

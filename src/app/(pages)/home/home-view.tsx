@@ -13,6 +13,7 @@ import { ThemeControl } from "@/app/(pages)/theme/theme-control";
 import { ThemeGeometryTexture } from "@/app/(pages)/theme/theme-geometry-texture";
 import { ThemeProvider } from "@/app/(pages)/theme/theme-provider";
 import { ThemeShellBackground } from "@/app/(pages)/theme/theme-shell-background";
+import { getThemeColumns } from "@/app/(pages)/theme/constants";
 import {
   getThemeShellBackground,
   mixHexColor,
@@ -283,6 +284,10 @@ export default function HomePage({
       <ThemeProvider initialTheme={initialTheme}>
         {({ activePalette, resolvedMode, themeConfig, updateTheme }) => {
           const isDark = resolvedMode === "dark";
+          const homeThemeColumns = getThemeColumns(
+            activePalette,
+            resolvedMode,
+          );
           const homeShellBackground = getThemeShellBackground(
             activePalette,
             resolvedMode,
@@ -344,6 +349,7 @@ export default function HomePage({
                     "--home-menu-selected-color": activePalette.color,
                     "--home-theme-bg": activePalette.bg,
                     "--home-theme-color": activePalette.color,
+                    "--home-theme-columns": homeThemeColumns.join(","),
                     "--home-theme-text": activePalette.text,
                     "--home-header-bg": homeHeaderBackground,
                     "--home-header-border": homeBorderColor,

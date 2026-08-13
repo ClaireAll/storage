@@ -14,6 +14,14 @@ const fullscreenPath = new URL(
   "../src/app/(pages)/home/home-content-fullscreen.tsx",
   import.meta.url,
 );
+const homeViewPath = new URL(
+  "../src/app/(pages)/home/home-view.tsx",
+  import.meta.url,
+);
+const themeConstantsPath = new URL(
+  "../src/app/(pages)/theme/constants.ts",
+  import.meta.url,
+);
 
 test("keeps the Codex table tall while constraining it to fullscreen height", async () => {
   const [dashboardSource, fullscreenSource] = await Promise.all([
@@ -72,13 +80,57 @@ test("stacks the toolbar until the dashboard has enough room beside the sidebar"
   );
 });
 
-test("uses a repeating color sequence for daily task bars", async () => {
-  const source = await readFile(dashboardPath, "utf8");
+test("uses the selected theme's eight chart columns for daily task bars", async () => {
+  const [dashboardSource, homeViewSource, themeConstantsSource] =
+    await Promise.all([
+      readFile(dashboardPath, "utf8"),
+      readFile(homeViewPath, "utf8"),
+      readFile(themeConstantsPath, "utf8"),
+    ]);
+  const chartColumns = [
+    ...themeConstantsSource.matchAll(/columns:\s*\[([^\]]*)\]/g),
+  ];
 
-  assert.match(source, /const taskBarColors = \[/);
+  assert.equal(chartColumns.length, 20);
+  chartColumns.forEach(([, colors]) => {
+    assert.equal((colors.match(/#[0-9A-F]{6}/gi) ?? []).length, 8);
+  });
+  assert.match(homeViewSource, /getThemeColumns/);
+  assert.match(
+    homeViewSource,
+    /"--home-theme-columns": homeThemeColumns\.join\(","\)/,
+  );
+  assert.match(dashboardSource, /columns:\s*getChartColumns\(/);
+  assert.match(
+    dashboardSource,
+    /readVar\("--home-theme-columns", defaultPalette\.columns\.join\(","\)\)/,
+  );
+  assert.match(
+    dashboardSource,
+    /const chartColumns = getChartColumns\(palette\.columns\.join\(","\)\)/,
+  );
+  assert.match(
+    dashboardSource,
+    /itemStyle:\s*\{\s*color: chartColumns\[index % chartColumns\.length\],?\s*\}/,
+  );
+  assert.doesNotMatch(dashboardSource, /const taskBarColors/);
+});
+
+test("matches preset theme chart columns without color-case drift", async () => {
+  const source = await readFile(themeConstantsPath, "utf8");
+
+  assert.match(source, /function normalizeThemeColorForComparison/);
   assert.match(
     source,
-    /data: trend\.map\(\(item, index\) => \(\{[\s\S]*itemStyle: \{ color: taskBarColors\[index % taskBarColors\.length\] \}/,
+    /normalizeThemeColorForComparison\(option\.bg\) ===\s*normalizeThemeColorForComparison\(value\.bg\)/,
+  );
+  assert.match(
+    source,
+    /normalizeThemeColorForComparison\(option\.color\) ===\s*normalizeThemeColorForComparison\(value\.color\)/,
+  );
+  assert.match(
+    source,
+    /normalizeThemeColorForComparison\(option\.text\) ===\s*normalizeThemeColorForComparison\(value\.text\)/,
   );
 });
 
