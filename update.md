@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-13 13:57:56 +08:00
+
+- Refine Codex daily-report theme chart palettes. Each built-in theme now owns a distinct eight-color chart column sequence, and the layout test rejects duplicated column hex colors across themes.
+
 ## 2026-08-13 12:04:12 +08:00
 
 - Fix Codex daily-report chart column colors. The trend bar chart now reads the current theme's `columns` through the home theme CSS variable, cleans empty color entries before handing them to ECharts, and keeps preset theme matching stable when stored colors use different hex casing.

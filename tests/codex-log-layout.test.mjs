@@ -87,14 +87,42 @@ test("uses the selected theme's eight chart columns for daily task bars", async 
       readFile(homeViewPath, "utf8"),
       readFile(themeConstantsPath, "utf8"),
     ]);
-  const chartColumns = [
-    ...themeConstantsSource.matchAll(/columns:\s*\[([^\]]*)\]/g),
+  const chartThemes = [
+    ...themeConstantsSource.matchAll(
+      /name:\s*"([^"]+)"[\s\S]*?columns:\s*\[([^\]]*)\]/g,
+    ),
   ];
+  const chartColumns = chartThemes.map(([, , colors]) => colors);
 
   assert.equal(chartColumns.length, 20);
-  chartColumns.forEach(([, colors]) => {
+  chartColumns.forEach((colors) => {
     assert.equal((colors.match(/#[0-9A-F]{6}/gi) ?? []).length, 8);
   });
+  const colorOwners = new Map();
+
+  chartThemes.forEach(([, themeName, colors]) => {
+    const themeColors = colors.match(/#[0-9A-F]{6}/gi) ?? [];
+
+    themeColors.forEach((color) => {
+      const normalizedColor = color.toUpperCase();
+      const owners = colorOwners.get(normalizedColor) ?? [];
+
+      owners.push(themeName);
+      colorOwners.set(normalizedColor, owners);
+    });
+  });
+
+  const duplicatedColors = [...colorOwners.entries()].filter(
+    ([, owners]) => owners.length > 1,
+  );
+
+  assert.equal(
+    duplicatedColors.length,
+    0,
+    `Duplicate chart column colors: ${duplicatedColors
+      .map(([color, owners]) => `${color} in ${owners.join(", ")}`)
+      .join("; ")}`,
+  );
   assert.match(homeViewSource, /getThemeColumns/);
   assert.match(
     homeViewSource,
