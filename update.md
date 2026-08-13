@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-13 11:25:01 +08:00
+
+- Fix compact Codex daily-report layout and vertical scrollbar ownership. The dashboard now responds to its own container width before expanding metric and analysis cards, and the longest-session card no longer creates a nested vertical scroll area that starts midway down the page.
+
 ## 2026-08-13 11:00:13 +08:00
 
 - Correct Codex daily-report scrollbar ownership. The report now uses one shared `OverlayScrollArea`: its fixed outer layer positions both tracks, while the inner dashboard is the only vertical and horizontal scrollport. This keeps the fullscreen vertical thumb aligned to the report frame and restores the report-level horizontal thumb in normal preview when the layout overflows.

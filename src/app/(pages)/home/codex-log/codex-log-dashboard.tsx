@@ -684,35 +684,32 @@ function TaskList({
   }
 
   return (
-    <OverlayScrollArea
-      className="min-h-0 flex-1"
-      viewportClassName="codex-log-rank-list flex flex-col gap-2.5 pr-0.5"
-    >
+    <div className="codex-log-rank-list flex min-h-0 flex-1 flex-col gap-2.5 pr-0.5">
       <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
         {items.map((item, index) => (
-        <li
-          className={cn(
-            "codex-log-rank-item grid min-h-12 grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2.5",
-            quietPanelClassName,
-          )}
-          key={item.key}
-        >
-          <span className="codex-log-rank-index inline-flex size-6 items-center justify-center rounded-[7px] text-xs font-bold">
-            {index + 1}
-          </span>
-          <span
-            className="codex-log-rank-title overflow-hidden text-ellipsis whitespace-nowrap"
-            title={item.user_tasks}
+          <li
+            className={cn(
+              "codex-log-rank-item grid min-h-12 grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2.5",
+              quietPanelClassName,
+            )}
+            key={item.key}
           >
-            {item.user_tasks}
-          </span>
-          <span className="codex-log-rank-meta whitespace-nowrap text-xs">
-            {formatToken(item.token_count)} Token
-          </span>
-        </li>
+            <span className="codex-log-rank-index inline-flex size-6 items-center justify-center rounded-[7px] text-xs font-bold">
+              {index + 1}
+            </span>
+            <span
+              className="codex-log-rank-title overflow-hidden text-ellipsis whitespace-nowrap"
+              title={item.user_tasks}
+            >
+              {item.user_tasks}
+            </span>
+            <span className="codex-log-rank-meta whitespace-nowrap text-xs">
+              {formatToken(item.token_count)} Token
+            </span>
+          </li>
         ))}
       </ul>
-    </OverlayScrollArea>
+    </div>
   );
 }
 
@@ -963,7 +960,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
 
   return (
     <OverlayScrollArea
-      className="codex-log-dashboard-shell h-full min-h-0 w-full min-w-0 flex-1"
+      className="codex-log-dashboard-shell @container/codex-log h-full min-h-0 w-full min-w-0 flex-1"
       data-scroll-pauses-background={
         fullscreen?.isFullscreen ? "true" : undefined
       }
@@ -1041,7 +1038,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </div>
       </div>
 
-      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 @2xl/codex-log:grid-cols-2 @5xl/codex-log:grid-cols-3">
         <MetricCard
           delta={metricDeltas.taskCount}
           icon="icon-task"
@@ -1066,7 +1063,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         />
       </section>
 
-      <section className="codex-log-analysis-grid grid grid-cols-1 gap-4 xl:grid-cols-[minmax(420px,1.35fr)_minmax(300px,0.9fr)_minmax(300px,0.95fr)]">
+      <section className="codex-log-analysis-grid grid grid-cols-1 gap-4 @7xl/codex-log:grid-cols-[minmax(420px,1.35fr)_minmax(300px,0.9fr)_minmax(300px,0.95fr)]">
         <ChartPanel
           empty={!data.trend.length}
           option={trendOption}
