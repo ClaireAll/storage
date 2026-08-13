@@ -16,7 +16,7 @@ const overlayScrollbarPath = new URL(
 );
 const stylesPath = new URL("../src/app/globals.css", import.meta.url);
 
-test("keeps the Codex log scrollbar outside its fullscreen scrollport", async () => {
+test("keeps the Codex log scrollbar native and outside React scroll state", async () => {
   const [dashboard, provider, overlayScrollbar, styles] = await Promise.all([
     readFile(dashboardPath, "utf8"),
     readFile(providerPath, "utf8"),
@@ -28,14 +28,14 @@ test("keeps the Codex log scrollbar outside its fullscreen scrollport", async ()
   assert.match(dashboard, /codex-log-dashboard-shell/);
   assert.match(dashboard, /overflow-x-auto/);
   assert.doesNotMatch(dashboard, /<OverlayScrollbar scrollTarget=\{scrollTarget\} \/>/);
-  assert.match(overlayScrollbar, /onPointerDown/);
-  assert.match(overlayScrollbar, /onPointerMove/);
-  assert.match(overlayScrollbar, /setPointerCapture/);
-  assert.match(overlayScrollbar, /scrollTarget\.scrollTo/);
-  assert.match(overlayScrollbar, /new ResizeObserver/);
-  assert.match(overlayScrollbar, /new ScrollTimelineClass/);
-  assert.match(styles, /\.storage-overlay-scrollbar-rail\s*\{[\s\S]*?pointer-events:\s*auto;/);
-  assert.match(styles, /--storage-overlay-vertical-thumb-size/);
+  assert.doesNotMatch(overlayScrollbar, /onPointerDown/);
+  assert.doesNotMatch(overlayScrollbar, /onPointerMove/);
+  assert.doesNotMatch(overlayScrollbar, /setPointerCapture/);
+  assert.doesNotMatch(overlayScrollbar, /scrollTarget\.scrollTo/);
+  assert.doesNotMatch(overlayScrollbar, /new ResizeObserver/);
+  assert.doesNotMatch(overlayScrollbar, /new ScrollTimelineClass/);
+  assert.match(styles, /scrollbar-width:\s*thin;/);
+  assert.match(styles, /storage-is-vertically-scrolling/);
   assert.doesNotMatch(styles, /100dvh - 100px/);
   assert.doesNotMatch(styles, /storage-scroll-surface-active::after/);
   assert.doesNotMatch(

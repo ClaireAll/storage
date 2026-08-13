@@ -29,7 +29,8 @@ test("limits the shared overlay scrollbar activity to the Codex daily report", a
   assert.doesNotMatch(homeDashboard, /data-scroll-surface="true"/);
   assert.match(dashboard, /<OverlayScrollArea[\s\S]*?horizontal[\s\S]*?viewportClassName=/);
   assert.match(dashboard, /codex-log-dashboard-shell/);
-  assert.match(styles, /storage-overlay-scrollbar-container\.storage-overlay-scrollbar-active/);
-  assert.match(styles, /storage-overlay-scrollbar-vertical-thumb/);
+  assert.match(styles, /\.storage-overlay-scrollbar-container\s*\{[\s\S]*?scrollbar-gutter:\s*auto;/);
+  assert.match(styles, /\.storage-overlay-scrollbar-viewport\s*\{[\s\S]*?scrollbar-width:\s*thin;/);
+  assert.match(styles, /\.storage-is-vertically-scrolling\s*\{[\s\S]*?scrollbar-color:/);
   assert.doesNotMatch(styles, /storage-scroll-surface-active::after/);
 });

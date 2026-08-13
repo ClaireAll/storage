@@ -52,8 +52,11 @@ test("uses one explicit dashboard scrollport inside the fullscreen card", async 
     dashboard,
     /<OverlayScrollArea[\s\S]*?codex-log-dashboard-shell[\s\S]*?horizontal[\s\S]*?viewportClassName=/,
   );
-  assert.match(overlayScrollbar, /export function OverlayScrollbar/);
-  assert.match(overlayScrollbar, /new ResizeObserver/);
+  assert.doesNotMatch(overlayScrollbar, /export function OverlayScrollbar\s*\(/);
+  assert.match(overlayScrollbar, /export function OverlayScrollArea/);
+  assert.match(overlayScrollbar, /export function OverlayScrollbarHost/);
+  assert.match(overlayScrollbar, /new MutationObserver/);
+  assert.doesNotMatch(overlayScrollbar, /new ResizeObserver/);
   assert.doesNotMatch(
     provider,
     /getComputedStyle|getBoundingClientRect|scrollHeight|clientHeight|scrollTop/,

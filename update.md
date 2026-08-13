@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-13 17:47:45 +08:00
+
+- Restyle the Codex daily-report longest-session panel as a compact reference-style list: each row now shows the task title, a stable colored repository label, and a right-aligned Token metric with a clock icon, without rank badges or nested row cards.
+
 ## 2026-08-13
 
 - 移除自绘覆盖式滚动条及其指针拖拽、尺寸观测和滚动时间线逻辑，统一使用浏览器原生细滚动条；滚动活动期间仅增强主题色，不再改变滚动容器尺寸。

@@ -30,7 +30,7 @@ test("keeps vertical scroll activity tracking lightweight", async () => {
   assert.equal(source.includes("event.target instanceof HTMLIFrameElement"), true);
 });
 
-test("prevents scrollbars from reserving layout space", async () => {
+test("keeps native scrollbar dimensions stable while using theme colors", async () => {
   const source = await readFile(globalStylesPath, "utf8");
   const universalRule = source.slice(
     source.indexOf("* {"),
@@ -51,15 +51,15 @@ test("prevents scrollbars from reserving layout space", async () => {
   );
   assert.equal(overflowRule.includes("scrollbar-gutter: auto;"), true);
   assert.equal(
-    source.includes("scrollbar-width: none;"),
+    overflowRule.includes("scrollbar-width: thin;"),
     true,
   );
   assert.equal(
-    webkitScrollbarRule.includes("height: 0;"),
+    webkitScrollbarRule.includes("height: 10px;"),
     true,
   );
   assert.equal(
-    webkitScrollbarRule.includes("width: 0;"),
+    webkitScrollbarRule.includes("width: 10px;"),
     true,
   );
   assert.equal(
@@ -67,10 +67,10 @@ test("prevents scrollbars from reserving layout space", async () => {
     false,
   );
   assert.equal(source.includes("html.storage-is-scrolling"), false);
-  assert.equal(universalRule.includes("scrollbar-width"), true);
+  assert.equal(universalRule.includes("scrollbar-width"), false);
   assert.equal(
     source.includes("@supports not selector(::-webkit-scrollbar)"),
-    true,
+    false,
   );
 });
 
