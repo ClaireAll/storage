@@ -85,8 +85,8 @@ test("uses a repeating color sequence for daily task bars", async () => {
 test("shows only task, Token, and repository metric cards", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
-  assert.match(source, /codex-log-dashboard-shell @container\/codex-log/);
-  assert.match(source, /codex-log-metric-grid grid grid-cols-1 gap-3 @2xl\/codex-log:grid-cols-2 @5xl\/codex-log:grid-cols-3/);
+  assert.match(source, /codex-log-metric-grid flex w-full flex-nowrap gap-3/);
+  assert.match(source, /codex-log-metric-card flex-1 basis-0/);
   assert.doesNotMatch(source, /label="估算占比"/);
   assert.doesNotMatch(source, /icon="icon-proportion"/);
 });

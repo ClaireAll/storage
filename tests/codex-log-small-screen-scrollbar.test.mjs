@@ -7,16 +7,12 @@ const dashboardPath = new URL(
   import.meta.url,
 );
 
-test("keeps compact Codex reports stacked until there is enough space", async () => {
+test("keeps compact Codex analysis stacked until there is enough space", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
   assert.match(
     source,
     /codex-log-dashboard-shell @container\/codex-log/,
-  );
-  assert.match(
-    source,
-    /codex-log-metric-grid grid grid-cols-1 gap-3 @2xl\/codex-log:grid-cols-2 @5xl\/codex-log:grid-cols-3/,
   );
   assert.match(
     source,

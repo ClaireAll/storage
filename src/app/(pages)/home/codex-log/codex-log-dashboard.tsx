@@ -1038,7 +1038,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </div>
       </div>
 
-      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 @2xl/codex-log:grid-cols-2 @5xl/codex-log:grid-cols-3">
+      <section className="codex-log-metric-grid flex w-full flex-nowrap gap-3">
         <MetricCard
           delta={metricDeltas.taskCount}
           icon="icon-task"
@@ -1139,7 +1139,7 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "codex-log-metric-card min-w-0 border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]! bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]!",
+        "codex-log-metric-card flex-1 basis-0 min-w-0 border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]! bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]!",
         panelClassName,
         metricToneClassNames[tone].card,
       )}

@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-13 11:41:41 +08:00
+
+- Adjust the Codex daily-report metric row. Today tasks, Token, and repository cards now use one flex row with equal-width cards across the available dashboard width.
+
 ## 2026-08-13 11:25:01 +08:00
 
 - Fix compact Codex daily-report layout and vertical scrollbar ownership. The dashboard now responds to its own container width before expanding metric and analysis cards, and the longest-session card no longer creates a nested vertical scroll area that starts midway down the page.
