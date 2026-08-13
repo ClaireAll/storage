@@ -3,7 +3,6 @@
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
 import {
   OverlayScrollArea,
-  OverlayScrollbar,
   OverlayScrollbarHost,
 } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
@@ -757,7 +756,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const fullscreen = useHomeContentFullscreen();
   const router = useRouter();
   const pathname = usePathname();
-  const [scrollTarget, setScrollTarget] = useState<HTMLDivElement | null>(null);
   const palette = useChartPalette();
   const [keyword, setKeyword] = useState("");
   const [repository, setRepository] = useState<string>("all");
@@ -964,14 +962,14 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   };
 
   return (
-    <div
-      className="codex-log-dashboard storage-overlay-scrollbar-container storage-overlay-scrollbar-viewport relative flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-1 md:gap-5"
+    <OverlayScrollArea
+      className="codex-log-dashboard-shell h-full min-h-0 w-full min-w-0 flex-1"
       data-scroll-pauses-background={
         fullscreen?.isFullscreen ? "true" : undefined
       }
-      ref={setScrollTarget}
+      horizontal
+      viewportClassName="codex-log-dashboard flex min-h-0 min-w-0 flex-col gap-4 overflow-x-auto p-1 md:gap-5"
     >
-      <OverlayScrollbar scrollTarget={scrollTarget} />
       <div
         className={cn(
           "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 2xl:flex 2xl:items-center 2xl:justify-between",
@@ -1122,7 +1120,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </OverlayScrollbarHost>
       </DashboardPanel>
       <SummaryPanel initialSummary={data.dailySummary} />
-    </div>
+    </OverlayScrollArea>
   );
 }
 

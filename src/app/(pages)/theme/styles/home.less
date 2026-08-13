@@ -85,26 +85,18 @@
   width: 100%;
 }
 
-.home-category-content-card:fullscreen .codex-log-dashboard {
-  gap: 14px;
+.home-category-content-card:fullscreen .codex-log-dashboard-shell {
   height: 100%;
   margin-inline: auto;
   max-width: 1680px;
   min-height: 0;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  padding: 0;
   width: min(100%, 1680px);
 }
 
 .home-category-content-card:fullscreen .codex-log-dashboard {
-  scrollbar-width: none;
-}
-
-.home-category-content-card:fullscreen .codex-log-dashboard::-webkit-scrollbar {
-  display: none;
-  height: 0;
-  width: 0;
+  gap: 14px;
+  min-height: 100%;
+  padding: 0;
 }
 
 .home-category-content-card:fullscreen .codex-log-toolbar {

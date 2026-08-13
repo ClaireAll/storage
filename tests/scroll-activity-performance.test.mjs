@@ -55,11 +55,11 @@ test("keeps the fullscreen dashboard scrollable without reserving a scrollbar gu
 
   assert.match(
     source,
-    /:fullscreen \.codex-log-dashboard\s*\{[^}]*overflow-y:\s*auto !important;/s,
+    /:fullscreen \.codex-log-dashboard-shell\s*\{[^}]*min-height:\s*0;/s,
   );
   assert.doesNotMatch(
     source,
-    /:fullscreen \.codex-log-dashboard\s*\{[^}]*scrollbar-gutter:\s*stable/s,
+    /:fullscreen \.codex-log-dashboard-shell\s*\{[^}]*scrollbar-gutter:\s*stable/s,
   );
 });
 

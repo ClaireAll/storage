@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-13 11:00:13 +08:00
+
+- Correct Codex daily-report scrollbar ownership. The report now uses one shared `OverlayScrollArea`: its fixed outer layer positions both tracks, while the inner dashboard is the only vertical and horizontal scrollport. This keeps the fullscreen vertical thumb aligned to the report frame and restores the report-level horizontal thumb in normal preview when the layout overflows.
+
 ## 2026-08-13 10:29:11 +08:00
 
 - Remove local-only Codex working artifacts from `.tmp` and `.superpowers` before release. Historical daily-import output, one-off repair scripts, dev-server logs, and local brainstorming session state are not part of the application source or deployment.

@@ -46,11 +46,11 @@ test("uses one explicit dashboard scrollport inside the fullscreen card", async 
   );
   assert.match(
     styles,
-    /\.home-category-content-card:fullscreen \.codex-log-dashboard\s*\{[\s\S]*overflow-y:\s*auto !important;/,
+    /\.home-category-content-card:fullscreen \.codex-log-dashboard-shell\s*\{[\s\S]*min-height:\s*0;/,
   );
   assert.match(
     dashboard,
-    /storage-overlay-scrollbar-container storage-overlay-scrollbar-viewport/,
+    /<OverlayScrollArea[\s\S]*?codex-log-dashboard-shell[\s\S]*?horizontal[\s\S]*?viewportClassName=/,
   );
   assert.match(overlayScrollbar, /export function OverlayScrollbar/);
   assert.match(overlayScrollbar, /new ResizeObserver/);
