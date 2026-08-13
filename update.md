@@ -1,5 +1,11 @@
 # 版本更新
 
+## 2026-08-13
+
+- 新增投资工作台：侧栏入口进入后使用 40/60 双栏布局，左侧“我的关注”支持基金/股票筛选、代码或名称公开搜索、手工添加、删除和拖拽排序；每条关注项展示可用的股票分时或基金净值趋势。
+- 右侧增加三条规则模型推荐与市场信号地图；页面按盘中、午间、开盘前、收盘后和 2026 年休市日明确展示行情时间状态，所有公开接口失败都会降级为可见的不可用状态。
+- 新增工程内置规则 MD、公开网页证据抓取和文本信号；新增企微机器人设置与同日同信号去重推送。新增 `investment_notifications` 与 `investment` 安全迁移，需应用到 Supabase 后启用持久化与推送。
+
 ## 2026-08-13 13:57:56 +08:00
 
 - Refine Codex daily-report theme chart palettes. Each built-in theme now owns a distinct eight-color chart column sequence, and the layout test rejects duplicated column hex colors across themes.

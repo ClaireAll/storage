@@ -23,6 +23,27 @@ export type UserAuthProfileRow = {
 
 export type UserProfileWriteValues = Record<string, string | null>;
 
+export type InvestmentInstrumentType = "fund" | "stock";
+
+/** 用户手动关注的基金或深市 00 开头股票。 */
+export type InvestmentWatchlistItem = {
+  createdAt: string | null;
+  id: string;
+  instrumentCode: string;
+  instrumentName: string;
+  instrumentOrder: string | null;
+  instrumentType: InvestmentInstrumentType;
+};
+
+type InvestmentWatchlistRow = {
+  created_at: string | null;
+  id: string;
+  instrument_code: string;
+  instrument_name: string;
+  instrument_order: string | null;
+  instrument_type: InvestmentInstrumentType;
+};
+
 export type ItemCategory =
   | "clothes"
   | "pants"
@@ -300,6 +321,40 @@ export function getThemeRow(supabase: DatabaseClient, userId: string) {
     .select(themeSelectFields)
     .eq("id", userId)
     .maybeSingle<ThemeDatabaseRow>();
+}
+
+/** 读取当前用户的投资关注项，并遵从排序字段保存的代码顺序。 */
+export async function listInvestmentWatchlist(
+  supabase: DatabaseClient,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("investment")
+    .select(
+      "id,instrument_code,instrument_name,instrument_type,created_at,instrument_order",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .returns<InvestmentWatchlistRow[]>();
+
+  return {
+    data: (data ?? []).map(mapInvestmentWatchlistRow),
+    error,
+  };
+}
+
+/** 按数据库原始字段转换为页面使用的投资关注项。 */
+function mapInvestmentWatchlistRow(
+  item: InvestmentWatchlistRow,
+): InvestmentWatchlistItem {
+  return {
+    createdAt: item.created_at,
+    id: item.id,
+    instrumentCode: item.instrument_code,
+    instrumentName: item.instrument_name,
+    instrumentOrder: item.instrument_order,
+    instrumentType: item.instrument_type,
+  };
 }
 
 export function upsertTheme(
