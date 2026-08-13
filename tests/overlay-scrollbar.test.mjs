@@ -55,6 +55,15 @@ test("keeps overlay scrollbars outside the document layout flow", async () => {
   );
 });
 
+test("resets the README preview scrollbar when its repository changes", async () => {
+  const source = await readFile(readmePreviewPath, "utf8");
+
+  assert.match(
+    source,
+    /<OverlayScrollArea\s+className="min-h-0 flex-1"\s+horizontal\s+key=\{repository\}/,
+  );
+});
+
 test("allows table-like views to bind horizontal overflow to a separate viewport", async () => {
   const component = await readFile(componentPath, "utf8");
 

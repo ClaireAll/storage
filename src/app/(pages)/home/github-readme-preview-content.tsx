@@ -60,6 +60,7 @@ export function GitHubReadmePreviewContent({
         <OverlayScrollArea
           className="min-h-0 flex-1"
           horizontal
+          key={repository}
           viewportClassName="pr-1"
         >
           <article
