@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
+  ClockCircleOutlined,
   MinusOutlined,
   QuestionCircleOutlined,
   SearchOutlined,
@@ -702,12 +703,14 @@ function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
   );
 }
 
-function TaskList({
+function LongestSessionList({
   emptyText,
   items,
+  palette,
 }: {
   emptyText: string;
   items: CodexLogRecord[];
+  palette: ChartPalette;
 }) {
   if (items.length === 0) {
     return (
@@ -715,31 +718,48 @@ function TaskList({
     );
   }
 
+  const repositoryToneMap = new Map<string, string>();
+
+  items.forEach((item) => {
+    if (!repositoryToneMap.has(item.repository)) {
+      const nextIndex = repositoryToneMap.size % palette.columns.length;
+
+      repositoryToneMap.set(
+        item.repository,
+        palette.columns[nextIndex] ?? palette.accent,
+      );
+    }
+  });
+
   return (
-    <div className="codex-log-rank-list flex min-h-0 flex-1 flex-col gap-2.5 pr-0.5">
-      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-        {items.map((item, index) => (
-          <li
-            className={cn(
-              "codex-log-rank-item grid min-h-12 grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2.5",
-              quietPanelClassName,
-            )}
-            key={item.key}
-          >
-            <span className="codex-log-rank-index inline-flex size-6 items-center justify-center rounded-[7px] text-xs font-bold">
-              {index + 1}
-            </span>
-            <span
-              className="codex-log-rank-title overflow-hidden text-ellipsis whitespace-nowrap"
-              title={item.user_tasks}
+    <div className="codex-log-longest-list flex min-h-0 flex-1 flex-col">
+      <ul className="m-0 flex list-none flex-col p-0">
+        {items.map((item) => {
+          const tone = repositoryToneMap.get(item.repository) ?? palette.accent;
+
+          return (
+            <li
+              className="codex-log-longest-row flex min-h-14 items-start gap-3 border-b border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)] py-3 last:border-b-0 last:pb-0 first:pt-0"
+              key={item.key}
             >
-              {item.user_tasks}
-            </span>
-            <span className="codex-log-rank-meta whitespace-nowrap text-xs">
-              {formatToken(item.token_count)} Token
-            </span>
-          </li>
-        ))}
+              <div className="min-w-0 flex-1">
+                <span className="codex-log-longest-title block truncate text-sm font-semibold text-(--home-theme-text)">
+                  {item.user_tasks}
+                </span>
+                <span
+                  className="codex-log-longest-repository mt-1 block truncate text-xs font-semibold"
+                  style={{ color: tone }}
+                >
+                  {item.repository}
+                </span>
+              </div>
+              <span className="codex-log-longest-meta inline-flex shrink-0 items-center gap-1 whitespace-nowrap pt-0.5 text-xs font-medium tabular-nums text-[color-mix(in_srgb,var(--home-theme-text)_58%,transparent)]">
+                <ClockCircleOutlined className="text-[13px]" />
+                {formatToken(item.token_count)} Token
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -1107,7 +1127,11 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           title="仓库占比"
         />
         <DashboardPanel className="min-h-75" title="最长会话">
-          <TaskList emptyText="暂无会话" items={data.longestSessions} />
+          <LongestSessionList
+            emptyText="暂无会话"
+            items={data.longestSessions}
+            palette={palette}
+          />
         </DashboardPanel>
       </section>
 

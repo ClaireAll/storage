@@ -42,8 +42,12 @@ test("uses the browser scroll target without layout reads on scroll", async () =
 test("does not resize the scrollport while marking scrolling activity", async () => {
   const source = await readFile(globalsPath, "utf8");
 
-  assert.match(source, /::\-webkit-scrollbar\s*\{[^}]*height:\s*0;[^}]*width:\s*0;/s);
-  assert.doesNotMatch(source, /\.storage-is-vertically-scrolling::\-webkit-scrollbar/);
+  assert.match(source, /::\-webkit-scrollbar\s*\{[^}]*height:\s*10px;[^}]*width:\s*10px;/s);
+  assert.match(
+    source,
+    /\.storage-is-vertically-scrolling::\-webkit-scrollbar-thumb\s*\{[^}]*background-color:/s,
+  );
+  assert.doesNotMatch(source, /\.storage-is-vertically-scrolling::\-webkit-scrollbar\s*\{/);
   assert.doesNotMatch(
     source,
     /\.storage-is-vertically-scrolling\s*\{[^}]*scrollbar-width/s,

@@ -12,68 +12,45 @@ const readmePreviewPath = new URL(
   import.meta.url,
 );
 
-test("provides a shared overlay scrollbar without scroll hot-path layout reads", async () => {
+test("uses browser-native vertical scrollbars for every shared scroll viewport", async () => {
   const [component, styles] = await Promise.all([
     readFile(componentPath, "utf8"),
     readFile(stylesPath, "utf8"),
   ]);
 
   assert.match(component, /export function OverlayScrollArea/);
-  assert.match(component, /export function OverlayScrollbar/);
   assert.match(component, /export function OverlayScrollbarHost/);
-  assert.match(component, /new ResizeObserver/);
   assert.match(component, /new MutationObserver/);
-  assert.match(component, /onPointerDown/);
-  assert.match(component, /setPointerCapture/);
-  assert.match(component, /scrollTo\(/);
-  assert.doesNotMatch(component, /addEventListener\("scroll"/);
-  assert.doesNotMatch(component, /onScroll=/);
-  assert.match(component, /storage-overlay-scrollbar-host/);
-  assert.match(component, /storage-overlay-scrollbar-vertical-thumb/);
-  assert.match(component, /storage-overlay-scrollbar-horizontal-thumb/);
-  assert.match(component, /ScrollTimeline/);
-  assert.match(styles, /storage-overlay-scrollbar-active/);
-  assert.match(component, /onKeyDown/);
+  assert.doesNotMatch(component, /export function OverlayScrollbar\s*\(/);
+  assert.doesNotMatch(component, /ScrollTimeline/);
+  assert.doesNotMatch(component, /getAxisMetrics/);
+  assert.doesNotMatch(component, /onPointerDown/);
+  assert.match(component, /storage-overlay-scrollbar-viewport h-full min-h-0 min-w-0/);
+  assert.match(styles, /scrollbar-width:\s*thin;/);
+  assert.match(styles, /::\-webkit-scrollbar\s*\{[^}]*height:\s*10px;[^}]*width:\s*10px;/s);
+  assert.match(styles, /::\-webkit-scrollbar-thumb\s*\{[^}]*background-color:/s);
 });
 
-test("keeps overlay scrollbars outside the document layout flow", async () => {
-  const [component, styles] = await Promise.all([
-    readFile(componentPath, "utf8"),
-    readFile(stylesPath, "utf8"),
-  ]);
+test("keeps native scrollbar dimensions stable while marking scroll activity", async () => {
+  const styles = await readFile(stylesPath, "utf8");
 
-  assert.match(component, /storage-overlay-scrollbar-container relative min-h-0 min-w-0/);
-  assert.match(component, /pointer-events-none absolute inset-0 z-10/);
-  assert.match(component, /storage-overlay-scrollbar-horizontal/);
-  assert.match(
+  assert.doesNotMatch(
     styles,
-    /\.storage-overlay-scrollbar-rail\s*\{[\s\S]*?position:\s*absolute;/,
+    /\.storage-is-vertically-scrolling::\-webkit-scrollbar\s*\{/,
   );
   assert.match(
     styles,
-    /\.storage-overlay-scrollbar-container\.storage-overlay-scrollbar-active/,
+    /\.storage-is-vertically-scrolling\s*\{[^}]*scrollbar-color:/s,
   );
 });
 
-test("resets the README preview scrollbar when its repository changes", async () => {
-  const source = await readFile(readmePreviewPath, "utf8");
-
-  assert.match(
-    source,
-    /<OverlayScrollArea\s+className="min-h-0 flex-1"\s+horizontal\s+key=\{repository\}/,
-  );
-});
-
-test("allows table-like views to bind horizontal overflow to a separate viewport", async () => {
+test("allows table-like views to bind native scrollbar styling to a separate viewport", async () => {
   const component = await readFile(componentPath, "utf8");
 
   assert.match(component, /horizontalTargetSelector\?: string;/);
   assert.match(component, /const \[horizontalScrollTarget, setHorizontalScrollTarget\]/);
   assert.match(component, /horizontalTargetSelector \?\? targetSelector/);
-  assert.match(
-    component,
-    /<OverlayScrollbar\s+horizontal\s+scrollTarget=\{horizontalScrollTarget\}\s+vertical=\{false\}/,
-  );
+  assert.match(component, /target\.classList\.add\("storage-overlay-scrollbar-viewport"\)/);
 });
 
 test("routes README overflow through the shared horizontal scrollbar", async () => {

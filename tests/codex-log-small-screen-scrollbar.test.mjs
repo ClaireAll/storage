@@ -26,9 +26,24 @@ test("keeps compact Codex analysis stacked until there is enough space", async (
 
 test("keeps the visible vertical scrollbar owned by the main report scrollport", async () => {
   const source = await readFile(dashboardPath, "utf8");
-  const taskListSource =
-    source.match(/function TaskList[\s\S]*?function SummaryPanel/)?.[0] ?? "";
+  const longestSessionSource =
+    source.match(/function LongestSessionList[\s\S]*?function SummaryPanel/)?.[0] ??
+    "";
 
-  assert.doesNotMatch(taskListSource, /<OverlayScrollArea/);
-  assert.match(taskListSource, /codex-log-rank-list/);
+  assert.doesNotMatch(longestSessionSource, /<OverlayScrollArea/);
+  assert.match(longestSessionSource, /codex-log-longest-list/);
+});
+
+test("renders longest sessions as compact rows instead of ranked cards", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+  const listSource =
+    source.match(/function LongestSessionList[\s\S]*?function SummaryPanel/)?.[0] ??
+    "";
+
+  assert.match(listSource, /codex-log-longest-list/);
+  assert.match(listSource, /codex-log-longest-row/);
+  assert.match(listSource, /codex-log-longest-repository/);
+  assert.match(listSource, /codex-log-longest-meta/);
+  assert.doesNotMatch(listSource, /codex-log-rank-index/);
+  assert.doesNotMatch(listSource, /\{index \+ 1\}/);
 });
