@@ -10,6 +10,10 @@ const homeStylesPath = new URL(
   "../src/app/(pages)/theme/styles/home.less",
   import.meta.url,
 );
+const overlayScrollbarPath = new URL(
+  "../src/app/(pages)/common/overlay-scrollbar.tsx",
+  import.meta.url,
+);
 
 async function readDashboardSource() {
   return readFile(dashboardPath, "utf8");
@@ -31,7 +35,10 @@ test("keeps the Codex submenu user-controlled on an active child route", async (
 });
 
 test("keeps the category menu vertically scrollable without horizontal overflow", async () => {
-  const source = await readDashboardSource();
+  const [source, overlayScrollbarSource] = await Promise.all([
+    readDashboardSource(),
+    readFile(overlayScrollbarPath, "utf8"),
+  ]);
 
   assert.equal(
     source.includes("flex h-full min-h-0 flex-col overflow-hidden"),
@@ -42,9 +49,10 @@ test("keeps the category menu vertically scrollable without horizontal overflow"
     true,
   );
   assert.equal(
-    source.includes("overflow-x-hidden overflow-y-auto"),
+    source.includes("viewportClassName=\"home-category-menu-scroll overflow-x-hidden\""),
     true,
   );
+  assert.equal(overlayScrollbarSource.includes('vertical && "overflow-y-auto"'), true);
   assert.equal(source.includes("scrollbar-gutter-stable"), false);
   assert.equal(
     source.includes('className="home-category-menu !w-full min-w-0"'),
@@ -75,15 +83,15 @@ test("keeps collapsed category menu spacing symmetrical", async () => {
     styles.includes(
       ".home-category-layout-collapsed .home-category-menu-scroll",
     ),
-    true,
+    false,
   );
-  assert.equal(styles.includes("scrollbar-gutter: auto;"), true);
-  assert.equal(styles.includes("scrollbar-width: none;"), true);
+  assert.equal(styles.includes("justify-content: center;"), true);
+  assert.equal(styles.includes("padding-inline: 0 !important;"), true);
   assert.equal(
     styles.includes(
       ".home-category-layout-collapsed .home-category-menu-scroll::-webkit-scrollbar",
     ),
-    true,
+    false,
   );
   assert.equal(
     source.includes(

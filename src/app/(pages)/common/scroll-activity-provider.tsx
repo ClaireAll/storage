@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 
 const verticalScrollActiveClassName = "storage-is-vertically-scrolling";
-const scrollSurfaceActiveClassName = "storage-scroll-surface-active";
+const overlayScrollbarActiveClassName = "storage-overlay-scrollbar-active";
 const sharedBackgroundPausedClassName = "storage-scroll-background-paused";
 const sharedBackgroundPauseSelector = "[data-scroll-pauses-background]";
-const scrollSurfaceSelector = "[data-scroll-surface]";
+const overlayScrollbarContainerSelector = ".storage-overlay-scrollbar-container";
 const scrollActivityRetentionMs = 2_000;
 
 function getScrollContainer(target: EventTarget | null) {
@@ -22,7 +22,7 @@ function getScrollContainer(target: EventTarget | null) {
 export function ScrollActivityProvider() {
   useEffect(() => {
     let activeScrollContainer: HTMLElement | null = null;
-    let activeScrollSurface: HTMLElement | null = null;
+    let activeOverlayScrollbarContainer: HTMLElement | null = null;
     let isSharedBackgroundPaused = false;
     let timer: number | undefined;
     const supportsScrollEnd = "onscrollend" in window;
@@ -51,8 +51,10 @@ export function ScrollActivityProvider() {
 
       activeScrollContainer?.classList.remove(verticalScrollActiveClassName);
       activeScrollContainer = null;
-      activeScrollSurface?.classList.remove(scrollSurfaceActiveClassName);
-      activeScrollSurface = null;
+      activeOverlayScrollbarContainer?.classList.remove(
+        overlayScrollbarActiveClassName,
+      );
+      activeOverlayScrollbarContainer = null;
       setSharedBackgroundPaused(false);
     };
 
@@ -88,12 +90,18 @@ export function ScrollActivityProvider() {
         activeScrollContainer.classList.remove(verticalScrollActiveClassName);
       }
 
-      activeScrollSurface?.classList.remove(scrollSurfaceActiveClassName);
+      activeOverlayScrollbarContainer?.classList.remove(
+        overlayScrollbarActiveClassName,
+      );
 
       activeScrollContainer = nextScrollContainer;
       activeScrollContainer.classList.add(verticalScrollActiveClassName);
-      activeScrollSurface = nextScrollContainer.closest(scrollSurfaceSelector);
-      activeScrollSurface?.classList.add(scrollSurfaceActiveClassName);
+      activeOverlayScrollbarContainer = nextScrollContainer.closest(
+        overlayScrollbarContainerSelector,
+      );
+      activeOverlayScrollbarContainer?.classList.add(
+        overlayScrollbarActiveClassName,
+      );
       setSharedBackgroundPaused(
         nextScrollContainer.closest(sharedBackgroundPauseSelector) !== null,
       );

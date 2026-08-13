@@ -1,6 +1,11 @@
 "use client";
 
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
+import {
+  OverlayScrollArea,
+  OverlayScrollbar,
+  OverlayScrollbarHost,
+} from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import {
   ArrowDownOutlined,
@@ -47,12 +52,10 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import type {
@@ -87,15 +90,6 @@ type ChartOption = ComposeOption<
 
 type CodexLogDashboardProps = {
   data: CodexLogDashboardData;
-};
-
-type CodexLogScrollbarDrag = {
-  maxScrollTop: number;
-  pointerId: number;
-  scrollContainer: HTMLElement;
-  startClientY: number;
-  startScrollTop: number;
-  trackTravel: number;
 };
 
 type CodexDailySummary = {
@@ -169,13 +163,6 @@ const metricToneClassNames = {
     card: "",
     help: "text-[color-mix(in_srgb,#6f7378_72%,var(--home-theme-text)_28%)]!",
     icon: "border-[color-mix(in_srgb,#6f7378_38%,transparent)]! bg-[color-mix(in_srgb,#6f7378_12%,transparent)]! text-[#6f7378]!",
-    label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
-    value: "text-(--home-theme-text)!",
-  },
-  proportion: {
-    card: "",
-    help: "text-[color-mix(in_srgb,#f59e0b_74%,var(--home-theme-text)_26%)]!",
-    icon: "border-[color-mix(in_srgb,#f59e0b_52%,transparent)]! bg-[color-mix(in_srgb,#f59e0b_14%,transparent)]! text-[#f59e0b]!",
     label: "text-[color-mix(in_srgb,var(--home-theme-text)_66%,transparent)]!",
     value: "text-(--home-theme-text)!",
   },
@@ -268,15 +255,6 @@ function buildNumberDelta(current: number, previous: number): MetricDelta {
   return {
     direction: getMetricDirection(diff),
     text: toMetricDeltaText(diff),
-  };
-}
-
-function buildPointDelta(current: number, previous: number): MetricDelta {
-  const diff = current - previous;
-
-  return {
-    direction: getMetricDirection(diff),
-    text: `${toMetricDeltaText(diff)}%`,
   };
 }
 
@@ -707,10 +685,12 @@ function TaskList({
   }
 
   return (
-    <ul
-      className="codex-log-rank-list m-0 flex min-h-0 flex-1 list-none flex-col gap-2.5 overflow-auto p-0"
+    <OverlayScrollArea
+      className="min-h-0 flex-1"
+      viewportClassName="codex-log-rank-list flex flex-col gap-2.5 pr-0.5"
     >
-      {items.map((item, index) => (
+      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {items.map((item, index) => (
         <li
           className={cn(
             "codex-log-rank-item grid min-h-12 grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2.5",
@@ -731,8 +711,9 @@ function TaskList({
             {formatToken(item.token_count)} Token
           </span>
         </li>
-      ))}
-    </ul>
+        ))}
+      </ul>
+    </OverlayScrollArea>
   );
 }
 
@@ -776,8 +757,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const fullscreen = useHomeContentFullscreen();
   const router = useRouter();
   const pathname = usePathname();
-  const dashboardRef = useRef<HTMLDivElement>(null);
-  const scrollbarDragRef = useRef<CodexLogScrollbarDrag | null>(null);
+  const [scrollTarget, setScrollTarget] = useState<HTMLDivElement | null>(null);
   const palette = useChartPalette();
   const [keyword, setKeyword] = useState("");
   const [repository, setRepository] = useState<string>("all");
@@ -792,166 +772,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     order: "descend",
   });
   const selectedDay = dayjs(data.selectedDate);
-  const getScrollbarScrollContainer = useCallback(() => {
-    const dashboard = dashboardRef.current;
-
-    if (!dashboard) {
-      return null;
-    }
-
-    if (!fullscreen?.isFullscreen) {
-      return dashboard;
-    }
-
-    const fullscreenCard = dashboard.closest(".home-category-content-card");
-
-    return fullscreenCard instanceof HTMLElement ? fullscreenCard : null;
-  }, [fullscreen?.isFullscreen]);
-  useEffect(() => {
-    const dashboard = dashboardRef.current;
-    const scrollContainer = getScrollbarScrollContainer();
-
-    if (!dashboard || !scrollContainer) {
-      return;
-    }
-
-    let frameId: number | undefined;
-    const updateScrollbarMetrics = () => {
-      frameId = undefined;
-      const trackHeight = Math.max(scrollContainer.clientHeight - 16, 0);
-      const hasOverflow = scrollContainer.scrollHeight > scrollContainer.clientHeight;
-      const thumbHeight = hasOverflow
-        ? Math.min(
-            trackHeight,
-            Math.max(
-              40,
-              (trackHeight * scrollContainer.clientHeight) /
-                scrollContainer.scrollHeight,
-            ),
-          )
-        : 0;
-
-      dashboard.style.setProperty(
-        "--codex-log-scrollbar-track-height",
-        `${trackHeight}px`,
-      );
-      dashboard.style.setProperty(
-        "--codex-log-scrollbar-thumb-height",
-        `${thumbHeight}px`,
-      );
-      dashboard.style.setProperty(
-        "--codex-log-scrollbar-travel",
-        `${Math.max(trackHeight - thumbHeight, 0)}px`,
-      );
-      dashboard.toggleAttribute("data-codex-log-scrollable", hasOverflow);
-    };
-    const scheduleScrollbarMetrics = () => {
-      if (frameId !== undefined) {
-        return;
-      }
-
-      frameId = window.requestAnimationFrame(updateScrollbarMetrics);
-    };
-    const resizeObserver = new ResizeObserver(scheduleScrollbarMetrics);
-
-    updateScrollbarMetrics();
-    resizeObserver.observe(scrollContainer);
-    Array.from(dashboard.children).forEach((child) => {
-      if (!child.classList.contains("codex-log-scrollbar")) {
-        resizeObserver.observe(child);
-      }
-    });
-
-    return () => {
-      resizeObserver.disconnect();
-
-      if (frameId !== undefined) {
-        window.cancelAnimationFrame(frameId);
-      }
-    };
-  }, [getScrollbarScrollContainer]);
-  const handleScrollbarPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>) => {
-      const scrollContainer = getScrollbarScrollContainer();
-      const thumb = event.currentTarget.firstElementChild;
-
-      if (!(thumb instanceof HTMLElement) || !scrollContainer) {
-        return;
-      }
-
-      const maxScrollTop =
-        scrollContainer.scrollHeight - scrollContainer.clientHeight;
-      const trackTravel =
-        event.currentTarget.clientHeight - thumb.clientHeight;
-
-      if (maxScrollTop <= 0 || trackTravel <= 0) {
-        return;
-      }
-
-      const trackBounds = event.currentTarget.getBoundingClientRect();
-      const nextScrollTop = Math.max(
-        0,
-        Math.min(
-          maxScrollTop,
-          ((event.clientY - trackBounds.top - thumb.clientHeight / 2) /
-            trackTravel) *
-            maxScrollTop,
-        ),
-      );
-
-      scrollbarDragRef.current = {
-        maxScrollTop,
-        pointerId: event.pointerId,
-        scrollContainer,
-        startClientY: event.clientY,
-        startScrollTop: nextScrollTop,
-        trackTravel,
-      };
-      event.currentTarget.setPointerCapture(event.pointerId);
-      event.preventDefault();
-      scrollContainer.scrollTo({ top: nextScrollTop });
-    },
-    [getScrollbarScrollContainer],
-  );
-  const handleScrollbarPointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>) => {
-      const dragState = scrollbarDragRef.current;
-
-      if (!dragState || dragState.pointerId !== event.pointerId) {
-        return;
-      }
-
-      const nextScrollTop = Math.max(
-        0,
-        Math.min(
-          dragState.maxScrollTop,
-          dragState.startScrollTop +
-            ((event.clientY - dragState.startClientY) /
-              dragState.trackTravel) *
-              dragState.maxScrollTop,
-        ),
-      );
-
-      dragState.scrollContainer.scrollTo({ top: nextScrollTop });
-    },
-    [],
-  );
-  const handleScrollbarPointerEnd = useCallback(
-    (event: ReactPointerEvent<HTMLButtonElement>) => {
-      const dragState = scrollbarDragRef.current;
-
-      if (!dragState || dragState.pointerId !== event.pointerId) {
-        return;
-      }
-
-      scrollbarDragRef.current = null;
-
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }
-    },
-    [],
-  );
   const tableScrollY = fullscreen?.isFullscreen
     ? "clamp(260px, 36dvh, 440px)"
     : 360;
@@ -978,10 +798,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       ? `使用 Codex 桌面 usage 聚合；入库估算为 ${formatToken(data.stats.databaseTokenTotal)} Token。`
       : "未读取到本机 Codex 桌面 usage，当前使用 codex_log.token_count 入库值。";
   const metricDeltas = {
-    estimatedRatio: buildPointDelta(
-      data.stats.estimatedRatio,
-      data.stats.previous.estimatedRatio,
-    ),
     repositoryCount: buildNumberDelta(
       data.stats.repositoryCount,
       data.stats.previous.repositoryCount,
@@ -1149,25 +965,13 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
 
   return (
     <div
-      className="codex-log-dashboard flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-1 md:gap-5"
+      className="codex-log-dashboard storage-overlay-scrollbar-container storage-overlay-scrollbar-viewport relative flex min-h-0 w-full min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-1 md:gap-5"
       data-scroll-pauses-background={
         fullscreen?.isFullscreen ? "true" : undefined
       }
-      ref={dashboardRef}
+      ref={setScrollTarget}
     >
-      <div className="codex-log-scrollbar">
-        <button
-          aria-label="拖动 Codex 日报滚动条"
-          className="codex-log-scrollbar-track"
-          onPointerCancel={handleScrollbarPointerEnd}
-          onPointerDown={handleScrollbarPointerDown}
-          onPointerMove={handleScrollbarPointerMove}
-          onPointerUp={handleScrollbarPointerEnd}
-          type="button"
-        >
-          <span className="codex-log-scrollbar-thumb" />
-        </button>
-      </div>
+      <OverlayScrollbar scrollTarget={scrollTarget} />
       <div
         className={cn(
           "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 2xl:flex 2xl:items-center 2xl:justify-between",
@@ -1239,7 +1043,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         </div>
       </div>
 
-      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="codex-log-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           delta={metricDeltas.taskCount}
           icon="icon-task"
@@ -1261,13 +1065,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           label="仓库"
           tone="store"
           value={formatNumber(data.stats.repositoryCount)}
-        />
-        <MetricCard
-          delta={metricDeltas.estimatedRatio}
-          icon="icon-proportion"
-          label="估算占比"
-          tone="proportion"
-          value={`${data.stats.estimatedRatio}%`}
         />
       </section>
 
@@ -1296,8 +1093,14 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         }
         title="会话记录"
       >
-        <Table
-          className={cn("codex-log-table", "min-w-0", tableScrollbarClassName)}
+        <OverlayScrollbarHost
+          className="min-h-0"
+          horizontal
+          horizontalTargetSelector=".ant-table-content"
+          targetSelector=".ant-table-body"
+        >
+          <Table
+            className={cn("codex-log-table", "min-w-0", tableScrollbarClassName)}
           columns={columns}
           dataSource={tableRecords}
           onChange={handleTableChange}
@@ -1315,7 +1118,8 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           showSorterTooltip={false}
           size="middle"
           tableLayout="fixed"
-        />
+          />
+        </OverlayScrollbarHost>
       </DashboardPanel>
       <SummaryPanel initialSummary={data.dailySummary} />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import {
   CloseOutlined,
   FullscreenExitOutlined,
@@ -260,8 +261,9 @@ export function AiAssistant() {
             </div>
           </div>
           <div className="ai-assistant-dialog flex min-h-0 flex-1 flex-col gap-3">
-            <div
-              className="ai-assistant-messages flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto pr-1"
+            <OverlayScrollArea
+              className="min-h-0 flex-1"
+              viewportClassName="ai-assistant-messages flex flex-col gap-2.5 pr-1"
               role="log"
             >
               {messages.map((message, index) => (
@@ -372,7 +374,7 @@ export function AiAssistant() {
                   <Spin size="small" />
                 </div>
               ) : null}
-            </div>
+            </OverlayScrollArea>
             {error ? (
               <Typography.Text className="ai-assistant-error block" type="danger">
                 {error}

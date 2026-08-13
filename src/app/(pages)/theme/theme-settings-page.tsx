@@ -13,7 +13,6 @@ import {
   Button,
   ColorPicker,
   Input,
-  Layout,
   Segmented,
   Select,
   Switch,
@@ -36,6 +35,7 @@ import { themeReturnMarkerKey } from "./theme-control";
 import { ThemeGeometryTexture } from "./theme-geometry-texture";
 import { ThemeProvider } from "./theme-provider";
 import { ThemeShellBackground } from "./theme-shell-background";
+import { OverlayScrollArea } from "../common/overlay-scrollbar";
 import {
   getThemeShellBackground,
   mixHexColor,
@@ -213,9 +213,9 @@ function ThemeSettingsContent({
         text={appliedPalette.text}
         texture={appliedTexture}
       />
-      <Layout
+      <OverlayScrollArea
         className={cn(
-          "app-shell app-textured-shell theme-settings-shell flex h-dvh min-h-0 flex-1 flex-col overflow-x-hidden! overflow-y-auto! [scrollbar-gutter:auto] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "app-shell app-textured-shell theme-settings-shell h-dvh min-h-0 flex-1",
           `theme-${resolvedMode}`,
           `app-texture-${appliedTexture}`,
         )}
@@ -238,6 +238,7 @@ function ThemeSettingsContent({
             "--app-texture-text": appliedPalette.text,
           } as React.CSSProperties
         }
+        viewportClassName="flex flex-col overflow-x-hidden!"
       >
         <ThemeGeometryTexture texture={appliedTexture} />
         <ThemeFallingLights
@@ -445,7 +446,7 @@ function ThemeSettingsContent({
             </div>
           </section>
         </main>
-      </Layout>
+      </OverlayScrollArea>
     </>
   );
 }

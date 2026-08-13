@@ -1,4 +1,5 @@
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import {
   BulbOutlined,
@@ -19,6 +20,7 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type WheelEvent,
 } from "react";
 import { homeCategories, homeStats } from "./constant";
 import { HomeContentFullscreenProvider } from "./home-content-fullscreen";
@@ -141,6 +143,30 @@ export function HomeDashboard({
       refreshFullscreenLayout();
     },
     [refreshFullscreenLayout],
+  );
+  const forwardFullscreenCodexLogWheel = useCallback(
+    (event: WheelEvent<HTMLDivElement>) => {
+      if (
+        !isCategoryContentFullscreen ||
+        activeCategoryHref !== "/home/codex-log" ||
+        !(event.target instanceof Element) ||
+        event.target.closest(".codex-log-dashboard")
+      ) {
+        return;
+      }
+
+      const dashboard = categoryContentRef.current?.querySelector<HTMLElement>(
+        ".codex-log-dashboard",
+      );
+
+      if (!dashboard) {
+        return;
+      }
+
+      dashboard.scrollBy({ left: event.deltaX, top: event.deltaY });
+      event.preventDefault();
+    },
+    [activeCategoryHref, isCategoryContentFullscreen],
   );
   const fullscreenContextValue = useMemo(
     () => ({
@@ -666,11 +692,12 @@ export function HomeDashboard({
               type="text"
             />
           </div>
-          <div
+          <OverlayScrollArea
             className={cn(
-              "home-category-menu-scroll min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto",
+              "min-h-0 min-w-0 flex-1",
               isCategorySidebarCollapsed ? "px-0" : "pr-1",
             )}
+            viewportClassName="home-category-menu-scroll overflow-x-hidden"
           >
             <Menu
               className="home-category-menu !w-full min-w-0"
@@ -696,7 +723,7 @@ export function HomeDashboard({
               }
               selectedKeys={selectedCategoryKeys}
             />
-          </div>
+          </OverlayScrollArea>
         </aside>
 
         <Card
@@ -713,6 +740,7 @@ export function HomeDashboard({
           data-scroll-surface={
             activeCategoryHref === "/home/codex-log" ? "true" : undefined
           }
+          onWheelCapture={forwardFullscreenCodexLogWheel}
           ref={categoryContentRef}
           style={surfaceStyle}
         >

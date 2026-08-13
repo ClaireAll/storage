@@ -1,6 +1,7 @@
 "use client";
 
 import { useHomeContentActions } from "@/app/(pages)/home/home-view";
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import {
   AppstoreOutlined,
@@ -592,7 +593,11 @@ export function ClothesGallery({
       </section>
 
       {pagedClothes.length && viewMode === "card" ? (
-        <div className="clothes-gallery-card-grid flex min-h-0 flex-1 flex-wrap content-start gap-3 overflow-auto pr-1">
+        <OverlayScrollArea
+          className="min-h-0 flex-1"
+          horizontal
+          viewportClassName="clothes-gallery-card-grid flex flex-wrap content-start gap-3 pr-1"
+        >
           {pagedClothes.map((item) => (
             <ClothesImageCard
               highlightIndexes={
@@ -604,10 +609,12 @@ export function ClothesGallery({
               showCount={showCount}
             />
           ))}
-        </div>
+        </OverlayScrollArea>
       ) : pagedClothes.length ? (
-        <div
-          className="clothes-gallery-detail-list grid min-h-0 flex-1 content-start gap-0.5 overflow-auto"
+        <OverlayScrollArea
+          className="min-h-0 flex-1"
+          horizontal
+          viewportClassName="clothes-gallery-detail-list grid content-start gap-0.5"
           role="list"
         >
           {pagedClothes.map((item) => (
@@ -693,7 +700,7 @@ export function ClothesGallery({
               </div>
             </article>
           ))}
-        </div>
+        </OverlayScrollArea>
       ) : (
         <div className="flex min-h-0 flex-1 items-center justify-center">
           <Empty

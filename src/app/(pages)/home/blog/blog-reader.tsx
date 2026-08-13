@@ -1,6 +1,7 @@
 "use client";
 
 import { useHomeContentActions } from "@/app/(pages)/home/home-view";
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import {
   EditOutlined,
@@ -93,8 +94,9 @@ function BlogReaderList({
           type="primary"
         />
       </div>
-      <div
-        className="blog-reader-list min-h-0 flex-1 overflow-auto rounded-lg border"
+      <OverlayScrollArea
+        className="min-h-0 flex-1"
+        viewportClassName="blog-reader-list rounded-lg border"
         role="list"
       >
         {filteredItems.length ? (
@@ -141,7 +143,7 @@ function BlogReaderList({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         )}
-      </div>
+      </OverlayScrollArea>
     </aside>
   );
 }

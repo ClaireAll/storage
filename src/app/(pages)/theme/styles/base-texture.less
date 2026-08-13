@@ -387,6 +387,52 @@ html:has(.app-shell.theme-dark) {
   z-index: 1;
 }
 
+/* 全屏日报滚动时暂停固定背景，避免背景动画与表格滚动争抢绘制时间。 */
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .theme-shared-texture-root {
+  visibility: hidden;
+}
+
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .app-textured-shell::before,
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .app-textured-shell::after {
+  animation-play-state: paused;
+  visibility: hidden;
+}
+
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .theme-shared-texture,
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .theme-meteor-line,
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .theme-meteor-spark,
+body:has(
+  .home-category-content-card:fullscreen
+    .codex-log-dashboard.storage-is-vertically-scrolling
+)
+  .theme-geometry-item {
+  animation-play-state: paused;
+}
+
 .theme-meteor-lines[data-variant="preview"] .theme-meteor-spark {
   filter: blur(0.1px);
 }
@@ -434,7 +480,7 @@ html:has(.app-shell.theme-dark) {
 }
 
 .theme-geometry-item {
-  animation: theme-geometry-rise var(--geometry-duration) linear var(--geometry-delay) 1 both;
+  animation: theme-geometry-rise var(--geometry-duration) linear var(--geometry-delay) infinite both;
   background: hsl(
     from var(--app-texture-color, var(--theme-preview-color))
     h

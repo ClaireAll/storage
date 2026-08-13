@@ -1,43 +1,63 @@
+# 版本更新
+
+## 2026-08-13 10:29:11 +08:00
+
+- Remove local-only Codex working artifacts from `.tmp` and `.superpowers` before release. Historical daily-import output, one-off repair scripts, dev-server logs, and local brainstorming session state are not part of the application source or deployment.
+
+## 2026-08-13 10:20:45 +08:00
+
+- Fix the non-fullscreen Codex report table's missing horizontal scrollbar. The shared overlay scrollbar now supports separate vertical and horizontal viewport selectors, so the table body keeps vertical scrolling while Ant Design's table-content viewport drives horizontal overflow.
+
+## 2026-08-13 10:00:00 +08:00
+
+- Remove the Codex daily-report estimated-ratio metric card. The dashboard now presents three wide-screen metric cards: tasks, Token usage, and repositories; the retained data field remains available to existing API consumers.
+
+## 2026-08-12 20:15:00 +08:00
+
+- Replace project custom scroll areas with the shared overlay scrollbar: native tracks no longer occupy layout space; horizontal thumbs remain available when content overflows, while the current vertical thumb appears during scrolling and hides after two seconds.
+- Migrate the Codex report, category menu, AI messages, blog list, image strips, share-link list, theme settings, and README preview. The fullscreen report keeps one explicit vertical scrollport and forwards wheel input from its side gutters without adding work to the scroll hot path.
+- Add pointer drag, track click, keyboard access, `ResizeObserver`/`MutationObserver` metric refreshes, and browser `ScrollTimeline` thumb movement. Update the focused regression suite for the common component and fullscreen report behavior.
+
 ## 2026-08-12 18:59:19 +08:00
 
 - Fix Codex daily-report overlay scrollbar geometry: derive the thumb height from the visible-to-total content ratio and its travel distance from the exact track length, instead of fixed viewport values. The track now aligns to the report scrollport with consistent 8px top and bottom insets.
+
 ## 2026-08-12 18:41:12 +08:00
 
-- Fix Codex daily-report scrollbar visibility in normal preview: render the draggable overlay inside the report dashboard, bind it to the dashboard scrollport in preview and the fullscreen card scrollport in fullscreen, and synchronize only its track height through ResizeObserver.
+- Fix Codex daily-report scrollbar visibility in normal preview: render the draggable overlay inside the report dashboard, bind it to the dashboard scrollport in preview and the fullscreen card scrollport in fullscreen, and synchronize only its track height through `ResizeObserver`.
+
 ## 2026-08-12 17:42:24 +08:00
 
 - Fix Codex daily-report fullscreen scrollbar dragging: replace the non-interactive activity pseudo-element with an overlay track and draggable thumb. The thumb follows the fullscreen card scroll timeline, while track clicks and pointer dragging scroll the card without reserving layout width.
+
 ## 2026-08-12 16:42:00 +08:00
 
 - Fix Codex daily-report fullscreen scrolling: move the only vertical scrollport from the centered dashboard body to the fullscreen card itself, so the content and both side gutters respond to the mouse wheel together. The overlay activity indicator is slightly wider, taller, and more visible without consuming layout width.
 
 ## 2026-08-12 15:38:00 +08:00
 
-- Fix nested scroll feedback in the Skills preview: the outer overlay scrollbar is now enabled only for /home/codex-log, so scrolling a Markdown preview no longer draws a second indicator beside the page header.
+- Fix nested scroll feedback in the Skills preview: the outer overlay scrollbar is now enabled only for `/home/codex-log`, so scrolling a Markdown preview no longer draws a second indicator beside the page header.
 
 ## 2026-08-12 15:28:27 +08:00
 
 - Fix Codex daily-report preview and fullscreen scrolling: native scrollbars no longer reserve content width, while a single overlay activity indicator remains visible during scrolling and hides two seconds after it stops.
 
-# 版本更新
+## 2026-08-12 11:25:00 +08:00
+
+- 修复 Codex 日报全屏滚动命中范围：完整卡片 body 作为唯一纵向滚动面，因此鼠标位于日报左右留白时也可继续滚动；原生滚动条保持零宽，滚动反馈改由覆盖式主题色细条绘制，不再压缩日报主体内容。
+
+## 2026-08-12 11:08:00 +08:00
+
+- 修复 Codex 日报全屏滚动仍然卡顿：滚动期间由全局 `ScrollActivityProvider` 直接给根节点添加状态类，暂停并隐藏流星、几何与页面纹理背景；停止滚动 2 秒后自动恢复。该链路不再依赖全屏伪类和 `:has()` 的整页匹配，且滚动热路径不读取布局、不驱动 React state。
+
+## 2026-08-12 10:43:03 +08:00
+
+- 移除 Canvas UI Frost“霜冻”背景：删除主题选项、预览与全局渲染挂载、WebGL 渲染器、滚动暂停分支、专用测试和设计文档；此前保存的 `frost` 配置会在读取时自动回落为默认背景。
 
 ## 2026-08-12 10:34:15 +08:00
 
 - Codex 日报改为由每日自动化任务统一生成：导入 `codex_log` 成功后，使用 human-writing Skill 写入 `codex_daily_report` 的总结、成长、不足、桌面 Token 总数、会话数、总结模型和统计时间。页面仅展示已入库结果，不再即时请求总结接口。
 - 新增日报回填脚本和数据库迁移；自动化任务会扫描历史 `codex_log`，只回填缺失或字段不完整的日报，且当日没有日志时不会创建日报。已回填 2026-08-03 至 2026-08-07、2026-08-10 至 2026-08-11 的真实会话日报，并过滤历史误入库的自动化任务记录。
-
-## 2026-08-12 10:28:57 +08:00
-
-- 优化 Canvas UI Frost“霜冻”背景的视觉表现：保留只作用于页面背景、卡片与表单不受覆盖的交互边界，移除泛白渐变底色，改为深色冰面；增强结晶纹理、颗粒高光、不规则融化边缘与折射对比，使效果更接近官方 Frost 示例。保留低分辨率渲染与滚动期间暂停 WebGL 的性能保护。
-
-## 2026-08-12 10:03:54 +08:00
-
-- 修复 Codex 日报全屏滚动时 CPU 持续满载、滚动迟滞的问题：复用全局 `ScrollActivityProvider` 发布滚动活动信号，滚动期间即时暂停 Frost 整屏 WebGL 渲染与待处理的悬停融化帧；在 `scrollend` 或短暂静止后恢复背景效果。日报页面未新增滚动监听、布局读取或滚动驱动的 React 状态，滚动条停下后 2 秒隐藏的既有交互保持不变。
-
-## 2026-08-11 20:26:18 +08:00
-
-- 新增 Canvas UI Frost“霜冻”背景动画：作为主题设置的独立选项接入，使用低清晰度 WebGL 冰霜层和悬停融化效果；卡片、对话框与表单保持在画布上方，不参与 DOM 捕获，也不会被拦截交互。为避免日报等复杂页面的性能回归，霜冻层不监听滚动、不驱动 React 滚动状态，渲染倍率限制为 1 倍设备像素比，并在未选中时立即销毁 WebGL 资源；主题预览同步支持静态回退。
-- 更新主题设置保存按钮的回归断言，使其与当前 `type="primary"` 实现保持一致。
 
 ## 2026-08-11
 

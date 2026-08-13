@@ -1,6 +1,7 @@
 "use client";
 
 import type { HobbyShareExpiry } from "@/app/api/share/hobby/share-types";
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import {
   CopyOutlined,
   DeleteOutlined,
@@ -374,7 +375,10 @@ export function HobbyShareDialog({
             </div>
           ) : null}
           {shares.length > 0 ? (
-            <div className="hobby-share-existing-list">
+            <OverlayScrollArea
+              className="hobby-share-existing-list"
+              viewportClassName="grid max-h-[220px] gap-2 overflow-y-auto pr-0.5"
+            >
               {shares.map((share) => (
                 <div className="hobby-share-existing-item" key={share.token}>
                   <div className="hobby-share-existing-info">
@@ -418,7 +422,7 @@ export function HobbyShareDialog({
                   </div>
                 </div>
               ))}
-            </div>
+            </OverlayScrollArea>
           ) : null}
         </section>
       ) : null}

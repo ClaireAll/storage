@@ -2,44 +2,33 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+const dashboardPath = new URL(
+  "../src/app/(pages)/home/codex-log/codex-log-dashboard.tsx",
+  import.meta.url,
+);
 const homeDashboardPath = new URL(
   "../src/app/(pages)/home/home-dashboard.tsx",
   import.meta.url,
 );
 const stylesPath = new URL(
-  "../src/app/(pages)/theme/styles/codex-log-fullscreen-scroll.less",
+  "../src/app/globals.css",
   import.meta.url,
 );
 
-test("limits the outer overlay scrollbar to the Codex daily report", async () => {
-  const [dashboard, styles] = await Promise.all([
+test("limits the shared overlay scrollbar activity to the Codex daily report", async () => {
+  const [dashboard, homeDashboard, styles] = await Promise.all([
+    readFile(dashboardPath, "utf8"),
     readFile(homeDashboardPath, "utf8"),
     readFile(stylesPath, "utf8"),
   ]);
 
   assert.match(
-    dashboard,
+    homeDashboard,
     /data-scroll-surface=\{\s*activeCategoryHref === "\/home\/codex-log" \? "true" : undefined\s*\}/s,
   );
-  assert.doesNotMatch(dashboard, /data-scroll-surface="true"/);
-  assert.match(
-    styles,
-    /\.home-category-content-card\s*\{[\s\S]*\.codex-log-dashboard\s*\{[\s\S]*scrollbar-width:\s*none !important;/,
-  );
-  assert.match(
-    styles,
-    /\.codex-log-dashboard::-webkit-scrollbar\s*\{[\s\S]*display:\s*none !important;[\s\S]*width:\s*0 !important;/,
-  );
-  assert.match(
-    styles,
-    /&::-webkit-scrollbar\s*\{[\s\S]*display:\s*none !important;[\s\S]*width:\s*0 !important;/,
-  );
-  assert.match(
-    styles,
-    /\.home-category-content-card\.storage-scroll-surface-active \.codex-log-scrollbar-thumb/,
-  );
-  assert.doesNotMatch(
-    styles,
-    /storage-scroll-surface-active::after/,
-  );
+  assert.doesNotMatch(homeDashboard, /data-scroll-surface="true"/);
+  assert.match(dashboard, /<OverlayScrollbar scrollTarget=\{scrollTarget\} \/>/);
+  assert.match(styles, /storage-overlay-scrollbar-container\.storage-overlay-scrollbar-active/);
+  assert.match(styles, /storage-overlay-scrollbar-vertical-thumb/);
+  assert.doesNotMatch(styles, /storage-scroll-surface-active::after/);
 });

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { uploadFileToOss, uploadImageToOss } from "@/utils/oss";
 import { reqDelete, reqPost, reqPut } from "@/utils/request";
 import {
@@ -1564,7 +1565,12 @@ export function ImageUploader({
             </button>
           )}
         </div>
-        <div className="clothes-multi-image-strip flex gap-2.5 overflow-x-auto pb-0.5">
+        <OverlayScrollArea
+          className="clothes-multi-image-strip"
+          horizontal
+          vertical={false}
+          viewportClassName="flex gap-2.5 pb-0.5"
+        >
           {imageDrafts.map((draft, index) => (
             <button
               className={`clothes-multi-image-thumb relative size-18 flex-[0_0_72px] cursor-pointer overflow-hidden rounded-lg border ${
@@ -1603,7 +1609,7 @@ export function ImageUploader({
           >
             <PlusOutlined />
           </button>
-        </div>
+        </OverlayScrollArea>
         <input
           accept="image/*"
           className="hidden"

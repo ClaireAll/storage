@@ -71,3 +71,21 @@ test("stacks the toolbar until the dashboard has enough room beside the sidebar"
     /@media \(min-width: 1280px\) \{\s+\.codex-log-toolbar/,
   );
 });
+
+test("uses a repeating color sequence for daily task bars", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+
+  assert.match(source, /const taskBarColors = \[/);
+  assert.match(
+    source,
+    /data: trend\.map\(\(item, index\) => \(\{[\s\S]*itemStyle: \{ color: taskBarColors\[index % taskBarColors\.length\] \}/,
+  );
+});
+
+test("shows only task, Token, and repository metric cards", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+
+  assert.match(source, /codex-log-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3/);
+  assert.doesNotMatch(source, /label="估算占比"/);
+  assert.doesNotMatch(source, /icon="icon-proportion"/);
+});

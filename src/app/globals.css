@@ -99,26 +99,103 @@
   min-width: 36px;
 }
 
-.storage-is-vertically-scrolling {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(
-    in srgb,
-    var(--storage-scrollbar-color, var(--primary)) 36%,
-    transparent
-  ) transparent;
+.storage-overlay-scrollbar-container {
+  scrollbar-gutter: auto;
 }
 
-.storage-is-vertically-scrolling::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+.storage-overlay-scrollbar-viewport {
+  scrollbar-width: none;
 }
 
-.storage-is-vertically-scrolling::-webkit-scrollbar-thumb {
-  background-color: color-mix(
+.storage-overlay-scrollbar-viewport::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.storage-overlay-scrollbar-rail {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: grab;
+  padding: 0;
+  pointer-events: auto;
+  position: absolute;
+  touch-action: none;
+}
+
+.storage-overlay-scrollbar-rail:active {
+  cursor: grabbing;
+}
+
+.storage-overlay-scrollbar-vertical {
+  height: var(--storage-overlay-vertical-track-size, 0px);
+  right: 6px;
+  top: 8px;
+  width: 12px;
+}
+
+.storage-overlay-scrollbar-horizontal {
+  bottom: 6px;
+  height: 12px;
+  left: 8px;
+  width: var(--storage-overlay-horizontal-track-size, 0px);
+}
+
+.storage-overlay-scrollbar-thumb {
+  background: color-mix(
     in srgb,
-    var(--storage-scrollbar-color, var(--primary)) 36%,
+    var(--storage-scrollbar-color, var(--home-theme-color, #22c55e)) 34%,
     transparent
-  ) !important;
+  );
+  border-radius: 999px;
+  display: block;
+  opacity: 0;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.storage-overlay-scrollbar-vertical-thumb {
+  height: var(--storage-overlay-vertical-thumb-size, 0px);
+  margin-inline: auto;
+  width: 4px;
+}
+
+.storage-overlay-scrollbar-horizontal-thumb {
+  height: 4px;
+  margin-block: auto;
+  width: var(--storage-overlay-horizontal-thumb-size, 0px);
+}
+
+.storage-overlay-scrollbar-host[data-storage-overlay-horizontal-scrollable]
+  .storage-overlay-scrollbar-horizontal-thumb {
+  opacity: 1;
+}
+
+.storage-overlay-scrollbar-container.storage-overlay-scrollbar-active
+  .storage-overlay-scrollbar-vertical-thumb,
+.storage-overlay-scrollbar-rail:focus-visible .storage-overlay-scrollbar-thumb {
+  opacity: 1;
+}
+
+.storage-overlay-scrollbar-rail:focus-visible {
+  outline: 2px solid
+    color-mix(
+      in srgb,
+      var(--storage-scrollbar-color, var(--home-theme-color, #22c55e)) 42%,
+      transparent
+    );
+  outline-offset: -2px;
+}
+
+.storage-overlay-scrollbar-host:not(
+    [data-storage-overlay-vertical-scrollable]
+  )
+  .storage-overlay-scrollbar-vertical,
+.storage-overlay-scrollbar-host:not(
+    [data-storage-overlay-horizontal-scrollable]
+  )
+  .storage-overlay-scrollbar-horizontal {
+  display: none;
 }
 
 @supports not selector(::-webkit-scrollbar) {
