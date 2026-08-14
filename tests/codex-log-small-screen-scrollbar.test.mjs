@@ -42,6 +42,10 @@ test("renders longest sessions as compact rows instead of ranked cards", async (
 
   assert.match(listSource, /codex-log-longest-list/);
   assert.match(listSource, /codex-log-longest-row/);
+  assert.match(
+    listSource,
+    /codex-log-longest-row[^"`]*var\(--home-theme-text\)_6%/,
+  );
   assert.match(listSource, /codex-log-longest-repository/);
   assert.match(listSource, /codex-log-longest-meta/);
   assert.doesNotMatch(listSource, /codex-log-rank-index/);

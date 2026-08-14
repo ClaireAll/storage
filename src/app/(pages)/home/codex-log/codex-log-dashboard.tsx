@@ -739,7 +739,7 @@ function LongestSessionList({
 
           return (
             <li
-              className="codex-log-longest-row flex min-h-14 items-start gap-3 border-b border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)] py-3 last:border-b-0 last:pb-0 first:pt-0"
+              className="codex-log-longest-row flex min-h-14 items-start gap-3 border-b border-[color-mix(in_srgb,var(--home-theme-text)_6%,transparent)] py-3 last:border-b-0 last:pb-0 first:pt-0"
               key={item.key}
             >
               <div className="min-w-0 flex-1">

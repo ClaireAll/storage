@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-14 09:56:17 +08:00
+
+- Lighten the Codex daily-report longest-session separators by lowering their theme text mix from 10% to 6%, so the divider reads softer in dark mode while preserving the compact list structure.
+
 ## 2026-08-13 17:47:45 +08:00
 
 - Restyle the Codex daily-report longest-session panel as a compact reference-style list: each row now shows the task title, a stable colored repository label, and a right-aligned Token metric with a clock icon, without rank badges or nested row cards.
