@@ -20,6 +20,7 @@ import {
   Button,
   Card,
   DatePicker,
+  Divider,
   Empty,
   Input,
   Select,
@@ -53,6 +54,7 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -157,10 +159,24 @@ const defaultPalette: ChartPalette = {
   surface: "#ffffff",
   text: "#111827",
 };
-const panelClassName =
-  "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)] shadow-sm";
-const quietPanelClassName =
-  "rounded-lg border border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)] bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]";
+// Dark border rule: panels 12%, quiet nested surfaces 10%, row dividers 6%.
+const codexLogBorderClassNames = {
+  divider:
+    "!my-0 !border-[color-mix(in_srgb,var(--home-theme-text)_6%,transparent)]",
+  panel: "border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]",
+  panelImportant:
+    "border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]!",
+  quietPanel:
+    "border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)]",
+};
+const panelClassName = cn(
+  "rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)] shadow-sm",
+  codexLogBorderClassNames.panel,
+);
+const quietPanelClassName = cn(
+  "rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]",
+  codexLogBorderClassNames.quietPanel,
+);
 const tableScrollbarClassName =
   "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto";
 const metricToneClassNames = {
@@ -734,30 +750,32 @@ function LongestSessionList({
   return (
     <div className="codex-log-longest-list flex min-h-0 flex-1 flex-col">
       <ul className="m-0 flex list-none flex-col p-0">
-        {items.map((item) => {
+        {items.map((item, index) => {
           const tone = repositoryToneMap.get(item.repository) ?? palette.accent;
 
           return (
-            <li
-              className="codex-log-longest-row flex min-h-14 items-start gap-3 border-b border-[color-mix(in_srgb,var(--home-theme-text)_6%,transparent)] py-3 last:border-b-0 last:pb-0 first:pt-0"
-              key={item.key}
-            >
-              <div className="min-w-0 flex-1">
-                <span className="codex-log-longest-title block truncate text-sm font-semibold text-(--home-theme-text)">
-                  {item.user_tasks}
+            <Fragment key={item.key}>
+              <li className="codex-log-longest-row flex min-h-14 items-start gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0 flex-1">
+                  <span className="codex-log-longest-title block truncate text-sm font-semibold text-(--home-theme-text)">
+                    {item.user_tasks}
+                  </span>
+                  <span
+                    className="codex-log-longest-repository mt-1 block truncate text-xs font-semibold"
+                    style={{ color: tone }}
+                  >
+                    {item.repository}
+                  </span>
+                </div>
+                <span className="codex-log-longest-meta inline-flex shrink-0 items-center gap-1 whitespace-nowrap pt-0.5 text-xs font-medium tabular-nums text-[color-mix(in_srgb,var(--home-theme-text)_58%,transparent)]">
+                  <ClockCircleOutlined className="text-[13px]" />
+                  {formatToken(item.token_count)} Token
                 </span>
-                <span
-                  className="codex-log-longest-repository mt-1 block truncate text-xs font-semibold"
-                  style={{ color: tone }}
-                >
-                  {item.repository}
-                </span>
-              </div>
-              <span className="codex-log-longest-meta inline-flex shrink-0 items-center gap-1 whitespace-nowrap pt-0.5 text-xs font-medium tabular-nums text-[color-mix(in_srgb,var(--home-theme-text)_58%,transparent)]">
-                <ClockCircleOutlined className="text-[13px]" />
-                {formatToken(item.token_count)} Token
-              </span>
-            </li>
+              </li>
+              {index < items.length - 1 ? (
+                <Divider className={codexLogBorderClassNames.divider} />
+              ) : null}
+            </Fragment>
           );
         })}
       </ul>
@@ -1195,7 +1213,8 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "codex-log-metric-card flex-1 basis-0 min-w-0 border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]! bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]!",
+        "codex-log-metric-card flex-1 basis-0 min-w-0 bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)]!",
+        codexLogBorderClassNames.panelImportant,
         panelClassName,
         metricToneClassNames[tone].card,
       )}

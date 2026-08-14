@@ -44,6 +44,28 @@ test("keeps the summary available without dashboard scroll render state", async 
   assert.match(source, /codex-log-summary-panel[^"`]*shrink-0/);
 });
 
+test("defines Codex dark border color rules in one token map", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+
+  assert.match(source, /const codexLogBorderClassNames = \{/);
+  assert.match(
+    source,
+    /panel:\s*"border-\[color-mix\(in_srgb,var\(--home-theme-text\)_12%,transparent\)\]"/,
+  );
+  assert.match(
+    source,
+    /panelImportant:\s*"border-\[color-mix\(in_srgb,var\(--home-theme-text\)_12%,transparent\)\]!"/,
+  );
+  assert.match(
+    source,
+    /quietPanel:\s*"border-\[color-mix\(in_srgb,var\(--home-theme-text\)_10%,transparent\)\]"/,
+  );
+  assert.match(
+    source,
+    /divider:\s*"!my-0 !border-\[color-mix\(in_srgb,var\(--home-theme-text\)_6%,transparent\)\]"/,
+  );
+});
+
 test("uses the daily report symbol and keeps mobile toolbar actions compact", async () => {
   const source = await readFile(dashboardPath, "utf8");
 

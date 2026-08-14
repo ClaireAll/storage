@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-14
+
+- 修复深色主题下 Codex 日报的边框：面板、工具栏、指标卡和总结块统一使用低对比中性色；最长会话改用细分隔线，避免高饱和主题色在深色背景上形成突兀外框。
+
 ## 2026-08-14 09:56:17 +08:00
 
 - Lighten the Codex daily-report longest-session separators by lowering their theme text mix from 10% to 6%, so the divider reads softer in dark mode while preserving the compact list structure.

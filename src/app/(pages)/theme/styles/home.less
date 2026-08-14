@@ -833,6 +833,19 @@
 .theme-dark .codex-log-panel,
 .theme-dark .codex-log-toolbar {
   background: color-mix(in srgb, var(--home-theme-bg) 94%, #ffffff 6%);
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-text) 12%,
+    transparent
+  );
+}
+
+.theme-dark .codex-log-summary-block {
+  border-color: color-mix(
+    in srgb,
+    var(--home-theme-text) 10%,
+    transparent
+  );
 }
 
 @media (max-width: 1180px) {

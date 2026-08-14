@@ -6,6 +6,10 @@ const dashboardPath = new URL(
   "../src/app/(pages)/home/codex-log/codex-log-dashboard.tsx",
   import.meta.url,
 );
+const homeStylesPath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 
 test("keeps compact Codex analysis stacked until there is enough space", async () => {
   const source = await readFile(dashboardPath, "utf8");
@@ -44,10 +48,24 @@ test("renders longest sessions as compact rows instead of ranked cards", async (
   assert.match(listSource, /codex-log-longest-row/);
   assert.match(
     listSource,
-    /codex-log-longest-row[^"`]*var\(--home-theme-text\)_6%/,
+    /<Divider[\s\S]*?className=\{codexLogBorderClassNames\.divider\}/,
   );
+  assert.doesNotMatch(listSource, /codex-log-longest-row[^"`]*border-b/);
   assert.match(listSource, /codex-log-longest-repository/);
   assert.match(listSource, /codex-log-longest-meta/);
   assert.doesNotMatch(listSource, /codex-log-rank-index/);
   assert.doesNotMatch(listSource, /\{index \+ 1\}/);
+});
+
+test("uses neutral borders for Codex panels in dark mode", async () => {
+  const styles = await readFile(homeStylesPath, "utf8");
+  const darkCodexStyles =
+    styles.match(/\.theme-dark \.codex-log-metric-card[\s\S]*?\n}\n/)?.[0] ??
+    "";
+
+  assert.match(
+    darkCodexStyles,
+    /border-color:\s*color-mix\(\s*in srgb,\s*var\(--home-theme-text\) 12%,\s*transparent\s*\);/,
+  );
+  assert.doesNotMatch(darkCodexStyles, /var\(--home-theme-color\)/);
 });
