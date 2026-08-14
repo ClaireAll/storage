@@ -93,7 +93,7 @@ test("uses shared preview border tokens for investment surfaces", async () => {
   assert.match(styles, /\.home-preview-divider\s*\{/);
   assert.match(
     styles,
-    /\.home-preview-divide-y > :not\(\[hidden\]\) ~ :not\(\[hidden\]\)\s*\{/,
+    /\.home-preview-divide-y > :not\(\[hidden\]\) ~ :not\(\[hidden\]\)\s*\{[\s\S]*border-color:\s*var\(--home-preview-divider-color\) !important;/,
   );
   assert.match(dashboardSource, /home-preview-panel/);
   assert.match(dashboardSource, /home-preview-divider/);

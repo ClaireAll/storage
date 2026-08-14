@@ -23,9 +23,9 @@ export function GitHubReadmePreviewContent({
 }: GitHubReadmePreviewContentProps) {
   return (
     <section className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-      <header className="mb-4 flex shrink-0 items-center justify-between gap-3 border-b border-[color:var(--home-preview-divider-color)] pb-3">
+      <header className="home-preview-divider mb-4 flex shrink-0 items-center justify-between gap-3 border-b pb-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-[color:var(--home-preview-border-color)] bg-[color-mix(in_srgb,var(--home-theme-color)_12%,transparent)]">
+          <span className="home-preview-panel inline-flex size-9 shrink-0 items-center justify-center rounded-md border bg-[color-mix(in_srgb,var(--home-theme-color)_12%,transparent)]">
             <CategoryIcon
               className="size-5"
               iconClassName="size-5"

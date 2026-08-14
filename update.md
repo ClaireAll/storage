@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-14 16:02:29 +08:00
+
+- 修复预览区域边框规则被局部 Tailwind 边框样式覆盖的问题：共享的 `home-preview-panel`、`home-preview-soft-panel`、`home-preview-divider` 与 `home-preview-divide-y` 现在使用更高优先级，Skills/Plugin 预览标题栏图标边框、标题分割线和投资推荐列表分割线会统一使用预览边界色。
+
 ## 2026-08-14 11:47:31 +08:00
 
 - Strengthen the shared preview boundary rule from `12/10/6` to `22/18/14`. Preview panels, nested soft surfaces, markdown dividers, investment separators, and README icon tiles now share the same neutral text-based border system instead of mixing faint borders with theme-color outlines.
