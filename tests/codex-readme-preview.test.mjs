@@ -93,4 +93,16 @@ test("uses shared preview tokens for README markdown boundaries", async () => {
     source,
     /\[&_hr\]:border-\[color:var\(--home-preview-divider-color\)\]/,
   );
+  assert.match(
+    styles,
+    /\.github-readme-preview-markdown :where\(h1, h2, h3, h4, h5, h6, hr\)\s*\{[\s\S]*border-color:\s*var\(--home-preview-divider-color\) !important;/,
+  );
+  assert.match(
+    styles,
+    /\.github-readme-preview-markdown :where\(table, th, td\)\s*\{[\s\S]*border-color:\s*var\(--home-preview-divider-color\) !important;/,
+  );
+  assert.match(
+    styles,
+    /\.github-readme-preview-markdown :where\(pre, blockquote\)\s*\{[\s\S]*border-color:\s*var\(--home-preview-border-soft-color\) !important;/,
+  );
 });

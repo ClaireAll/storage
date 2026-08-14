@@ -4,6 +4,34 @@
   --home-preview-divider-color: color-mix(in srgb, var(--home-theme-text) 6%, transparent);
 }
 
+.home-preview-panel {
+  border-color: var(--home-preview-border-color);
+}
+
+.home-preview-soft-panel {
+  border-color: var(--home-preview-border-soft-color);
+}
+
+.home-preview-divider {
+  border-color: var(--home-preview-divider-color);
+}
+
+.home-preview-divide-y > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--home-preview-divider-color);
+}
+
+.github-readme-preview-markdown :where(h1, h2, h3, h4, h5, h6, hr) {
+  border-color: var(--home-preview-divider-color) !important;
+}
+
+.github-readme-preview-markdown :where(table, th, td) {
+  border-color: var(--home-preview-divider-color) !important;
+}
+
+.github-readme-preview-markdown :where(pre, blockquote) {
+  border-color: var(--home-preview-border-soft-color) !important;
+}
+
 .home-category-menu.ant-menu {
   background: transparent;
   border-inline-end: 0 !important;

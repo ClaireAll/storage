@@ -35,6 +35,10 @@ const notificationMigrationPath = new URL(
   "../supabase/migrations/20260813_create_investment_notifications.sql",
   import.meta.url,
 );
+const homeStylesPath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 
 test("adds the investment category and renders its own dashboard route", async () => {
   const [categorySource, pageSource] = await Promise.all([
@@ -77,6 +81,27 @@ test("implements filtering, drag sorting, recommendations, and state-aware data 
   assert.match(source, /aria-label="趋势图"/);
   assert.match(source, /echarts/);
   assert.match(source, /企微机器人通知/);
+});
+
+test("uses shared preview border tokens for investment surfaces", async () => {
+  const [dashboardSource, styles] = await Promise.all([
+    readFile(dashboardPath, "utf8"),
+    readFile(homeStylesPath, "utf8"),
+  ]);
+
+  assert.match(styles, /\.home-preview-panel\s*\{/);
+  assert.match(styles, /\.home-preview-divider\s*\{/);
+  assert.match(
+    styles,
+    /\.home-preview-divide-y > :not\(\[hidden\]\) ~ :not\(\[hidden\]\)\s*\{/,
+  );
+  assert.match(dashboardSource, /home-preview-panel/);
+  assert.match(dashboardSource, /home-preview-divider/);
+  assert.match(dashboardSource, /home-preview-divide-y/);
+  assert.doesNotMatch(
+    dashboardSource,
+    /(?:border|divide)-black\/(?:7|8)|dark:(?:border|divide)-white\/(?:10|12)/,
+  );
 });
 
 test("uses code-maintained rules and does not present unavailable public data as live", async () => {

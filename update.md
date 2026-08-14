@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-14 11:20:16 +08:00
+
+- Extend the shared preview border rules to the investment dashboard and dynamic README markdown output. Investment panels, row dividers, divide-y lists, and evidence strips now use reusable `home-preview-*` classes, and GitHub README markdown gets a CSS fallback for headings, hr, tables, code blocks, and blockquotes.
+
 ## 2026-08-14 10:48:24 +08:00
 
 - Add shared light/dark preview border rules: `--home-preview-border-color`, `--home-preview-border-soft-color`, and `--home-preview-divider-color`. The right content surface, Codex report panels/table dividers, note preview, README markdown headings/tables/code blocks, and Codex placeholder now use those tokens instead of each feature mixing its own theme-color borders.
