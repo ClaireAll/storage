@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-14 11:47:31 +08:00
+
+- Strengthen the shared preview boundary rule from `12/10/6` to `22/18/14`. Preview panels, nested soft surfaces, markdown dividers, investment separators, and README icon tiles now share the same neutral text-based border system instead of mixing faint borders with theme-color outlines.
+
 ## 2026-08-14 11:20:16 +08:00
 
 - Extend the shared preview border rules to the investment dashboard and dynamic README markdown output. Investment panels, row dividers, divide-y lists, and evidence strips now use reusable `home-preview-*` classes, and GitHub README markdown gets a CSS fallback for headings, hr, tables, code blocks, and blockquotes.

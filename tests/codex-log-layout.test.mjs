@@ -53,15 +53,15 @@ test("defines Codex preview border color rules in one token map", async () => {
   assert.match(source, /const codexLogBorderClassNames = \{/);
   assert.match(
     styles,
-    /\.home-shell\s*\{[\s\S]*--home-preview-border-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 12%, transparent\);/,
+    /\.home-shell\s*\{[\s\S]*--home-preview-border-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 22%, transparent\);/,
   );
   assert.match(
     styles,
-    /\.home-shell\s*\{[\s\S]*--home-preview-border-soft-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 10%, transparent\);/,
+    /\.home-shell\s*\{[\s\S]*--home-preview-border-soft-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 18%, transparent\);/,
   );
   assert.match(
     styles,
-    /\.home-shell\s*\{[\s\S]*--home-preview-divider-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 6%, transparent\);/,
+    /\.home-shell\s*\{[\s\S]*--home-preview-divider-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 14%, transparent\);/,
   );
   assert.match(
     source,

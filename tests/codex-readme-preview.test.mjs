@@ -71,6 +71,10 @@ test("uses shared preview tokens for README markdown boundaries", async () => {
   assert.match(styles, /--home-preview-divider-color:/);
   assert.match(
     source,
+    /inline-flex size-9[\s\S]*border-\[color:var\(--home-preview-border-color\)\]/,
+  );
+  assert.match(
+    source,
     /github-readme-preview-markdown[\s\S]*\[&_h2\]:border-\[color:var\(--home-preview-divider-color\)\]/,
   );
   assert.match(

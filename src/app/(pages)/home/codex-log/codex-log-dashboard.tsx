@@ -159,7 +159,7 @@ const defaultPalette: ChartPalette = {
   surface: "#ffffff",
   text: "#111827",
 };
-// Preview border rule: panels 12%, quiet nested surfaces 10%, row dividers 6%.
+// Preview border rule: panels 22%, quiet nested surfaces 18%, row dividers 14%.
 const codexLogBorderClassNames = {
   divider: "!my-0 !border-[color:var(--home-preview-divider-color)]",
   panel: "border-[color:var(--home-preview-border-color)]",
