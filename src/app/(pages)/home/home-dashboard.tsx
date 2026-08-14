@@ -119,6 +119,10 @@ export function HomeDashboard({
     backgroundColor: surfaceBackground,
     borderColor: surfaceBorderColor,
   } satisfies CSSProperties;
+  const previewSurfaceStyle = {
+    ...surfaceStyle,
+    borderColor: "var(--home-preview-border-color)",
+  } satisfies CSSProperties;
   const refreshFullscreenLayout = useCallback(() => {
     window.requestAnimationFrame(() => {
       window.dispatchEvent(new Event("resize"));
@@ -742,7 +746,7 @@ export function HomeDashboard({
           }
           onWheelCapture={forwardFullscreenCodexLogWheel}
           ref={categoryContentRef}
-          style={surfaceStyle}
+          style={previewSurfaceStyle}
         >
           {isCategoryContentLoading ? (
             <div

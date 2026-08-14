@@ -65,7 +65,7 @@ test("uses neutral borders for Codex panels in dark mode", async () => {
 
   assert.match(
     darkCodexStyles,
-    /border-color:\s*color-mix\(\s*in srgb,\s*var\(--home-theme-text\) 12%,\s*transparent\s*\);/,
+    /border-color:\s*var\(--home-preview-border-color\);/,
   );
   assert.doesNotMatch(darkCodexStyles, /var\(--home-theme-color\)/);
 });

@@ -159,15 +159,12 @@ const defaultPalette: ChartPalette = {
   surface: "#ffffff",
   text: "#111827",
 };
-// Dark border rule: panels 12%, quiet nested surfaces 10%, row dividers 6%.
+// Preview border rule: panels 12%, quiet nested surfaces 10%, row dividers 6%.
 const codexLogBorderClassNames = {
-  divider:
-    "!my-0 !border-[color-mix(in_srgb,var(--home-theme-text)_6%,transparent)]",
-  panel: "border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]",
-  panelImportant:
-    "border-[color-mix(in_srgb,var(--home-theme-text)_12%,transparent)]!",
-  quietPanel:
-    "border-[color-mix(in_srgb,var(--home-theme-text)_10%,transparent)]",
+  divider: "!my-0 !border-[color:var(--home-preview-divider-color)]",
+  panel: "border-[color:var(--home-preview-border-color)]",
+  panelImportant: "border-[color:var(--home-preview-border-color)]!",
+  quietPanel: "border-[color:var(--home-preview-border-soft-color)]",
 };
 const panelClassName = cn(
   "rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_94%,#ffffff_6%)] shadow-sm",

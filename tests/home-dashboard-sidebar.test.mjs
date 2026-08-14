@@ -111,6 +111,20 @@ test("keeps content fullscreen action out of the category navigation", async () 
   assert.equal(source.includes("全屏预览Codex日报"), false);
 });
 
+test("uses the shared preview border token for the right content surface", async () => {
+  const source = await readDashboardSource();
+
+  assert.match(source, /const previewSurfaceStyle = \{/);
+  assert.match(
+    source,
+    /borderColor:\s*"var\(--home-preview-border-color\)"/,
+  );
+  assert.match(
+    source,
+    /home-category-content-card[\s\S]*style=\{previewSurfaceStyle\}/,
+  );
+});
+
 test("does not scale the Codex submenu when a child is active", async () => {
   const source = await readDashboardSource();
   const parentMenuItemSource = source.slice(

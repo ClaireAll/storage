@@ -44,25 +44,40 @@ test("keeps the summary available without dashboard scroll render state", async 
   assert.match(source, /codex-log-summary-panel[^"`]*shrink-0/);
 });
 
-test("defines Codex dark border color rules in one token map", async () => {
-  const source = await readFile(dashboardPath, "utf8");
+test("defines Codex preview border color rules in one token map", async () => {
+  const [source, styles] = await Promise.all([
+    readFile(dashboardPath, "utf8"),
+    readFile(homeStylePath, "utf8"),
+  ]);
 
   assert.match(source, /const codexLogBorderClassNames = \{/);
   assert.match(
-    source,
-    /panel:\s*"border-\[color-mix\(in_srgb,var\(--home-theme-text\)_12%,transparent\)\]"/,
+    styles,
+    /\.home-shell\s*\{[\s\S]*--home-preview-border-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 12%, transparent\);/,
+  );
+  assert.match(
+    styles,
+    /\.home-shell\s*\{[\s\S]*--home-preview-border-soft-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 10%, transparent\);/,
+  );
+  assert.match(
+    styles,
+    /\.home-shell\s*\{[\s\S]*--home-preview-divider-color:\s*color-mix\(in srgb, var\(--home-theme-text\) 6%, transparent\);/,
   );
   assert.match(
     source,
-    /panelImportant:\s*"border-\[color-mix\(in_srgb,var\(--home-theme-text\)_12%,transparent\)\]!"/,
+    /panel:\s*"border-\[color:var\(--home-preview-border-color\)\]"/,
   );
   assert.match(
     source,
-    /quietPanel:\s*"border-\[color-mix\(in_srgb,var\(--home-theme-text\)_10%,transparent\)\]"/,
+    /panelImportant:\s*"border-\[color:var\(--home-preview-border-color\)\]!"/,
   );
   assert.match(
     source,
-    /divider:\s*"!my-0 !border-\[color-mix\(in_srgb,var\(--home-theme-text\)_6%,transparent\)\]"/,
+    /quietPanel:\s*"border-\[color:var\(--home-preview-border-soft-color\)\]"/,
+  );
+  assert.match(
+    source,
+    /divider:\s*"!my-0 !border-\[color:var\(--home-preview-divider-color\)\]"/,
   );
 });
 

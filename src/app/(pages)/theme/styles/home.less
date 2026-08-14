@@ -1,3 +1,9 @@
+.home-shell {
+  --home-preview-border-color: color-mix(in srgb, var(--home-theme-text) 12%, transparent);
+  --home-preview-border-soft-color: color-mix(in srgb, var(--home-theme-text) 10%, transparent);
+  --home-preview-divider-color: color-mix(in srgb, var(--home-theme-text) 6%, transparent);
+}
+
 .home-category-menu.ant-menu {
   background: transparent;
   border-inline-end: 0 !important;
@@ -267,12 +273,11 @@
 }
 
 .blog-reader-list {
-  border: 1px solid color-mix(in srgb, var(--home-theme-color) 24%, transparent);
+  border: 1px solid var(--home-preview-border-color);
 }
 
 .blog-reader-list-item {
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--home-theme-color) 16%, transparent);
+  border-bottom: 1px solid var(--home-preview-divider-color);
 }
 
 .blog-reader-list-item:last-child {
@@ -307,12 +312,12 @@
 
 .blog-reader-preview {
   background: #ffffff;
-  border: 1px solid color-mix(in srgb, var(--home-theme-color) 24%, transparent);
+  border: 1px solid var(--home-preview-border-color);
   color: #1f2937;
 }
 
 .blog-reader-preview-header {
-  border-bottom: 1px solid rgb(15 23 42 / 10%);
+  border-bottom: 1px solid var(--home-preview-divider-color);
 }
 
 .blog-reader-preview-title .ant-typography {
@@ -598,7 +603,7 @@
 
 .codex-log-toolbar {
   background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
-  border: 1px solid color-mix(in srgb, var(--home-theme-color) 24%, transparent);
+  border: 1px solid var(--home-preview-border-color);
   border-radius: 8px;
 }
 
@@ -635,7 +640,7 @@
 .codex-log-metric-card,
 .codex-log-panel {
   background: color-mix(in srgb, var(--home-theme-bg) 90%, #ffffff 10%);
-  border: 1px solid color-mix(in srgb, var(--home-theme-color) 26%, transparent);
+  border: 1px solid var(--home-preview-border-color);
   border-radius: 8px;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
 }
@@ -694,7 +699,7 @@
 
 .codex-log-summary-block {
   background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
-  border: 1px solid color-mix(in srgb, var(--home-theme-color) 18%, transparent);
+  border: 1px solid var(--home-preview-border-soft-color);
 }
 
 .codex-log-summary-block > span {
@@ -715,7 +720,7 @@
 
 .codex-log-rank-item.ant-list-item {
   background: color-mix(in srgb, var(--home-theme-bg) 88%, #ffffff 12%);
-  border: 1px solid color-mix(in srgb, var(--home-theme-color) 18%, transparent);
+  border: 1px solid var(--home-preview-border-soft-color);
 }
 
 .codex-log-rank-list .ant-list-empty-text {
@@ -758,11 +763,7 @@
     var(--home-theme-bg) 78%,
     var(--home-theme-color) 22%
   ) !important;
-  border-bottom-color: color-mix(
-    in srgb,
-    var(--home-theme-color) 24%,
-    transparent
-  ) !important;
+  border-bottom-color: var(--home-preview-divider-color) !important;
   color: var(--home-theme-text) !important;
 }
 
@@ -784,11 +785,7 @@
 
 .codex-log-dashboard .ant-table-tbody > tr > td {
   background: transparent !important;
-  border-bottom-color: color-mix(
-    in srgb,
-    var(--home-theme-color) 16%,
-    transparent
-  ) !important;
+  border-bottom-color: var(--home-preview-divider-color) !important;
   color: var(--home-theme-text);
 }
 
@@ -833,19 +830,11 @@
 .theme-dark .codex-log-panel,
 .theme-dark .codex-log-toolbar {
   background: color-mix(in srgb, var(--home-theme-bg) 94%, #ffffff 6%);
-  border-color: color-mix(
-    in srgb,
-    var(--home-theme-text) 12%,
-    transparent
-  );
+  border-color: var(--home-preview-border-color);
 }
 
 .theme-dark .codex-log-summary-block {
-  border-color: color-mix(
-    in srgb,
-    var(--home-theme-text) 10%,
-    transparent
-  );
+  border-color: var(--home-preview-border-soft-color);
 }
 
 @media (max-width: 1180px) {

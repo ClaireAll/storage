@@ -1,5 +1,9 @@
 # 版本更新
 
+## 2026-08-14 10:48:24 +08:00
+
+- Add shared light/dark preview border rules: `--home-preview-border-color`, `--home-preview-border-soft-color`, and `--home-preview-divider-color`. The right content surface, Codex report panels/table dividers, note preview, README markdown headings/tables/code blocks, and Codex placeholder now use those tokens instead of each feature mixing its own theme-color borders.
+
 ## 2026-08-14
 
 - 修复深色主题下 Codex 日报的边框：面板、工具栏、指标卡和总结块统一使用低对比中性色；最长会话改用细分隔线，避免高饱和主题色在深色背景上形成突兀外框。

@@ -10,6 +10,10 @@ const dashboardPath = new URL(
   "../src/app/(pages)/home/home-dashboard.tsx",
   import.meta.url,
 );
+const homeStylesPath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 
 test("uses an accessible circular icon control to toggle the note list", async () => {
   const source = await readFile(readerPath, "utf8");
@@ -58,5 +62,22 @@ test("keeps the reader toggle visible in the card gutter", async () => {
   assert.match(
     source,
     /has-\[\.blog-reader-list-toggle\]:overflow-visible/,
+  );
+});
+
+test("uses shared preview tokens for note preview borders and dividers", async () => {
+  const styles = await readFile(homeStylesPath, "utf8");
+
+  assert.match(
+    styles,
+    /\.blog-reader-preview\s*\{[\s\S]*border:\s*1px solid var\(--home-preview-border-color\);/,
+  );
+  assert.match(
+    styles,
+    /\.blog-reader-preview-header\s*\{[\s\S]*border-bottom:\s*1px solid var\(--home-preview-divider-color\);/,
+  );
+  assert.match(
+    styles,
+    /\.blog-reader-list-item\s*\{[\s\S]*var\(--home-preview-divider-color\)/,
   );
 });

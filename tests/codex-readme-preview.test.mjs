@@ -18,6 +18,10 @@ const previewContentPath = new URL(
   "../src/app/(pages)/home/github-readme-preview-content.tsx",
   import.meta.url,
 );
+const homeStylePath = new URL(
+  "../src/app/(pages)/theme/styles/home.less",
+  import.meta.url,
+);
 
 test("renders the chrome-plugin README in the Plugin section", async () => {
   const source = await readFile(pluginPagePath, "utf8");
@@ -54,4 +58,39 @@ test("adds the shared fullscreen action to Plugin and Skills README previews", a
     true,
   );
   assert.equal(source.includes("<HomeContentFullscreenButton />"), true);
+});
+
+test("uses shared preview tokens for README markdown boundaries", async () => {
+  const [source, styles] = await Promise.all([
+    readFile(previewContentPath, "utf8"),
+    readFile(homeStylePath, "utf8"),
+  ]);
+
+  assert.match(styles, /--home-preview-border-color:/);
+  assert.match(styles, /--home-preview-border-soft-color:/);
+  assert.match(styles, /--home-preview-divider-color:/);
+  assert.match(
+    source,
+    /github-readme-preview-markdown[\s\S]*\[&_h2\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+  );
+  assert.match(
+    source,
+    /\[&_blockquote\]:border-\[color:var\(--home-preview-border-soft-color\)\]/,
+  );
+  assert.match(
+    source,
+    /\[&_pre\]:border-\[color:var\(--home-preview-border-soft-color\)\]/,
+  );
+  assert.match(
+    source,
+    /\[&_td\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+  );
+  assert.match(
+    source,
+    /\[&_th\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+  );
+  assert.match(
+    source,
+    /\[&_hr\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+  );
 });
