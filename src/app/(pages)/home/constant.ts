@@ -60,6 +60,7 @@ export const blogCategoryLabels = getCategoryLabels(blogCategoryOptions);
 export const homeCategories: HomeCategory[] = [
   {
     href: "/home/investment",
+    iconClassName: "icon-investment",
     key: "investment",
     label: "投资",
   },

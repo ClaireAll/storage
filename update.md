@@ -16,6 +16,10 @@
 
 - Add shared light/dark preview border rules: `--home-preview-border-color`, `--home-preview-border-soft-color`, and `--home-preview-divider-color`. The right content surface, Codex report panels/table dividers, note preview, README markdown headings/tables/code blocks, and Codex placeholder now use those tokens instead of each feature mixing its own theme-color borders.
 
+## 2026-08-19
+
+- 接入新增的股票、基金和投资图标：侧边栏与投资页标题使用投资图标，关注列表和推荐列表按基金、股票类型显示对应图标。
+
 ## 2026-08-14
 
 - 修复深色主题下 Codex 日报的边框：面板、工具栏、指标卡和总结块统一使用低对比中性色；最长会话改用细分隔线，避免高饱和主题色在深色背景上形成突兀外框。

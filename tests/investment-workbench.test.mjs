@@ -52,6 +52,28 @@ test("adds the investment category and renders its own dashboard route", async (
   assert.match(pageSource, /<InvestmentDashboard/);
 });
 
+test("uses the supplied icons for investment navigation and instruments", async () => {
+  const [categorySource, dashboardSource] = await Promise.all([
+    readFile(categoryPath, "utf8"),
+    readFile(dashboardPath, "utf8"),
+  ]);
+
+  assert.match(
+    categorySource,
+    /href: "\/home\/investment",\s*iconClassName: "icon-investment"/,
+  );
+  assert.match(dashboardSource, /name="icon-investment"/);
+  assert.match(
+    dashboardSource,
+    /function InvestmentInstrumentIcon[\s\S]*?"icon-fund"[\s\S]*?"icon-stock"/,
+  );
+  assert.match(
+    dashboardSource,
+    /<InvestmentInstrumentIcon instrumentType=\{item\.instrumentType\}/,
+  );
+  assert.doesNotMatch(dashboardSource, /(?:投资|项目)图标预留/);
+});
+
 test("keeps investment watchlist access scoped to the signed-in user", async () => {
   const [databaseSource, routeSource] = await Promise.all([
     readFile(databasePath, "utf8"),

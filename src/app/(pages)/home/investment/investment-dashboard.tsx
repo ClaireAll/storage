@@ -1,5 +1,6 @@
 "use client";
 
+import { CategoryIcon } from "@/app/(pages)/common/category-icon";
 import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import {
@@ -70,6 +71,23 @@ function formatChange(value: number | null) {
 function getChangeClass(value: number | null) {
   if (value === null || value === 0) return "text-[color:var(--home-theme-text)]";
   return value > 0 ? "text-red-500" : "text-emerald-600";
+}
+
+/** 根据投资品种展示对应的 iconfont 图标。 */
+function InvestmentInstrumentIcon({
+  className,
+  instrumentType,
+}: {
+  className?: string;
+  instrumentType: "fund" | "stock";
+}) {
+  return (
+    <CategoryIcon
+      className={className}
+      iconClassName="text-xl"
+      name={instrumentType === "fund" ? "icon-fund" : "icon-stock"}
+    />
+  );
 }
 
 /** 复用 ECharts 渲染微型行情趋势，空序列不会显示成真实走势。 */
@@ -328,7 +346,11 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
     <section className="flex min-h-0 w-full flex-1 flex-col gap-4" data-investment-dashboard>
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-1">
         <div className="flex min-w-0 items-center gap-3">
-          <div aria-label="投资图标预留" className="size-7 shrink-0" />
+          <CategoryIcon
+            className="size-7"
+            iconClassName="text-xl"
+            name="icon-investment"
+          />
           <Typography.Title className="m-0! text-[22px]! max-sm:text-xl!" level={2}>今日市场信号</Typography.Title>
           <Tag className="m-0 border-0 bg-emerald-50 px-2 py-1 text-emerald-700">{data.marketStateLabel}</Tag>
         </div>
@@ -386,22 +408,145 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   );
 }
 
-function WatchlistRow({ item, onDragEnd, onDragStart, onDrop, onRemove }: { item: InvestmentWatchlistEntry; onDragEnd: () => void; onDragStart: () => void; onDrop: () => void; onRemove: () => void }) {
-  return <div className="home-preview-divider flex flex-col gap-2 border-b py-4 last:border-b-0 min-[720px]:grid min-[720px]:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] min-[720px]:items-center min-[720px]:gap-2" draggable onDragEnd={onDragEnd} onDragOver={(event) => event.preventDefault()} onDragStart={onDragStart} onDrop={onDrop}>
-    <div className="flex min-w-0 items-center gap-2"><DragOutlined className="cursor-grab text-black/35 dark:text-white/35" /><div aria-label="项目图标预留" className="size-7 shrink-0" /><div className="min-w-0"><Typography.Text className="block truncate" strong>{item.instrumentName}</Typography.Text><Typography.Text className="text-xs" type="secondary">{item.instrumentCode} · {item.instrumentType === "fund" ? "基金" : "股票"}</Typography.Text></div></div>
-    <MetricCell label="今日涨跌" value={formatChange(item.quote.changePercent)} valueClassName={getChangeClass(item.quote.changePercent)} detail={`${item.quote.source}${item.quote.updatedAt ? ` · ${item.quote.updatedAt}` : ""}`} />
-    <MetricCell label="下一交易日预测" value={item.forecast.value} valueClassName={item.forecast.value.includes("-") || item.forecast.value === "偏弱" ? "text-emerald-600" : "text-red-500"} detail={item.forecast.label} />
-    <TrendChart trend={item.trend} value={item.quote.changePercent} />
-    <Popconfirm cancelText="取消" okText="移除" onConfirm={onRemove} title="移除此关注项？"><Button aria-label={`删除 ${item.instrumentName}`} icon={<DeleteOutlined />} size="small" type="text" /></Popconfirm>
-  </div>;
+function WatchlistRow({
+  item,
+  onDragEnd,
+  onDragStart,
+  onDrop,
+  onRemove,
+}: {
+  item: InvestmentWatchlistEntry;
+  onDragEnd: () => void;
+  onDragStart: () => void;
+  onDrop: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div
+      className="home-preview-divider flex flex-col gap-2 border-b py-4 last:border-b-0 min-[720px]:grid min-[720px]:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] min-[720px]:items-center min-[720px]:gap-2"
+      draggable
+      onDragEnd={onDragEnd}
+      onDragOver={(event) => event.preventDefault()}
+      onDragStart={onDragStart}
+      onDrop={onDrop}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <DragOutlined className="cursor-grab text-black/35 dark:text-white/35" />
+        <InvestmentInstrumentIcon
+          className="size-7"
+          instrumentType={item.instrumentType}
+        />
+        <div className="min-w-0">
+          <Typography.Text className="block truncate" strong>
+            {item.instrumentName}
+          </Typography.Text>
+          <Typography.Text className="text-xs" type="secondary">
+            {item.instrumentCode} · {item.instrumentType === "fund" ? "基金" : "股票"}
+          </Typography.Text>
+        </div>
+      </div>
+      <MetricCell
+        detail={`${item.quote.source}${item.quote.updatedAt ? ` · ${item.quote.updatedAt}` : ""}`}
+        label="今日涨跌"
+        value={formatChange(item.quote.changePercent)}
+        valueClassName={getChangeClass(item.quote.changePercent)}
+      />
+      <MetricCell
+        detail={item.forecast.label}
+        label="下一交易日预测"
+        value={item.forecast.value}
+        valueClassName={
+          item.forecast.value.includes("-") || item.forecast.value === "偏弱"
+            ? "text-emerald-600"
+            : "text-red-500"
+        }
+      />
+      <TrendChart trend={item.trend} value={item.quote.changePercent} />
+      <Popconfirm
+        cancelText="取消"
+        okText="移除"
+        onConfirm={onRemove}
+        title="移除此关注项？"
+      >
+        <Button
+          aria-label={`删除 ${item.instrumentName}`}
+          icon={<DeleteOutlined />}
+          size="small"
+          type="text"
+        />
+      </Popconfirm>
+    </div>
+  );
 }
 
 function MetricCell({ detail, label, value, valueClassName }: { detail: string; label: string; value: string; valueClassName?: string }) {
   return <div><Typography.Text className="mr-2 text-xs min-[720px]:hidden" type="secondary">{label}</Typography.Text><Typography.Text className={cn("font-semibold", valueClassName)}>{value}</Typography.Text><Typography.Text className="mt-0.5 block text-[10px]" type="secondary">{detail}</Typography.Text></div>;
 }
 
-function RecommendationPanel({ items, onAdd }: { items: InvestmentRecommendation[]; onAdd: (item: InvestmentRecommendation) => void }) {
-  return <section className="home-preview-panel border bg-white/55 p-4 shadow-sm dark:bg-black/10"><div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>推荐关注</Typography.Title><Tag className="m-0 rounded-full border-0 bg-emerald-50 text-emerald-700">{items.length}</Tag></div><Typography.Text className="mt-1 block text-xs" type="secondary">基金展示下一交易日估计；股票只展示方向判断。</Typography.Text><div className="home-preview-divide-y mt-2 divide-y">{items.map((item) => <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 py-3" key={item.instrumentCode}><div className="min-w-0"><div className="flex items-center gap-2"><div aria-label="项目图标预留" className="size-6 shrink-0" /><Typography.Text className="truncate" strong>{item.instrumentName}</Typography.Text></div><Typography.Text className="ml-8 block truncate text-xs" type="secondary">{item.instrumentCode} · {item.reason}</Typography.Text></div><div className="text-right"><Typography.Text className={cn("font-semibold", getChangeClass(item.changePercent))}>{formatChange(item.changePercent)}</Typography.Text><Typography.Text className={cn("ml-2 text-sm font-semibold", item.forecast.includes("-") ? "text-emerald-600" : "text-red-500")}>{item.forecast}</Typography.Text><div className="text-[10px] text-black/40 dark:text-white/40">{item.source}{item.updatedAt ? ` · ${item.updatedAt}` : ""}</div></div><Button onClick={() => onAdd(item)} size="small">加入关注</Button></div>)}</div></section>;
+function RecommendationPanel({
+  items,
+  onAdd,
+}: {
+  items: InvestmentRecommendation[];
+  onAdd: (item: InvestmentRecommendation) => void;
+}) {
+  return (
+    <section className="home-preview-panel border bg-white/55 p-4 shadow-sm dark:bg-black/10">
+      <div className="flex items-center gap-2">
+        <Typography.Title className="m-0! text-lg!" level={3}>
+          推荐关注
+        </Typography.Title>
+        <Tag className="m-0 rounded-full border-0 bg-emerald-50 text-emerald-700">
+          {items.length}
+        </Tag>
+      </div>
+      <Typography.Text className="mt-1 block text-xs" type="secondary">
+        基金展示下一交易日估计；股票只展示方向判断。
+      </Typography.Text>
+      <div className="home-preview-divide-y mt-2 divide-y">
+        {items.map((item) => (
+          <div
+            className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 py-3"
+            key={item.instrumentCode}
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <InvestmentInstrumentIcon instrumentType={item.instrumentType} />
+                <Typography.Text className="truncate" strong>
+                  {item.instrumentName}
+                </Typography.Text>
+              </div>
+              <Typography.Text className="ml-8 block truncate text-xs" type="secondary">
+                {item.instrumentCode} · {item.reason}
+              </Typography.Text>
+            </div>
+            <div className="text-right">
+              <Typography.Text
+                className={cn("font-semibold", getChangeClass(item.changePercent))}
+              >
+                {formatChange(item.changePercent)}
+              </Typography.Text>
+              <Typography.Text
+                className={cn(
+                  "ml-2 text-sm font-semibold",
+                  item.forecast.includes("-") ? "text-emerald-600" : "text-red-500",
+                )}
+              >
+                {item.forecast}
+              </Typography.Text>
+              <div className="text-[10px] text-black/40 dark:text-white/40">
+                {item.source}
+                {item.updatedAt ? ` · ${item.updatedAt}` : ""}
+              </div>
+            </div>
+            <Button onClick={() => onAdd(item)} size="small">
+              加入关注
+            </Button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function MarketSignalPanel({ items }: { items: InvestmentSectorSignal[] }) {

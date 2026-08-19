@@ -1,8 +1,8 @@
 @font-face {
   font-family: "iconfont"; /* Project id 4012350 */
-  src: url('iconfont.woff2?t=1786417235256') format('woff2'),
-       url('iconfont.woff?t=1786417235256') format('woff'),
-       url('iconfont.ttf?t=1786417235256') format('truetype');
+  src: url('iconfont.woff2?t=1787108086670') format('woff2'),
+       url('iconfont.woff?t=1787108086670') format('woff'),
+       url('iconfont.ttf?t=1787108086670') format('truetype');
 }
 
 .iconfont {
@@ -11,6 +11,18 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-stock:before {
+  content: "\e61f";
+}
+
+.icon-fund:before {
+  content: "\e623";
+}
+
+.icon-investment:before {
+  content: "\e628";
 }
 
 .icon-invisible:before {
