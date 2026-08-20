@@ -29,6 +29,10 @@ test("uses browser-native vertical scrollbars for every shared scroll viewport",
   assert.match(styles, /scrollbar-width:\s*thin;/);
   assert.match(styles, /::\-webkit-scrollbar\s*\{[^}]*height:\s*10px;[^}]*width:\s*10px;/s);
   assert.match(styles, /::\-webkit-scrollbar-thumb\s*\{[^}]*background-color:/s);
+  assert.match(
+    styles,
+    /--storage-scrollbar-thumb:\s*color-mix\([\s\S]*?var\(--storage-scrollbar-color,\s*var\(--home-theme-color, #22c55e\)\)/,
+  );
 });
 
 test("keeps native scrollbar dimensions stable while marking scroll activity", async () => {

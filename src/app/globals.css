@@ -32,12 +32,12 @@
   --storage-scrollbar-track: transparent;
   --storage-scrollbar-thumb: color-mix(
     in srgb,
-    var(--home-theme-color, #22c55e) 42%,
+    var(--storage-scrollbar-color, var(--home-theme-color, #22c55e)) 42%,
     transparent
   );
   --storage-scrollbar-thumb-active: color-mix(
     in srgb,
-    var(--home-theme-color, #22c55e) 68%,
+    var(--storage-scrollbar-color, var(--home-theme-color, #22c55e)) 68%,
     transparent
   );
 }
