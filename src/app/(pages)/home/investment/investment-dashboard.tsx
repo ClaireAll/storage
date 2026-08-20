@@ -3,6 +3,7 @@
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
 import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
+import { HomeContentFullscreenButton } from "../home-content-fullscreen";
 import {
   DeleteOutlined,
   DragOutlined,
@@ -84,7 +85,7 @@ function InvestmentInstrumentIcon({
   return (
     <CategoryIcon
       className={className}
-      iconClassName="text-xl"
+      iconClassName="text-xl text-red-500"
       name={instrumentType === "fund" ? "icon-fund" : "icon-stock"}
     />
   );
@@ -343,15 +344,19 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   }
 
   return (
-    <section className="flex min-h-0 w-full flex-1 flex-col gap-4" data-investment-dashboard>
+    <section
+      className="investment-dashboard-shell flex min-h-0 w-full flex-1 flex-col gap-4"
+      data-investment-dashboard
+    >
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-1">
         <div className="flex min-w-0 items-center gap-3">
           <CategoryIcon
             className="size-7"
-            iconClassName="text-xl"
+            iconClassName="text-xl text-red-500"
             name="icon-investment"
           />
           <Typography.Title className="m-0! text-[22px]! max-sm:text-xl!" level={2}>今日市场信号</Typography.Title>
+          <HomeContentFullscreenButton />
           <Tag className="m-0 border-0 bg-emerald-50 px-2 py-1 text-emerald-700">{data.marketStateLabel}</Tag>
         </div>
         <div className="flex items-center gap-1 text-xs text-black/45 dark:text-white/45">
@@ -361,14 +366,14 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 max-[980px]:grid-cols-1">
-        <section className="home-preview-panel flex min-h-0 flex-col border bg-white/55 p-4 shadow-sm dark:bg-black/10">
+      <div className="investment-dashboard-grid grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 max-[1180px]:grid-cols-1">
+        <section className="investment-watchlist-panel home-preview-panel @container/investment-watchlist flex min-h-0 flex-col border bg-white/55 p-4 shadow-sm dark:bg-black/10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><Typography.Text type="secondary">({data.watchlist.length})</Typography.Text></div>
             <div className="flex items-center gap-2"><Input allowClear className="w-43 max-sm:w-38" onChange={(event) => setKeyword(event.target.value)} placeholder="搜索代码/名称" prefix={<SearchOutlined />} value={keyword} /><Tooltip title="添加关注"><Button aria-label="添加关注" icon={<PlusOutlined />} onClick={() => setIsCreateOpen(true)} type="text" /></Tooltip></div>
           </div>
           <Segmented className="mt-3 w-fit" onChange={(value) => setFilter(value as InvestmentFilter)} options={filterOptions} value={filter} />
-          <div className="home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs text-black/45 min-[720px]:grid dark:text-white/45">
+          <div className="home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs text-black/45 @min-[720px]/investment-watchlist:grid dark:text-white/45">
             <span>代码 / 名称</span><span>今日涨跌</span><span>下一交易日预测</span><span>趋势</span><span />
           </div>
           <OverlayScrollArea className="min-h-0 flex-1" viewportClassName="overflow-x-hidden" vertical>
@@ -423,7 +428,7 @@ function WatchlistRow({
 }) {
   return (
     <div
-      className="home-preview-divider flex flex-col gap-2 border-b py-4 last:border-b-0 min-[720px]:grid min-[720px]:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] min-[720px]:items-center min-[720px]:gap-2"
+      className="home-preview-divider flex flex-col gap-2 border-b py-4 last:border-b-0 @min-[720px]/investment-watchlist:grid @min-[720px]/investment-watchlist:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] @min-[720px]/investment-watchlist:items-center @min-[720px]/investment-watchlist:gap-2"
       draggable
       onDragEnd={onDragEnd}
       onDragOver={(event) => event.preventDefault()}
@@ -448,12 +453,14 @@ function WatchlistRow({
       <MetricCell
         detail={`${item.quote.source}${item.quote.updatedAt ? ` · ${item.quote.updatedAt}` : ""}`}
         label="今日涨跌"
+        labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
         value={formatChange(item.quote.changePercent)}
         valueClassName={getChangeClass(item.quote.changePercent)}
       />
       <MetricCell
         detail={item.forecast.label}
         label="下一交易日预测"
+        labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
         value={item.forecast.value}
         valueClassName={
           item.forecast.value.includes("-") || item.forecast.value === "偏弱"
@@ -479,8 +486,35 @@ function WatchlistRow({
   );
 }
 
-function MetricCell({ detail, label, value, valueClassName }: { detail: string; label: string; value: string; valueClassName?: string }) {
-  return <div><Typography.Text className="mr-2 text-xs min-[720px]:hidden" type="secondary">{label}</Typography.Text><Typography.Text className={cn("font-semibold", valueClassName)}>{value}</Typography.Text><Typography.Text className="mt-0.5 block text-[10px]" type="secondary">{detail}</Typography.Text></div>;
+function MetricCell({
+  detail,
+  label,
+  labelClassName,
+  value,
+  valueClassName,
+}: {
+  detail: string;
+  label: string;
+  labelClassName?: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div>
+      <Typography.Text
+        className={cn("mr-2 text-xs", labelClassName ?? "min-[720px]:hidden")}
+        type="secondary"
+      >
+        {label}
+      </Typography.Text>
+      <Typography.Text className={cn("font-semibold", valueClassName)}>
+        {value}
+      </Typography.Text>
+      <Typography.Text className="mt-0.5 block text-[10px]" type="secondary">
+        {detail}
+      </Typography.Text>
+    </div>
+  );
 }
 
 function RecommendationPanel({

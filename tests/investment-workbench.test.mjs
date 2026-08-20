@@ -39,6 +39,14 @@ const homeStylesPath = new URL(
   "../src/app/(pages)/theme/styles/home.less",
   import.meta.url,
 );
+const homeDashboardPath = new URL(
+  "../src/app/(pages)/home/home-dashboard.tsx",
+  import.meta.url,
+);
+const homeViewPath = new URL(
+  "../src/app/(pages)/home/home-view.tsx",
+  import.meta.url,
+);
 
 test("adds the investment category and renders its own dashboard route", async () => {
   const [categorySource, pageSource] = await Promise.all([
@@ -72,6 +80,45 @@ test("uses the supplied icons for investment navigation and instruments", async 
     /<InvestmentInstrumentIcon instrumentType=\{item\.instrumentType\}/,
   );
   assert.doesNotMatch(dashboardSource, /(?:投资|项目)图标预留/);
+});
+
+test("keeps investment controls responsive and available in fullscreen", async () => {
+  const [dashboardSource, homeDashboardSource, homeViewSource] = await Promise.all([
+    readFile(dashboardPath, "utf8"),
+    readFile(homeDashboardPath, "utf8"),
+    readFile(homeViewPath, "utf8"),
+  ]);
+  const watchlistRowSource =
+    dashboardSource.match(/function WatchlistRow[\s\S]*?function MetricCell/)?.[0] ??
+    "";
+
+  assert.match(
+    dashboardSource,
+    /from "\.\.\/home-content-fullscreen"/,
+  );
+  assert.match(dashboardSource, /<HomeContentFullscreenButton \/>/);
+  assert.match(
+    dashboardSource,
+    /investment-dashboard-grid[^"]*max-\[1180px\]:grid-cols-1/,
+  );
+  assert.match(
+    dashboardSource,
+    /investment-watchlist-panel[^"`]*@container\/investment-watchlist/,
+  );
+  assert.match(
+    watchlistRowSource,
+    /@min-\[720px\]\/investment-watchlist:grid/,
+  );
+  assert.doesNotMatch(watchlistRowSource, /min-\[720px\]:grid/);
+  assert.match(dashboardSource, /iconClassName="text-xl text-red-500"/);
+  assert.match(
+    homeDashboardSource,
+    /has-\[\[data-investment-dashboard\]\]:max-\[1180px\]:overflow-visible/,
+  );
+  assert.match(
+    homeViewSource,
+    /has-\[\[data-investment-dashboard\]\]:max-\[1180px\]:overflow-visible/,
+  );
 });
 
 test("keeps investment watchlist access scoped to the signed-in user", async () => {
