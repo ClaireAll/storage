@@ -81,7 +81,7 @@ test("defines Codex preview border color rules in one token map", async () => {
   );
 });
 
-test("uses the daily report symbol and keeps mobile toolbar actions compact", async () => {
+test("uses the daily report symbol and stacks compact toolbar controls in two rows", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
   assert.match(source, /import \{ CategoryIcon \} from "@\/app\/\(pages\)\/common\/category-icon"/);
@@ -95,11 +95,16 @@ test("uses the daily report symbol and keeps mobile toolbar actions compact", as
   );
   assert.match(
     source,
-    /grid-cols-\[minmax\(0,1fr\)_40px\][^"`]*sm:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/,
+    /codex-log-toolbar-actions flex w-full min-w-0 flex-col gap-2 lg:grid lg:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/,
   );
-  assert.match(source, /codex-log-date-picker col-span-2 w-full sm:col-span-1/);
-  assert.match(source, /codex-log-repo-select col-span-2 w-full sm:col-span-1/);
-  assert.match(source, /className="col-span-1 w-full sm:col-span-1"/);
+  assert.match(source, /className="grid grid-cols-2 gap-2 lg:contents"/);
+  assert.match(source, /className="flex min-w-0 gap-2 lg:contents"/);
+  assert.match(source, /codex-log-date-picker w-full/);
+  assert.match(source, /codex-log-repo-select w-full/);
+  assert.match(
+    source,
+    /<span className="hidden lg:contents">\s*<HomeContentFullscreenButton\s*\/>\s*<\/span>/,
+  );
 });
 
 test("stacks the toolbar until the dashboard has enough room beside the sidebar", async () => {
@@ -109,7 +114,7 @@ test("stacks the toolbar until the dashboard has enough room beside the sidebar"
   ]);
 
   assert.match(source, /codex-log-toolbar grid grid-cols-1[^"`]*2xl:flex 2xl:items-center 2xl:justify-between/);
-  assert.match(source, /sm:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\] 2xl:w-180/);
+  assert.match(source, /lg:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\] 2xl:w-180/);
   assert.doesNotMatch(source, /xl:flex xl:items-center xl:justify-between/);
   assert.doesNotMatch(
     homeStyleSource,

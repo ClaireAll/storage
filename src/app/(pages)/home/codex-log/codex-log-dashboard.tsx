@@ -1055,7 +1055,9 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
               <Typography.Title className="!mb-0 !text-xl text-balance" level={4}>
                 日报
               </Typography.Title>
-              <HomeContentFullscreenButton />
+              <span className="hidden lg:contents">
+                <HomeContentFullscreenButton />
+              </span>
             </div>
             <Typography.Title className="!hidden" level={4}>
               Codex日报
@@ -1065,43 +1067,47 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-[minmax(0,1fr)_40px] gap-2 sm:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] 2xl:w-180">
-          <DatePicker
-            allowClear={false}
-            className="codex-log-date-picker col-span-2 w-full sm:col-span-1"
-            disabledDate={(current) =>
-              !data.availableDates.includes(current.format("YYYY-MM-DD"))
-            }
-            onChange={handleDateChange}
-            value={selectedDay.isValid() ? selectedDay : undefined}
-          />
-          <Select
-            className="codex-log-repo-select col-span-2 w-full sm:col-span-1"
-            onChange={(value) => {
-              setRepository(value);
-              setTablePage(1);
-            }}
-            options={repositoryOptions}
-            value={repository}
-          />
-          <Input
-            allowClear
-            className="codex-log-search col-span-1 w-full sm:col-span-1"
-            onChange={(event) => {
-              setKeyword(event.target.value);
-              setTablePage(1);
-            }}
-            placeholder="搜索任务或回答"
-            prefix={<SearchOutlined />}
-            value={keyword}
-          />
-          <Button
-            aria-label="刷新日报"
-            className="col-span-1 w-full sm:col-span-1"
-            icon={<SyncOutlined />}
-            onClick={() => router.refresh()}
-            type="text"
-          />
+        <div className="codex-log-toolbar-actions flex w-full min-w-0 flex-col gap-2 lg:grid lg:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] 2xl:w-180">
+          <div className="grid grid-cols-2 gap-2 lg:contents">
+            <DatePicker
+              allowClear={false}
+              className="codex-log-date-picker w-full"
+              disabledDate={(current) =>
+                !data.availableDates.includes(current.format("YYYY-MM-DD"))
+              }
+              onChange={handleDateChange}
+              value={selectedDay.isValid() ? selectedDay : undefined}
+            />
+            <Select
+              className="codex-log-repo-select w-full"
+              onChange={(value) => {
+                setRepository(value);
+                setTablePage(1);
+              }}
+              options={repositoryOptions}
+              value={repository}
+            />
+          </div>
+          <div className="flex min-w-0 gap-2 lg:contents">
+            <Input
+              allowClear
+              className="codex-log-search min-w-0 flex-1 lg:w-full"
+              onChange={(event) => {
+                setKeyword(event.target.value);
+                setTablePage(1);
+              }}
+              placeholder="搜索任务或回答"
+              prefix={<SearchOutlined />}
+              value={keyword}
+            />
+            <Button
+              aria-label="刷新日报"
+              className="shrink-0 lg:w-full"
+              icon={<SyncOutlined />}
+              onClick={() => router.refresh()}
+              type="text"
+            />
+          </div>
         </div>
       </div>
 
