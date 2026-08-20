@@ -109,6 +109,10 @@ test("keeps investment controls responsive and available in fullscreen", async (
     watchlistRowSource,
     /@min-\[720px\]\/investment-watchlist:grid/,
   );
+  assert.match(watchlistRowSource, /grid grid-cols-2 gap-2/);
+  assert.match(watchlistRowSource, /@min-\[720px\]\/investment-watchlist:contents/);
+  assert.match(watchlistRowSource, /@min-\[720px\]\/investment-watchlist:hidden/);
+  assert.match(watchlistRowSource, /@min-\[720px\]\/investment-watchlist:inline-flex/);
   assert.doesNotMatch(watchlistRowSource, /min-\[720px\]:grid/);
   assert.match(dashboardSource, /iconClassName="text-xl text-red-500"/);
   assert.match(
@@ -172,6 +176,7 @@ test("uses shared preview border tokens for investment surfaces", async () => {
   assert.match(dashboardSource, /dark:bg-\[color-mix\(in_srgb,var\(--home-theme-bg\)_88%,#ffffff_12%\)\]/);
   assert.match(dashboardSource, /const investmentMutedTextClassName =/);
   assert.match(dashboardSource, /const investmentFaintTextClassName =/);
+  assert.match(dashboardSource, /const investmentInsetSurfaceClassName =/);
   assert.doesNotMatch(
     dashboardSource,
     /(?:border|divide)-black\/(?:7|8)|dark:(?:border|divide)-white\/(?:10|12)/,

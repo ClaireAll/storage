@@ -83,6 +83,9 @@ const investmentMutedTextClassName =
 const investmentFaintTextClassName =
   "text-[color-mix(in_srgb,var(--home-theme-text)_56%,transparent)]";
 
+const investmentInsetSurfaceClassName =
+  "rounded-lg bg-[color-mix(in_srgb,var(--home-theme-bg)_28%,#ffffff_72%)] p-2 dark:bg-[color-mix(in_srgb,var(--home-theme-bg)_82%,#ffffff_18%)]";
+
 /** 根据投资品种展示对应的 iconfont 图标。 */
 function InvestmentInstrumentIcon({
   className,
@@ -101,7 +104,15 @@ function InvestmentInstrumentIcon({
 }
 
 /** 复用 ECharts 渲染微型行情趋势，空序列不会显示成真实走势。 */
-function TrendChart({ trend, value }: { trend: number[]; value: number | null }) {
+function TrendChart({
+  className,
+  trend,
+  value,
+}: {
+  className?: string;
+  trend: number[];
+  value: number | null;
+}) {
   const chartElement = useRef<HTMLDivElement>(null);
   const stroke = value === null || value >= 0 ? "#e64f4f" : "#16a072";
 
@@ -128,12 +139,12 @@ function TrendChart({ trend, value }: { trend: number[]; value: number | null })
   }, [stroke, trend]);
 
   if (!trend.length) {
-    return <Typography.Text className={cn("text-[10px]", investmentFaintTextClassName)}>走势待更新</Typography.Text>;
+    return <Typography.Text className={cn("text-[10px]", investmentFaintTextClassName, className)}>走势待更新</Typography.Text>;
   }
 
   return (
-    <div aria-label="趋势图" className="min-w-0">
-      <div className="h-11 w-full" ref={chartElement} />
+    <div aria-label="趋势图" className={cn("min-w-0", className)}>
+      <div className="h-9 w-full @min-[720px]/investment-watchlist:h-11" ref={chartElement} />
       <div className={cn("flex justify-between text-[10px]", investmentFaintTextClassName)}>
         <span>起点</span><span>最新</span>
       </div>
@@ -379,7 +390,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
         <section className={cn("investment-watchlist-panel @container/investment-watchlist flex min-h-0 flex-col p-4", investmentPanelClassName)}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><Typography.Text className={investmentMutedTextClassName}>({data.watchlist.length})</Typography.Text></div>
-            <div className="flex items-center gap-2"><Input allowClear className="w-43 max-sm:w-38" onChange={(event) => setKeyword(event.target.value)} placeholder="搜索代码/名称" prefix={<SearchOutlined />} value={keyword} /><Tooltip title="添加关注"><Button aria-label="添加关注" icon={<PlusOutlined />} onClick={() => setIsCreateOpen(true)} type="text" /></Tooltip></div>
+            <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_32px] items-center gap-2 sm:flex-none"><Input allowClear className="min-w-0" onChange={(event) => setKeyword(event.target.value)} placeholder="搜索代码/名称" prefix={<SearchOutlined />} value={keyword} /><Tooltip title="添加关注"><Button aria-label="添加关注" className="size-8 rounded-lg!" icon={<PlusOutlined />} onClick={() => setIsCreateOpen(true)} type="text" /></Tooltip></div>
           </div>
           <Segmented className="mt-3 w-fit" onChange={(value) => setFilter(value as InvestmentFilter)} options={filterOptions} value={filter} />
           <div className={cn("home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs @min-[720px]/investment-watchlist:grid", investmentMutedTextClassName)}>
@@ -437,20 +448,20 @@ function WatchlistRow({
 }) {
   return (
     <div
-      className="home-preview-divider flex flex-col gap-2 border-b py-4 last:border-b-0 @min-[720px]/investment-watchlist:grid @min-[720px]/investment-watchlist:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] @min-[720px]/investment-watchlist:items-center @min-[720px]/investment-watchlist:gap-2"
+      className="home-preview-divider flex flex-col gap-3 border-b py-4 last:border-b-0 @min-[720px]/investment-watchlist:grid @min-[720px]/investment-watchlist:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] @min-[720px]/investment-watchlist:items-center @min-[720px]/investment-watchlist:gap-2"
       draggable
       onDragEnd={onDragEnd}
       onDragOver={(event) => event.preventDefault()}
       onDragStart={onDragStart}
       onDrop={onDrop}
     >
-      <div className="flex min-w-0 items-center gap-2">
-        <DragOutlined className="cursor-grab text-black/35 dark:text-white/35" />
+      <div className="flex min-w-0 items-start gap-2 @min-[720px]/investment-watchlist:items-center">
+        <DragOutlined className={cn("mt-1 cursor-grab @min-[720px]/investment-watchlist:mt-0", investmentFaintTextClassName)} />
         <InvestmentInstrumentIcon
           className="size-7"
           instrumentType={item.instrumentType}
         />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <Typography.Text className="block truncate" strong>
             {item.instrumentName}
           </Typography.Text>
@@ -458,26 +469,48 @@ function WatchlistRow({
             {item.instrumentCode} · {item.instrumentType === "fund" ? "基金" : "股票"}
           </Typography.Text>
         </div>
+        <Popconfirm
+          cancelText="取消"
+          okText="移除"
+          onConfirm={onRemove}
+          title="移除此关注项？"
+        >
+          <Button
+            aria-label={`删除 ${item.instrumentName}`}
+            className="shrink-0 @min-[720px]/investment-watchlist:hidden"
+            icon={<DeleteOutlined />}
+            size="small"
+            type="text"
+          />
+        </Popconfirm>
       </div>
-      <MetricCell
-        detail={`${item.quote.source}${item.quote.updatedAt ? ` · ${item.quote.updatedAt}` : ""}`}
-        label="今日涨跌"
-        labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
-        value={formatChange(item.quote.changePercent)}
-        valueClassName={getChangeClass(item.quote.changePercent)}
+      <div className="grid grid-cols-2 gap-2 @min-[720px]/investment-watchlist:contents">
+        <MetricCell
+          className={cn(investmentInsetSurfaceClassName, "@min-[720px]/investment-watchlist:rounded-none @min-[720px]/investment-watchlist:bg-transparent @min-[720px]/investment-watchlist:p-0")}
+          detail={`${item.quote.source}${item.quote.updatedAt ? ` · ${item.quote.updatedAt}` : ""}`}
+          label="今日涨跌"
+          labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
+          value={formatChange(item.quote.changePercent)}
+          valueClassName={getChangeClass(item.quote.changePercent)}
+        />
+        <MetricCell
+          className={cn(investmentInsetSurfaceClassName, "@min-[720px]/investment-watchlist:rounded-none @min-[720px]/investment-watchlist:bg-transparent @min-[720px]/investment-watchlist:p-0")}
+          detail={item.forecast.label}
+          label="下一交易日预测"
+          labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
+          value={item.forecast.value}
+          valueClassName={
+            item.forecast.value.includes("-") || item.forecast.value === "偏弱"
+              ? "text-emerald-600"
+              : "text-red-500"
+          }
+        />
+      </div>
+      <TrendChart
+        className={cn(investmentInsetSurfaceClassName, "@min-[720px]/investment-watchlist:rounded-none @min-[720px]/investment-watchlist:bg-transparent @min-[720px]/investment-watchlist:p-0")}
+        trend={item.trend}
+        value={item.quote.changePercent}
       />
-      <MetricCell
-        detail={item.forecast.label}
-        label="下一交易日预测"
-        labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
-        value={item.forecast.value}
-        valueClassName={
-          item.forecast.value.includes("-") || item.forecast.value === "偏弱"
-            ? "text-emerald-600"
-            : "text-red-500"
-        }
-      />
-      <TrendChart trend={item.trend} value={item.quote.changePercent} />
       <Popconfirm
         cancelText="取消"
         okText="移除"
@@ -486,6 +519,7 @@ function WatchlistRow({
       >
         <Button
           aria-label={`删除 ${item.instrumentName}`}
+          className="hidden justify-self-end @min-[720px]/investment-watchlist:inline-flex"
           icon={<DeleteOutlined />}
           size="small"
           type="text"
@@ -496,12 +530,14 @@ function WatchlistRow({
 }
 
 function MetricCell({
+  className,
   detail,
   label,
   labelClassName,
   value,
   valueClassName,
 }: {
+  className?: string;
   detail: string;
   label: string;
   labelClassName?: string;
@@ -509,7 +545,7 @@ function MetricCell({
   valueClassName?: string;
 }) {
   return (
-    <div>
+    <div className={className}>
       <Typography.Text
         className={cn(
           "mr-2 text-xs",
@@ -522,7 +558,7 @@ function MetricCell({
       <Typography.Text className={cn("font-semibold", valueClassName)}>
         {value}
       </Typography.Text>
-      <Typography.Text className={cn("mt-0.5 block text-[10px]", investmentFaintTextClassName)}>
+      <Typography.Text className={cn("mt-0.5 block truncate text-[10px]", investmentFaintTextClassName)}>
         {detail}
       </Typography.Text>
     </div>
