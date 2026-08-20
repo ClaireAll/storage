@@ -167,10 +167,16 @@ test("uses shared preview border tokens for investment surfaces", async () => {
   assert.match(dashboardSource, /home-preview-panel/);
   assert.match(dashboardSource, /home-preview-divider/);
   assert.match(dashboardSource, /home-preview-divide-y/);
+  assert.match(dashboardSource, /const investmentPanelClassName =/);
+  assert.match(dashboardSource, /rounded-xl border bg-\[color-mix\(in_srgb,var\(--home-theme-bg\)_18%,#ffffff_82%\)\]/);
+  assert.match(dashboardSource, /dark:bg-\[color-mix\(in_srgb,var\(--home-theme-bg\)_88%,#ffffff_12%\)\]/);
+  assert.match(dashboardSource, /const investmentMutedTextClassName =/);
+  assert.match(dashboardSource, /const investmentFaintTextClassName =/);
   assert.doesNotMatch(
     dashboardSource,
     /(?:border|divide)-black\/(?:7|8)|dark:(?:border|divide)-white\/(?:10|12)/,
   );
+  assert.doesNotMatch(dashboardSource, /bg-white\/55|bg-white\/45|dark:bg-black\/10/);
 });
 
 test("uses code-maintained rules and does not present unavailable public data as live", async () => {

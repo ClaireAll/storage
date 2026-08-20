@@ -74,6 +74,15 @@ function getChangeClass(value: number | null) {
   return value > 0 ? "text-red-500" : "text-emerald-600";
 }
 
+const investmentPanelClassName =
+  "home-preview-panel rounded-xl border bg-[color-mix(in_srgb,var(--home-theme-bg)_18%,#ffffff_82%)] text-[color:var(--home-theme-text)] shadow-sm dark:bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]";
+
+const investmentMutedTextClassName =
+  "text-[color-mix(in_srgb,var(--home-theme-text)_68%,transparent)]";
+
+const investmentFaintTextClassName =
+  "text-[color-mix(in_srgb,var(--home-theme-text)_56%,transparent)]";
+
 /** 根据投资品种展示对应的 iconfont 图标。 */
 function InvestmentInstrumentIcon({
   className,
@@ -119,13 +128,13 @@ function TrendChart({ trend, value }: { trend: number[]; value: number | null })
   }, [stroke, trend]);
 
   if (!trend.length) {
-    return <Typography.Text className="text-[10px]" type="secondary">走势待更新</Typography.Text>;
+    return <Typography.Text className={cn("text-[10px]", investmentFaintTextClassName)}>走势待更新</Typography.Text>;
   }
 
   return (
     <div aria-label="趋势图" className="min-w-0">
       <div className="h-11 w-full" ref={chartElement} />
-      <div className="flex justify-between text-[10px] text-black/35 dark:text-white/35">
+      <div className={cn("flex justify-between text-[10px]", investmentFaintTextClassName)}>
         <span>起点</span><span>最新</span>
       </div>
     </div>
@@ -359,7 +368,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
           <HomeContentFullscreenButton />
           <Tag className="m-0 border-0 bg-emerald-50 px-2 py-1 text-emerald-700">{data.marketStateLabel}</Tag>
         </div>
-        <div className="flex items-center gap-1 text-xs text-black/45 dark:text-white/45">
+        <div className={cn("flex items-center gap-1 text-xs", investmentMutedTextClassName)}>
           <span>公开行情 · 更新于 {data.dataUpdatedAt}</span>
           <Tooltip title="手动刷新"><Button aria-label="手动刷新" icon={<ReloadOutlined />} loading={isRefreshing} onClick={() => void refreshDashboard()} type="text" /></Tooltip>
           <Tooltip title="通知设置"><Button aria-label="通知设置" icon={<SettingOutlined />} onClick={() => { setNotificationForm({ enabled: false, notifyOnRecommendation: false, notifyOnSignal: false, webhookUrl: "" }); setIsNotificationOpen(true); }} type="text" /></Tooltip>
@@ -367,13 +376,13 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
       </header>
 
       <div className="investment-dashboard-grid grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 max-[1180px]:grid-cols-1">
-        <section className="investment-watchlist-panel home-preview-panel @container/investment-watchlist flex min-h-0 flex-col border bg-white/55 p-4 shadow-sm dark:bg-black/10">
+        <section className={cn("investment-watchlist-panel @container/investment-watchlist flex min-h-0 flex-col p-4", investmentPanelClassName)}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><Typography.Text type="secondary">({data.watchlist.length})</Typography.Text></div>
+            <div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><Typography.Text className={investmentMutedTextClassName}>({data.watchlist.length})</Typography.Text></div>
             <div className="flex items-center gap-2"><Input allowClear className="w-43 max-sm:w-38" onChange={(event) => setKeyword(event.target.value)} placeholder="搜索代码/名称" prefix={<SearchOutlined />} value={keyword} /><Tooltip title="添加关注"><Button aria-label="添加关注" icon={<PlusOutlined />} onClick={() => setIsCreateOpen(true)} type="text" /></Tooltip></div>
           </div>
           <Segmented className="mt-3 w-fit" onChange={(value) => setFilter(value as InvestmentFilter)} options={filterOptions} value={filter} />
-          <div className="home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs text-black/45 @min-[720px]/investment-watchlist:grid dark:text-white/45">
+          <div className={cn("home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs @min-[720px]/investment-watchlist:grid", investmentMutedTextClassName)}>
             <span>代码 / 名称</span><span>今日涨跌</span><span>下一交易日预测</span><span>趋势</span><span />
           </div>
           <OverlayScrollArea className="min-h-0 flex-1" viewportClassName="overflow-x-hidden" vertical>
@@ -445,7 +454,7 @@ function WatchlistRow({
           <Typography.Text className="block truncate" strong>
             {item.instrumentName}
           </Typography.Text>
-          <Typography.Text className="text-xs" type="secondary">
+          <Typography.Text className={cn("text-xs", investmentMutedTextClassName)}>
             {item.instrumentCode} · {item.instrumentType === "fund" ? "基金" : "股票"}
           </Typography.Text>
         </div>
@@ -502,15 +511,18 @@ function MetricCell({
   return (
     <div>
       <Typography.Text
-        className={cn("mr-2 text-xs", labelClassName ?? "min-[720px]:hidden")}
-        type="secondary"
+        className={cn(
+          "mr-2 text-xs",
+          investmentMutedTextClassName,
+          labelClassName ?? "min-[720px]:hidden",
+        )}
       >
         {label}
       </Typography.Text>
       <Typography.Text className={cn("font-semibold", valueClassName)}>
         {value}
       </Typography.Text>
-      <Typography.Text className="mt-0.5 block text-[10px]" type="secondary">
+      <Typography.Text className={cn("mt-0.5 block text-[10px]", investmentFaintTextClassName)}>
         {detail}
       </Typography.Text>
     </div>
@@ -525,7 +537,7 @@ function RecommendationPanel({
   onAdd: (item: InvestmentRecommendation) => void;
 }) {
   return (
-    <section className="home-preview-panel border bg-white/55 p-4 shadow-sm dark:bg-black/10">
+    <section className={cn(investmentPanelClassName, "p-4")}>
       <div className="flex items-center gap-2">
         <Typography.Title className="m-0! text-lg!" level={3}>
           推荐关注
@@ -534,7 +546,7 @@ function RecommendationPanel({
           {items.length}
         </Tag>
       </div>
-      <Typography.Text className="mt-1 block text-xs" type="secondary">
+      <Typography.Text className={cn("mt-1 block text-xs", investmentMutedTextClassName)}>
         基金展示下一交易日估计；股票只展示方向判断。
       </Typography.Text>
       <div className="home-preview-divide-y mt-2 divide-y">
@@ -550,7 +562,7 @@ function RecommendationPanel({
                   {item.instrumentName}
                 </Typography.Text>
               </div>
-              <Typography.Text className="ml-8 block truncate text-xs" type="secondary">
+              <Typography.Text className={cn("ml-8 block truncate text-xs", investmentMutedTextClassName)}>
                 {item.instrumentCode} · {item.reason}
               </Typography.Text>
             </div>
@@ -568,7 +580,7 @@ function RecommendationPanel({
               >
                 {item.forecast}
               </Typography.Text>
-              <div className="text-[10px] text-black/40 dark:text-white/40">
+              <div className={cn("text-[10px]", investmentFaintTextClassName)}>
                 {item.source}
                 {item.updatedAt ? ` · ${item.updatedAt}` : ""}
               </div>
@@ -584,12 +596,87 @@ function RecommendationPanel({
 }
 
 function MarketSignalPanel({ items }: { items: InvestmentSectorSignal[] }) {
-  return <section className="home-preview-panel flex min-h-0 flex-col border bg-white/55 p-4 shadow-sm dark:bg-black/10"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><Typography.Title className="m-0! text-lg!" level={3}>市场信号地图</Typography.Title><Typography.Text type="secondary">下一交易日判断</Typography.Text></div><OverlayScrollArea className="mt-3 min-h-0 flex-1" viewportClassName="overflow-x-hidden" vertical><div className="home-preview-divide-y divide-y">{items.map((item) => <div className="flex flex-col gap-2 py-3 min-[760px]:grid min-[760px]:grid-cols-[minmax(108px,.7fr)_72px_100px_minmax(80px,.65fr)_minmax(0,1.1fr)] min-[760px]:items-center min-[760px]:gap-3" key={item.name}><div className="flex min-w-0 items-center gap-2"><div aria-label="板块图标预留" className="size-6 shrink-0" /><Typography.Text className="truncate" strong>{item.name}</Typography.Text></div><MetricCell detail={item.isLive ? item.source : "等待公开行情"} label="今日涨跌" value={formatChange(item.changePercent)} valueClassName={getChangeClass(item.changePercent)} /><MetricCell detail="下一交易日" label="规则判断" value={`${item.direction}${item.forecastPercent === undefined ? "" : ` ${formatChange(item.forecastPercent)}`}`} valueClassName={item.direction === "偏弱" ? "text-emerald-600" : item.direction === "偏涨" ? "text-red-500" : undefined} /><TrendChart trend={item.trend} value={item.changePercent} /><Typography.Text className="line-clamp-2 text-xs" type="secondary">{item.reason}{item.updatedAt ? ` · ${item.updatedAt}` : ""}</Typography.Text></div>)}</div></OverlayScrollArea></section>;
+  return (
+    <section className={cn(investmentPanelClassName, "flex min-h-0 flex-col p-4")}>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <Typography.Title className="m-0! text-lg!" level={3}>
+          市场信号地图
+        </Typography.Title>
+        <Typography.Text className={investmentMutedTextClassName}>
+          下一交易日判断
+        </Typography.Text>
+      </div>
+      <OverlayScrollArea
+        className="mt-3 min-h-0 flex-1"
+        viewportClassName="overflow-x-hidden"
+        vertical
+      >
+        <div className="home-preview-divide-y divide-y">
+          {items.map((item) => (
+            <div
+              className="flex flex-col gap-2 py-3 min-[760px]:grid min-[760px]:grid-cols-[minmax(108px,.7fr)_72px_100px_minmax(80px,.65fr)_minmax(0,1.1fr)] min-[760px]:items-center min-[760px]:gap-3"
+              key={item.name}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <div aria-label="板块图标预留" className="size-6 shrink-0" />
+                <Typography.Text className="truncate" strong>
+                  {item.name}
+                </Typography.Text>
+              </div>
+              <MetricCell
+                detail={item.isLive ? item.source : "等待公开行情"}
+                label="今日涨跌"
+                value={formatChange(item.changePercent)}
+                valueClassName={getChangeClass(item.changePercent)}
+              />
+              <MetricCell
+                detail="下一交易日"
+                label="规则判断"
+                value={`${item.direction}${item.forecastPercent === undefined ? "" : ` ${formatChange(item.forecastPercent)}`}`}
+                valueClassName={
+                  item.direction === "偏弱"
+                    ? "text-emerald-600"
+                    : item.direction === "偏涨"
+                      ? "text-red-500"
+                      : undefined
+                }
+              />
+              <TrendChart trend={item.trend} value={item.changePercent} />
+              <Typography.Text className={cn("line-clamp-2 text-xs", investmentMutedTextClassName)}>
+                {item.reason}
+                {item.updatedAt ? ` · ${item.updatedAt}` : ""}
+              </Typography.Text>
+            </div>
+          ))}
+        </div>
+      </OverlayScrollArea>
+    </section>
+  );
 }
 
 function EvidenceStrip({ evidence }: { evidence: InvestmentDashboardData["evidence"] }) {
   const fetched = evidence.filter((item) => item.status === "fetched");
   const failed = evidence.filter((item) => item.status === "failed");
   const signalScore = fetched.reduce((total, item) => total + item.signalScore, 0);
-  return <section className="home-preview-panel flex flex-wrap items-center gap-x-5 gap-y-2 border bg-white/45 px-4 py-3 text-sm dark:bg-black/10"><Typography.Text strong>信号依据</Typography.Text><span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">规则 MD</span><Typography.Text type="secondary">{fetched.length ? `已抓取 ${fetched.map((item) => item.title).join("、")}` : "等待公开来源响应"}</Typography.Text>{fetched.length ? <Typography.Text type="secondary">文本信号 {signalScore > 0 ? "偏涨" : signalScore < 0 ? "偏弱" : "中性"}</Typography.Text> : null}{failed.length ? <Typography.Text className="text-amber-700 dark:text-amber-300">抓取失败 {failed.length} 个</Typography.Text> : null}</section>;
+  return (
+    <section className={cn(investmentPanelClassName, "flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 text-sm")}>
+      <Typography.Text strong>信号依据</Typography.Text>
+      <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-emerald-700">
+        规则 MD
+      </span>
+      <Typography.Text className={investmentMutedTextClassName}>
+        {fetched.length ? `已抓取 ${fetched.map((item) => item.title).join("、")}` : "等待公开来源响应"}
+      </Typography.Text>
+      {fetched.length ? (
+        <Typography.Text className={investmentMutedTextClassName}>
+          文本信号 {signalScore > 0 ? "偏涨" : signalScore < 0 ? "偏弱" : "中性"}
+        </Typography.Text>
+      ) : null}
+      {failed.length ? (
+        <Typography.Text className="text-amber-700 dark:text-amber-300">
+          抓取失败 {failed.length} 个
+        </Typography.Text>
+      ) : null}
+    </section>
+  );
 }
