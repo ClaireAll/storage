@@ -507,7 +507,7 @@ export function HomeDashboard({
   }, [refreshFullscreenLayout]);
 
   return (
-    <main className="home-dashboard-main flex min-h-0 w-full flex-1 flex-col gap-5 overflow-hidden px-[clamp(24px,3vw,64px)] pb-6 pt-6 has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:overflow-visible max-md:px-4 max-md:py-5">
+    <main className="home-dashboard-main flex min-h-0 w-full flex-1 flex-col gap-5 overflow-hidden px-[clamp(32px,4vw,88px)] pb-6 pt-6 has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:overflow-visible max-md:px-4 max-md:py-5">
       <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1fr)] gap-6 has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)_clamp(320px,24vw,420px)] max-[1100px]:has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)]">
         <div className="home-dashboard-left-stack flex min-h-0 min-w-0 flex-col gap-5">
       <section className="grid shrink-0 grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">

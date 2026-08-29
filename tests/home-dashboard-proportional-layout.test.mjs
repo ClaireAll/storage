@@ -10,7 +10,7 @@ const dashboardPath = new URL(
 test("uses proportional gutters and shared content boundaries on the home dashboard", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
-  assert.match(source, /px-\[clamp\(24px,3vw,64px\)\]/);
+  assert.match(source, /px-\[clamp\(32px,4vw,88px\)\]/);
   assert.match(source, /grid-cols-\[minmax\(0,1fr\)\]/);
   assert.match(
     source,
