@@ -87,27 +87,27 @@ test("uses shared preview tokens for README markdown boundaries", async () => {
   );
   assert.match(
     source,
-    /github-readme-preview-markdown[\s\S]*\[&_h2\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+    /github-readme-preview-markdown[\s\S]*\[&_h2\]:border-\(--home-preview-divider-color\)/,
   );
   assert.match(
     source,
-    /\[&_blockquote\]:border-\[color:var\(--home-preview-border-soft-color\)\]/,
+    /\[&_blockquote\]:border-\(--home-preview-border-soft-color\)/,
   );
   assert.match(
     source,
-    /\[&_pre\]:border-\[color:var\(--home-preview-border-soft-color\)\]/,
+    /\[&_pre\]:border-\(--home-preview-border-soft-color\)/,
   );
   assert.match(
     source,
-    /\[&_td\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+    /\[&_td\]:border-\(--home-preview-divider-color\)/,
   );
   assert.match(
     source,
-    /\[&_th\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+    /\[&_th\]:border-\(--home-preview-divider-color\)/,
   );
   assert.match(
     source,
-    /\[&_hr\]:border-\[color:var\(--home-preview-divider-color\)\]/,
+    /\[&_hr\]:border-\(--home-preview-divider-color\)/,
   );
   assert.match(
     styles,

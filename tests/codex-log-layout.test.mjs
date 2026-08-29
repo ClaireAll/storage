@@ -81,7 +81,7 @@ test("defines Codex preview border color rules in one token map", async () => {
   );
 });
 
-test("uses the daily report symbol and stacks compact toolbar controls in two rows", async () => {
+test("uses the daily report symbol and responds to the report container width", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
   assert.match(source, /import \{ CategoryIcon \} from "@\/app\/\(pages\)\/common\/category-icon"/);
@@ -95,15 +95,14 @@ test("uses the daily report symbol and stacks compact toolbar controls in two ro
   );
   assert.match(
     source,
-    /codex-log-toolbar-actions flex w-full min-w-0 flex-col gap-2 lg:grid lg:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/,
+    /codex-log-toolbar-actions grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_40px\] gap-2 @3xl\/codex-log:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/,
   );
-  assert.match(source, /className="grid grid-cols-2 gap-2 lg:contents"/);
-  assert.match(source, /className="flex min-w-0 gap-2 lg:contents"/);
-  assert.match(source, /codex-log-date-picker w-full/);
-  assert.match(source, /codex-log-repo-select w-full/);
+  assert.match(source, /codex-log-date-picker col-span-2 w-full @3xl\/codex-log:col-span-1/);
+  assert.match(source, /codex-log-repo-select col-span-2 w-full @3xl\/codex-log:col-span-1/);
+  assert.match(source, /className="col-span-1 w-full @3xl\/codex-log:col-span-1"/);
   assert.match(
     source,
-    /<span className="hidden lg:contents">\s*<HomeContentFullscreenButton\s*\/>\s*<\/span>/,
+    /<span className="hidden @5xl\/codex-log:contents">\s*<HomeContentFullscreenButton\s*\/>\s*<\/span>/,
   );
 });
 
@@ -113,9 +112,10 @@ test("stacks the toolbar until the dashboard has enough room beside the sidebar"
     readFile(homeStylePath, "utf8"),
   ]);
 
-  assert.match(source, /codex-log-toolbar grid grid-cols-1[^"`]*2xl:flex 2xl:items-center 2xl:justify-between/);
-  assert.match(source, /lg:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\] 2xl:w-180/);
-  assert.doesNotMatch(source, /xl:flex xl:items-center xl:justify-between/);
+  assert.match(source, /codex-log-toolbar grid grid-cols-1[^"`]*@5xl\/codex-log:flex @5xl\/codex-log:items-center @5xl\/codex-log:justify-between/);
+  assert.match(source, /@3xl\/codex-log:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\] @5xl\/codex-log:w-180/);
+  assert.doesNotMatch(source, /2xl:flex 2xl:items-center 2xl:justify-between/);
+  assert.doesNotMatch(source, /\blg:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/);
   assert.doesNotMatch(
     homeStyleSource,
     /@media \(min-width: 1280px\) \{\s+\.codex-log-toolbar/,

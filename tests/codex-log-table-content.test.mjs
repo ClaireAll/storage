@@ -25,7 +25,7 @@ test("wraps text cells without ellipsis or hover text", async () => {
     assert.equal(column.includes("tooltip"), false);
     assert.equal(column.includes("title="), false);
     assert.match(column, /whitespace-normal/);
-    assert.match(column, /break-words/);
+    assert.match(column, /wrap-break-word/);
   }
 
   assert.equal(source.includes("showSorterTooltip={false}"), true);

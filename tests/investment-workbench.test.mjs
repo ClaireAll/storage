@@ -117,11 +117,11 @@ test("keeps investment controls responsive and available in fullscreen", async (
   assert.match(dashboardSource, /iconClassName="text-xl text-red-500"/);
   assert.match(
     homeDashboardSource,
-    /has-\[\[data-investment-dashboard\]\]:max-\[1180px\]:overflow-visible/,
+    /has-data-investment-dashboard:max-\[1180px\]:overflow-visible/,
   );
   assert.match(
     homeViewSource,
-    /has-\[\[data-investment-dashboard\]\]:max-\[1180px\]:overflow-visible/,
+    /has-data-investment-dashboard:max-\[1180px\]:overflow-visible/,
   );
 });
 

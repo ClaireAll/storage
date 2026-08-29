@@ -709,7 +709,7 @@ function PanelTitle({ icon, title }: { icon?: ReactNode; title: string }) {
   return (
     <div className="codex-log-panel-title flex min-w-0 items-center gap-2">
       {icon}
-      <Typography.Title className="!mb-0 !text-base text-balance" level={5}>
+      <Typography.Title className="mb-0! text-base! text-balance" level={5}>
         {title}
       </Typography.Title>
     </div>
@@ -809,7 +809,7 @@ function SummaryBlock({ label, text }: { label: string; text: string }) {
       )}
     >
       <span className="mb-2 block text-sm font-bold text-balance">{label}</span>
-      <Typography.Paragraph className="!mb-0 text-pretty">
+      <Typography.Paragraph className="mb-0! text-pretty">
         {text}
       </Typography.Paragraph>
     </div>
@@ -929,7 +929,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       render: (value: string, record) => (
         <div className="codex-log-title-cell flex min-w-0 items-start gap-2">
           <Tag className="shrink-0">{record.repository}</Tag>
-          <span className="min-w-0 break-words whitespace-normal text-pretty leading-5">
+          <span className="min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
             {value}
           </span>
         </div>
@@ -944,7 +944,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     {
       dataIndex: "user_tasks",
       render: (value: string) => (
-        <span className="block min-w-0 break-words whitespace-normal text-pretty leading-5">
+        <span className="block min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
           {value}
         </span>
       ),
@@ -957,7 +957,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     {
       dataIndex: "assistant_summary",
       render: (value: string) => (
-        <span className="block min-w-0 break-words whitespace-normal text-pretty leading-5">
+        <span className="block min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
           {value}
         </span>
       ),
@@ -1036,7 +1036,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     >
       <div
         className={cn(
-          "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 2xl:flex 2xl:items-center 2xl:justify-between",
+          "codex-log-toolbar grid grid-cols-1 items-start gap-4 p-4 md:p-5 @5xl/codex-log:flex @5xl/codex-log:items-center @5xl/codex-log:justify-between",
           panelClassName,
         )}
       >
@@ -1052,14 +1052,14 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
           </span>
           <div className="min-w-0">
             <div className="mb-1 flex min-w-0 items-center gap-2">
-              <Typography.Title className="!mb-0 !text-xl text-balance" level={4}>
+              <Typography.Title className="mb-0! text-xl! text-balance" level={4}>
                 日报
               </Typography.Title>
-              <span className="hidden lg:contents">
+              <span className="hidden @5xl/codex-log:contents">
                 <HomeContentFullscreenButton />
               </span>
             </div>
-            <Typography.Title className="!hidden" level={4}>
+            <Typography.Title className="hidden!" level={4}>
               Codex日报
             </Typography.Title>
             <Typography.Text type="secondary">
@@ -1067,47 +1067,43 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             </Typography.Text>
           </div>
         </div>
-        <div className="codex-log-toolbar-actions flex w-full min-w-0 flex-col gap-2 lg:grid lg:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] 2xl:w-180">
-          <div className="grid grid-cols-2 gap-2 lg:contents">
-            <DatePicker
-              allowClear={false}
-              className="codex-log-date-picker w-full"
-              disabledDate={(current) =>
-                !data.availableDates.includes(current.format("YYYY-MM-DD"))
-              }
-              onChange={handleDateChange}
-              value={selectedDay.isValid() ? selectedDay : undefined}
-            />
-            <Select
-              className="codex-log-repo-select w-full"
-              onChange={(value) => {
-                setRepository(value);
-                setTablePage(1);
-              }}
-              options={repositoryOptions}
-              value={repository}
-            />
-          </div>
-          <div className="flex min-w-0 gap-2 lg:contents">
-            <Input
-              allowClear
-              className="codex-log-search min-w-0 flex-1 lg:w-full"
-              onChange={(event) => {
-                setKeyword(event.target.value);
-                setTablePage(1);
-              }}
-              placeholder="搜索任务或回答"
-              prefix={<SearchOutlined />}
-              value={keyword}
-            />
-            <Button
-              aria-label="刷新日报"
-              className="shrink-0 lg:w-full"
-              icon={<SyncOutlined />}
-              onClick={() => router.refresh()}
-              type="text"
-            />
-          </div>
+        <div className="codex-log-toolbar-actions grid w-full min-w-0 grid-cols-[minmax(0,1fr)_40px] gap-2 @3xl/codex-log:grid-cols-[160px_minmax(160px,1fr)_minmax(180px,1.2fr)_40px] @5xl/codex-log:w-180">
+          <DatePicker
+            allowClear={false}
+            className="codex-log-date-picker col-span-2 w-full @3xl/codex-log:col-span-1"
+            disabledDate={(current) =>
+              !data.availableDates.includes(current.format("YYYY-MM-DD"))
+            }
+            onChange={handleDateChange}
+            value={selectedDay.isValid() ? selectedDay : undefined}
+          />
+          <Select
+            className="codex-log-repo-select col-span-2 w-full @3xl/codex-log:col-span-1"
+            onChange={(value) => {
+              setRepository(value);
+              setTablePage(1);
+            }}
+            options={repositoryOptions}
+            value={repository}
+          />
+          <Input
+            allowClear
+            className="col-span-1 w-full @3xl/codex-log:col-span-1"
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setTablePage(1);
+            }}
+            placeholder="搜索任务或回答"
+            prefix={<SearchOutlined />}
+            value={keyword}
+          />
+          <Button
+            aria-label="刷新日报"
+            className="col-span-1 w-full @3xl/codex-log:col-span-1"
+            icon={<SyncOutlined />}
+            onClick={() => router.refresh()}
+            type="text"
+          />
         </div>
       </div>
 
@@ -1226,8 +1222,8 @@ function MetricCard({
       }}
     >
       <MetricIcon
-        className="!size-14 !rounded-xl"
-        iconClassName="!text-3xl"
+        className="size-14! rounded-xl!"
+        iconClassName="text-3xl!"
         name={icon}
         tone={tone}
       />

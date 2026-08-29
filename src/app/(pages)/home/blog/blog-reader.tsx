@@ -273,7 +273,7 @@ export function BlogReader({ items }: BlogReaderProps) {
         aria-controls="blog-reader-list-panel"
         aria-expanded={!isListCollapsed}
         aria-label={isListCollapsed ? "展开笔记列表" : "收起笔记列表"}
-        className="blog-reader-list-toggle !absolute -left-8 top-6 z-10 size-9 rounded-full p-0 shadow-sm"
+        className="blog-reader-list-toggle absolute! -left-8 top-6 z-10 size-9 rounded-full p-0 shadow-sm"
         icon={isListCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         onClick={() => setIsListCollapsed((collapsed) => !collapsed)}
         shape="circle"

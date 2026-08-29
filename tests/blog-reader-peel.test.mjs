@@ -26,7 +26,7 @@ test("uses an accessible circular icon control to toggle the note list", async (
   assert.match(source, /aria-expanded=\{!isListCollapsed\}/);
   assert.match(
     source,
-    /className="blog-reader-list-toggle[^\"]*!absolute[^\"]*rounded-full/,
+    /className="blog-reader-list-toggle[^\"]*absolute![^\"]*rounded-full/,
   );
   assert.match(
     source,

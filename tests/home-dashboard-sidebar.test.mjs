@@ -55,7 +55,7 @@ test("keeps the category menu vertically scrollable without horizontal overflow"
   assert.equal(overlayScrollbarSource.includes('vertical && "overflow-y-auto"'), true);
   assert.equal(source.includes("scrollbar-gutter-stable"), false);
   assert.equal(
-    source.includes('className="home-category-menu !w-full min-w-0"'),
+    source.includes('className="home-category-menu w-full! min-w-0"'),
     true,
   );
 });

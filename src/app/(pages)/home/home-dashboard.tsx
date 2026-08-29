@@ -507,10 +507,10 @@ export function HomeDashboard({
   }, [refreshFullscreenLayout]);
 
   return (
-    <main className="home-dashboard-main mx-auto flex min-h-0 w-full max-w-385 flex-1 flex-col gap-5 overflow-hidden px-8 pb-6 pt-6 has-[[data-investment-dashboard]]:max-[1180px]:overflow-visible max-[900px]:overflow-visible max-md:p-5">
-      <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1180px)] justify-center gap-6 has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1180px)_minmax(320px,360px)] max-sm:has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)]">
+    <main className="home-dashboard-main flex min-h-0 w-full flex-1 flex-col gap-5 overflow-hidden px-[clamp(24px,3vw,64px)] pb-6 pt-6 has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:overflow-visible max-md:px-4 max-md:py-5">
+      <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1fr)] gap-6 has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)_clamp(320px,24vw,420px)] max-[1100px]:has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)]">
         <div className="home-dashboard-left-stack flex min-h-0 min-w-0 flex-col gap-5">
-      <section className="grid shrink-0 grid-cols-3 gap-4 max-md:grid-cols-1">
+      <section className="grid shrink-0 grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
         {homeStats.map((stat) => {
           return (
             <Card
@@ -623,15 +623,15 @@ export function HomeDashboard({
 
       <section
         className={cn(
-          "home-category-workspace grid min-h-0 flex-1 justify-center gap-6 transition-[grid-template-columns] duration-200 max-[900px]:min-h-130 max-md:grid-cols-1",
+          "home-category-workspace grid min-h-0 flex-1 gap-6 transition-[grid-template-columns] duration-200 max-[900px]:min-h-130 max-[900px]:grid-cols-1",
           isCategorySidebarCollapsed
             ? "home-category-layout-collapsed grid-cols-[72px_minmax(0,1fr)]"
-            : "grid-cols-[260px_minmax(0,1fr)]",
+            : "grid-cols-[clamp(220px,16vw,300px)_minmax(0,1fr)]",
         )}
       >
         <aside
           className={cn(
-            "home-soft-shadow flex h-full min-h-0 flex-col overflow-hidden rounded-lg border p-4 transition-[padding] duration-200",
+            "home-soft-shadow flex h-full min-h-0 flex-col overflow-hidden rounded-lg border p-4 transition-[padding] duration-200 max-[900px]:h-auto",
             isCategorySidebarCollapsed && "px-2",
           )}
           style={surfaceStyle}
@@ -704,7 +704,7 @@ export function HomeDashboard({
             viewportClassName="home-category-menu-scroll overflow-x-hidden"
           >
             <Menu
-              className="home-category-menu !w-full min-w-0"
+              className="home-category-menu w-full! min-w-0"
               inlineCollapsed={isCategorySidebarCollapsed}
               items={menuItems}
               mode="inline"
@@ -732,11 +732,11 @@ export function HomeDashboard({
 
         <Card
           className={cn(
-            "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden has-[.blog-reader-list-toggle]:overflow-visible has-[[data-investment-dashboard]]:max-[1180px]:h-auto has-[[data-investment-dashboard]]:max-[1180px]:overflow-visible",
+            "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden has-[.blog-reader-list-toggle]:overflow-visible has-data-investment-dashboard:max-[1180px]:h-auto has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:h-auto",
             isCategoryContentFullscreen && "home-category-content-fullscreen",
           )}
           classNames={{
-            body: "flex h-full min-h-0 w-full p-4! has-[[data-investment-dashboard]]:max-[1180px]:h-auto!",
+            body: "flex h-full min-h-0 w-full p-4! has-data-investment-dashboard:max-[1180px]:h-auto!",
           }}
           data-scroll-pauses-background={
             isCategoryContentFullscreen ? "true" : undefined
