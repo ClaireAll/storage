@@ -31,12 +31,13 @@ test("wraps text cells without ellipsis or hover text", async () => {
   assert.equal(source.includes("showSorterTooltip={false}"), true);
 });
 
-test("stacks repository tag above the session title", async () => {
+test("renders repository status in its own table column", async () => {
   const source = await readFile(dashboardPath, "utf8");
+  const statusColumn = getColumn(source, "repository", "thread_title");
   const threadColumn = getColumn(source, "thread_title", "user_tasks");
 
-  assert.match(
-    threadColumn,
-    /codex-log-title-cell flex min-w-0 flex-col items-start gap-1\.5/,
-  );
+  assert.match(statusColumn, /title:\s*"状态"/);
+  assert.match(statusColumn, /<Tag className="max-w-full shrink-0 whitespace-normal">/);
+  assert.equal(threadColumn.includes("record.repository"), false);
+  assert.equal(threadColumn.includes("<Tag"), false);
 });

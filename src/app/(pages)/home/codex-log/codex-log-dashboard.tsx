@@ -925,23 +925,26 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       width: 86,
     },
     {
+      dataIndex: "repository",
+      render: (value: string) => (
+        <Tag className="max-w-full shrink-0 whitespace-normal">{value}</Tag>
+      ),
+      title: "状态",
+      width: 140,
+    },
+    {
       dataIndex: "thread_title",
-      render: (value: string, record) => (
-        <div className="codex-log-title-cell flex min-w-0 flex-col items-start gap-1.5">
-          <Tag className="max-w-full shrink-0 whitespace-normal">
-            {record.repository}
-          </Tag>
-          <span className="min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
-            {value}
-          </span>
-        </div>
+      render: (value: string) => (
+        <span className="block min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
+          {value}
+        </span>
       ),
       sorter: true,
       sortOrder:
         tableSorter.field === "thread_title" ? tableSorter.order : null,
       sortDirections: ["ascend", "descend"],
       title: "会话",
-      width: 220,
+      width: 180,
     },
     {
       dataIndex: "user_tasks",
@@ -954,7 +957,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       sortOrder: tableSorter.field === "user_tasks" ? tableSorter.order : null,
       sortDirections: ["ascend", "descend"],
       title: "任务",
-      width: 320,
+      width: 300,
     },
     {
       dataIndex: "assistant_summary",
@@ -968,7 +971,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
         tableSorter.field === "assistant_summary" ? tableSorter.order : null,
       sortDirections: ["ascend", "descend"],
       title: "回答简述",
-      width: 440,
+      width: 352,
     },
     {
       align: "right",
