@@ -927,8 +927,10 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
     {
       dataIndex: "thread_title",
       render: (value: string, record) => (
-        <div className="codex-log-title-cell flex min-w-0 items-start gap-2">
-          <Tag className="shrink-0">{record.repository}</Tag>
+        <div className="codex-log-title-cell flex min-w-0 flex-col items-start gap-1.5">
+          <Tag className="max-w-full shrink-0 whitespace-normal">
+            {record.repository}
+          </Tag>
           <span className="min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
             {value}
           </span>

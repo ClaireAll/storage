@@ -30,3 +30,13 @@ test("wraps text cells without ellipsis or hover text", async () => {
 
   assert.equal(source.includes("showSorterTooltip={false}"), true);
 });
+
+test("stacks repository tag above the session title", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+  const threadColumn = getColumn(source, "thread_title", "user_tasks");
+
+  assert.match(
+    threadColumn,
+    /codex-log-title-cell flex min-w-0 flex-col items-start gap-1\.5/,
+  );
+});
