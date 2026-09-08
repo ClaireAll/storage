@@ -23,20 +23,63 @@ function getShanghaiDate(timestamp) {
   }).format(date);
 }
 
-function cleanUserMessage(value) {
+/** 清理用户请求中的桌面注入包装，只保留真实任务文本。 */
+export function cleanUserMessage(value) {
   let text = toText(value);
-  const marker = /^## My request for Codex:\s*$/m;
+  const marker = /^## My request(?: for Codex)?:\s*$/m;
   const markerMatch = marker.exec(text);
 
   if (markerMatch) {
     text = text.slice(markerMatch.index + markerMatch[0].length);
   }
 
-  return text
+  text = text
     .replace(/<image\b[^>]*>[\s\S]*?<\/image>/gi, "")
     .replace(/<image\b[^>]*\/?\s*>/gi, "")
+    .replace(/<\/?(?:environment_context|recommended_plugins|developer)\b[^>]*>[\s\S]*?<\/(?:environment_context|recommended_plugins|developer)>/gi, "")
     .replace(/<\/?(?:environment_context|recommended_plugins|developer)\b[^>]*>/gi, "")
     .trim();
+
+  if (/^# AGENTS\.md instructions\b/i.test(text) || /<INSTRUCTIONS>[\s\S]*<\/INSTRUCTIONS>/i.test(text)) {
+    return "";
+  }
+
+  return text;
+}
+
+/** 提取新版 response_item 用户消息中的文本片段。 */
+export function getResponseUserMessage(payload) {
+  if (payload?.role !== "user" || !Array.isArray(payload.content)) {
+    return "";
+  }
+
+  return payload.content
+    .filter((item) => item?.type === "input_text")
+    .map((item) => toText(item.text))
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+/** 追加用户请求并过滤新旧日志格式在短时间内产生的镜像记录。 */
+function appendUserMessage(messages, timestamps, message, timestamp) {
+  const previousMessage = messages.at(-1);
+  const previousTimestamp = timestamps.at(-1);
+  const currentTime = new Date(timestamp).getTime();
+  const previousTime = new Date(previousTimestamp).getTime();
+
+  if (
+    previousMessage === message &&
+    Number.isFinite(currentTime) &&
+    Number.isFinite(previousTime) &&
+    Math.abs(currentTime - previousTime) <= 1000
+  ) {
+    return false;
+  }
+
+  messages.push(message);
+  timestamps.push(timestamp);
+  return true;
 }
 
 function getAssistantMessage(payload) {
@@ -64,25 +107,33 @@ export function parseCodexSessionTaskEntries(lines, targetDate) {
       continue;
     }
 
-    if (
-      event.type !== "event_msg" ||
-      event.payload?.type !== "user_message" ||
-      getShanghaiDate(event.timestamp) !== targetDate
-    ) {
+    if (getShanghaiDate(event.timestamp) !== targetDate) {
       continue;
     }
 
-    const userTasks = cleanUserMessage(event.payload.message);
+    const userTasks =
+      event.type === "event_msg" && event.payload?.type === "user_message"
+        ? cleanUserMessage(event.payload.message)
+        : event.type === "response_item"
+          ? cleanUserMessage(getResponseUserMessage(event.payload))
+          : "";
 
     if (!userTasks) {
       continue;
     }
 
-    entries.push({
-      created_at: new Date(event.timestamp).toISOString(),
-      date: targetDate,
-      user_tasks: userTasks,
-    });
+    const createdAt = new Date(event.timestamp).toISOString();
+    const previous = entries.at(-1);
+
+    if (
+      previous &&
+      previous.user_tasks === userTasks &&
+      Math.abs(new Date(createdAt).getTime() - new Date(previous.created_at).getTime()) <= 1000
+    ) {
+      continue;
+    }
+
+    entries.push({ created_at: createdAt, date: targetDate, user_tasks: userTasks });
   }
 
   return entries[0]?.user_tasks.startsWith("Automation:") ? [] : entries;
@@ -104,6 +155,7 @@ export function parseCodexSessionLines(lines, targetDate, fallbackId = "") {
   let id = fallbackId;
   let tokenCount = 0;
   const userMessages = [];
+  const userMessageTimestamps = [];
   const agentMessages = [];
   const assistantFallbacks = [];
   let createdAt = "";
@@ -128,6 +180,16 @@ export function parseCodexSessionLines(lines, targetDate, fallbackId = "") {
     }
 
     if (event.type === "response_item") {
+      const userMessage = cleanUserMessage(getResponseUserMessage(event.payload));
+
+      if (userMessage) {
+        const timestamp = new Date(event.timestamp).toISOString();
+
+        if (appendUserMessage(userMessages, userMessageTimestamps, userMessage, timestamp)) {
+          createdAt ||= timestamp;
+        }
+      }
+
       const message = getAssistantMessage(event.payload);
 
       if (message) {
@@ -145,8 +207,11 @@ export function parseCodexSessionLines(lines, targetDate, fallbackId = "") {
       const message = cleanUserMessage(event.payload.message);
 
       if (message) {
-        userMessages.push(message);
-        createdAt ||= new Date(event.timestamp).toISOString();
+        const timestamp = new Date(event.timestamp).toISOString();
+
+        if (appendUserMessage(userMessages, userMessageTimestamps, message, timestamp)) {
+          createdAt ||= timestamp;
+        }
       }
       continue;
     }

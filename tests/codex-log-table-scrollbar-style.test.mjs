@@ -11,7 +11,7 @@ const dashboardPath = new URL(
   import.meta.url,
 );
 
-test("uses the common overlay scrollbar for the Codex table instead of browser defaults", async () => {
+test("removes table-specific scrollbar wiring from Codex sessions", async () => {
   const [stylesSource, dashboardSource] = await Promise.all([
     readFile(stylesPath, "utf8"),
     readFile(dashboardPath, "utf8"),
@@ -20,10 +20,11 @@ test("uses the common overlay scrollbar for the Codex table instead of browser d
   assert.equal(stylesSource.includes("scrollbar-width: thin;"), false);
   assert.equal(stylesSource.includes("height: 8px;"), false);
   assert.equal(stylesSource.includes("width: 8px;"), false);
-  assert.equal(stylesSource.includes(".codex-log-dashboard .ant-table-content"), true);
-  assert.match(
+  assert.equal(stylesSource.includes(".codex-log-dashboard .ant-table-content"), false);
+  assert.doesNotMatch(
     dashboardSource,
     /horizontalTargetSelector="\.ant-table-content"/,
   );
-  assert.match(dashboardSource, /targetSelector="\.ant-table-body"/);
+  assert.doesNotMatch(dashboardSource, /targetSelector="\.ant-table-body"/);
+  assert.match(dashboardSource, /<Timeline/);
 });

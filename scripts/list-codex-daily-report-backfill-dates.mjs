@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
 function isDailyReportLogRecord(record) {
-  return !(
-    record?.thread_title?.trim().startsWith("Automation:") ||
-    record?.user_tasks?.trim().startsWith("Automation:")
-  );
+  return !record?.thread_title?.trim().startsWith("Automation:");
 }
 
 function loadLocalEnv() {
@@ -92,7 +89,7 @@ async function main() {
     await Promise.all([
       supabase
         .from("codex_log")
-        .select("date,thread_title,user_tasks")
+        .select("date,thread_title")
         .eq("id", userId),
       supabase
         .from("codex_daily_report")

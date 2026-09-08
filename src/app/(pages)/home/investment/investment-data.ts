@@ -380,7 +380,14 @@ export async function searchInvestmentInstruments(keyword: string): Promise<Inve
   if (!normalizedKeyword) return [];
 
   const [funds, stocks] = await Promise.all([searchFunds(normalizedKeyword), searchStocks(normalizedKeyword)]);
-  return [...funds, ...stocks].slice(0, 12);
+  const seenInstrumentCodes = new Set<string>();
+  return [...stocks, ...funds]
+    .filter((item) => {
+      if (seenInstrumentCodes.has(item.instrumentCode)) return false;
+      seenInstrumentCodes.add(item.instrumentCode);
+      return true;
+    })
+    .slice(0, 12);
 }
 
 async function searchFunds(keyword: string): Promise<InvestmentSearchResult[]> {
@@ -389,12 +396,14 @@ async function searchFunds(keyword: string): Promise<InvestmentSearchResult[]> {
       `https://fundsuggest.eastmoney.com/FundSearch/api/FundSearchAPI.ashx?m=1&key=${encodeURIComponent(keyword)}`,
       { cache: "no-store", signal: AbortSignal.timeout(4000) },
     );
-    const payload = await response.json() as { Datas?: Array<{ CODE?: string; FCode?: string; FName?: string; NAME?: string }> };
-    return (payload.Datas ?? []).flatMap((item) =>
-      (item.FCode ?? item.CODE) && (item.FName ?? item.NAME)
-        ? [{ instrumentCode: item.FCode ?? item.CODE!, instrumentName: item.FName ?? item.NAME!, instrumentType: "fund" as const }]
-        : [],
-    );
+    const payload = await response.json() as { Datas?: Array<{ CODE?: string; FCode?: string; FName?: string; NAME?: string; FundBaseInfo?: unknown }> };
+    return (payload.Datas ?? []).flatMap((item) => {
+      const code = item.FCode ?? item.CODE;
+      const name = item.FName ?? item.NAME;
+      return item.FundBaseInfo && code && name
+        ? [{ instrumentCode: code, instrumentName: name, instrumentType: "fund" as const }]
+        : [];
+    });
   } catch {
     return [];
   }

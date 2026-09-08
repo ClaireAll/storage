@@ -2,7 +2,6 @@
 import type { DatabaseClient } from "@/app/utils/database";
 
 export type CodexLogRecord = {
-  assistant_summary: string;
   category: number;
   created_at: string | null;
   date: string;
@@ -13,7 +12,6 @@ export type CodexLogRecord = {
   thread_title: string;
   time: string;
   token_count: number;
-  user_tasks: string;
 };
 
 export type CodexLogTaskStat = {
@@ -68,14 +66,12 @@ export type CodexLogDashboardData = {
 };
 
 type CodexLogRow = {
-  assistant_summary: string | null;
   category: number | null;
   created_at: string | null;
   date: string | null;
   r_id: string | null;
   thread_title: string | null;
   token_count: number | null;
-  user_tasks: string | null;
 };
 
 type CodexDailyReportRow = {
@@ -181,7 +177,6 @@ function mapCodexLogRow(row: CodexLogRow, index: number): CodexLogRecord {
   const tokenCount = toTokenCount(row.token_count);
 
   return {
-    assistant_summary: toCleanText(row.assistant_summary, "暂无总结"),
     category,
     created_at: row.created_at,
     date: row.date ?? getShanghaiToday(),
@@ -192,7 +187,6 @@ function mapCodexLogRow(row: CodexLogRow, index: number): CodexLogRecord {
     thread_title: toCleanText(row.thread_title, "未命名任务"),
     time: formatShanghaiTime(row.created_at),
     token_count: tokenCount,
-    user_tasks: toCleanText(row.user_tasks, "暂无任务描述"),
   };
 }
 
@@ -274,7 +268,7 @@ function getCachedDailySummary(
 }
 
 function getTaskLabel(record: CodexLogRecord) {
-  const source = record.user_tasks || record.thread_title;
+  const source = record.thread_title;
   const firstSentence =
     source.split(/[。！？!?；;]/).find((item) => item.trim()) ?? source;
 
@@ -384,7 +378,7 @@ export async function listCodexLogDashboard(
     supabase
       .from("codex_log")
       .select(
-        "r_id,id,date,thread_title,user_tasks,assistant_summary,created_at,category,token_count",
+        "r_id,id,date,thread_title,created_at,category,token_count",
       )
       .eq("id", userId)
       .gte("date", trendStartDate)

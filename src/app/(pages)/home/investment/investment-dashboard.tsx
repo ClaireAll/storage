@@ -5,6 +5,7 @@ import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import { HomeContentFullscreenButton } from "../home-content-fullscreen";
 import {
+  CheckCircleOutlined,
   DeleteOutlined,
   DragOutlined,
   PlusOutlined,
@@ -19,6 +20,7 @@ import {
   Empty,
   Input,
   Popconfirm,
+  Popover,
   Segmented,
   Spin,
   Switch,
@@ -34,6 +36,11 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  buildInvestmentSearchRows,
+  splitSearchHighlight,
+} from "./investment-search-utils";
+import type { InvestmentFilter } from "./investment-search-utils";
 import type {
   InvestmentDashboardData,
   InvestmentRecommendation,
@@ -42,10 +49,9 @@ import type {
   InvestmentWatchlistEntry,
 } from "./investment-types";
 
-type InvestmentFilter = "all" | "fund" | "stock";
 type InvestmentDashboardProps = { initialData: InvestmentDashboardData };
 
-type CreateInstrumentForm = {
+type InvestmentInstrumentInput = {
   instrumentCode: string;
   instrumentName: string;
   instrumentType: "fund" | "stock";
@@ -159,18 +165,14 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   const [filter, setFilter] = useState<InvestmentFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [creatingInstrumentCode, setCreatingInstrumentCode] = useState<string>();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSavingNotification, setIsSavingNotification] = useState(false);
   const [draggedId, setDraggedId] = useState<string>();
   const [searchResults, setSearchResults] = useState<InvestmentSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [form, setForm] = useState<CreateInstrumentForm>({
-    instrumentCode: "",
-    instrumentName: "",
-    instrumentType: "fund",
-  });
+  const [searchError, setSearchError] = useState(false);
   const [notificationForm, setNotificationForm] = useState<NotificationForm>({
     enabled: false,
     notifyOnRecommendation: false,
@@ -179,14 +181,15 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   });
 
   const visibleWatchlist = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase();
     return data.watchlist.filter((item) =>
-      (filter === "all" || item.instrumentType === filter) &&
-      (!normalizedKeyword ||
-        item.instrumentCode.includes(normalizedKeyword) ||
-        item.instrumentName.toLowerCase().includes(normalizedKeyword)),
+      filter === "all" || item.instrumentType === filter,
     );
-  }, [data.watchlist, filter, keyword]);
+  }, [data.watchlist, filter]);
+
+  const visibleSearchResults = useMemo(
+    () => buildInvestmentSearchRows(searchResults, data.watchlist, filter),
+    [data.watchlist, filter, searchResults],
+  );
 
   const refreshDashboard = useCallback(async (showSuccess = true) => {
     setIsRefreshing(true);
@@ -203,25 +206,29 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   }, [message]);
 
   useEffect(() => {
-    const searchKeyword = form.instrumentCode.trim() || form.instrumentName.trim();
-    if (!isCreateOpen || searchKeyword.length < 2) {
+    const searchKeyword = keyword.trim();
+    if (!isSearchOpen || !searchKeyword) {
       return;
     }
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setIsSearching(true);
+      setSearchError(false);
       try {
         const response = await fetch(`/api/investment/search?q=${encodeURIComponent(searchKeyword)}`, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("search failed");
         const results = (await response.json()) as InvestmentSearchResult[];
-        setSearchResults(results.filter((item) => item.instrumentType === form.instrumentType));
+        setSearchResults(results);
       } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) setSearchResults([]);
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setSearchError(true);
+          setSearchResults([]);
+        }
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted) setIsSearching(false);
       }
     }, 280);
 
@@ -229,7 +236,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [form.instrumentCode, form.instrumentName, form.instrumentType, isCreateOpen]);
+  }, [isSearchOpen, keyword]);
 
   useEffect(() => {
     if (!isNotificationOpen) return;
@@ -301,28 +308,27 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
     await saveOrder(data.watchlist.filter((item) => item.id !== id));
   }
 
-  async function createWatchlistItem(nextForm = form) {
-    setIsCreating(true);
+  /** 将搜索结果或推荐项加入当前用户的关注列表。 */
+  async function createWatchlistItem(nextItem: InvestmentInstrumentInput) {
+    setCreatingInstrumentCode(nextItem.instrumentCode);
     try {
       const response = await fetch("/api/investment", {
         body: JSON.stringify({
-          instrument_code: nextForm.instrumentCode,
-          instrument_name: nextForm.instrumentName,
-          instrument_type: nextForm.instrumentType,
+          instrument_code: nextItem.instrumentCode,
+          instrument_name: nextItem.instrumentName,
+          instrument_type: nextItem.instrumentType,
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
       const result = (await response.json()) as { message?: string };
       if (!response.ok) throw new Error(result.message ?? "create failed");
-      setForm({ instrumentCode: "", instrumentName: "", instrumentType: "fund" });
-      setIsCreateOpen(false);
       message.success("已加入我的关注");
       await refreshDashboard(false);
     } catch (error) {
       message.error(error instanceof Error ? error.message : "添加关注失败");
     } finally {
-      setIsCreating(false);
+      setCreatingInstrumentCode(undefined);
     }
   }
 
@@ -363,6 +369,107 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
     }
   }
 
+  const searchStatusText = isSearching
+    ? "正在搜索"
+    : searchError
+      ? "搜索失败"
+      : visibleSearchResults.length
+        ? `找到 ${visibleSearchResults.length} 个结果`
+        : "未找到匹配结果";
+  const searchPopoverContent = (
+    <div
+      aria-busy={isSearching}
+      aria-label="模糊搜索结果"
+      className="w-[min(360px,calc(100vw-32px))]"
+      id="investment-search-results"
+      role="region"
+    >
+      <span aria-live="polite" className="sr-only">
+        {searchStatusText}
+      </span>
+      {isSearching ? (
+        <div className="flex min-h-24 items-center justify-center">
+          <Spin size="small" />
+        </div>
+      ) : searchError ? (
+        <Typography.Text className="block px-4 py-6 text-center text-red-500">
+          搜索失败，请稍后重试
+        </Typography.Text>
+      ) : visibleSearchResults.length ? (
+        <ul className="home-preview-divide-y m-0 max-h-80 list-none divide-y overflow-y-auto p-0">
+          {visibleSearchResults.map((item) => (
+            <li
+              className="flex items-center gap-3 px-4 py-3"
+              key={`${item.instrumentType}-${item.instrumentCode}`}
+            >
+              <InvestmentInstrumentIcon className="size-7 shrink-0" instrumentType={item.instrumentType} />
+              <div className="min-w-0 flex-1">
+                <Typography.Text className="block truncate" strong>
+                  {splitSearchHighlight(item.instrumentName, keyword).map((segment, index) =>
+                    segment.highlighted ? (
+                      <mark
+                        className="rounded-sm bg-red-50 px-0.5 text-red-500 dark:bg-red-950/50"
+                        key={`${segment.text}-${index}`}
+                      >
+                        {segment.text}
+                      </mark>
+                    ) : (
+                      <span key={`${segment.text}-${index}`}>{segment.text}</span>
+                    ),
+                  )}
+                </Typography.Text>
+                <Typography.Text className={cn("block truncate text-xs tabular-nums", investmentMutedTextClassName)}>
+                  {splitSearchHighlight(item.instrumentCode, keyword).map((segment, index) =>
+                    segment.highlighted ? (
+                      <mark
+                        className="rounded-sm bg-red-50 px-0.5 text-red-500 dark:bg-red-950/50"
+                        key={`${segment.text}-${index}`}
+                      >
+                        {segment.text}
+                      </mark>
+                    ) : (
+                      <span key={`${segment.text}-${index}`}>{segment.text}</span>
+                    ),
+                  )}
+                  {` · ${item.instrumentType === "fund" ? "基金" : "股票"}`}
+                </Typography.Text>
+              </div>
+              {item.isWatched ? (
+                <span
+                  aria-label={`${item.instrumentName} 已关注`}
+                  className={cn("flex shrink-0 flex-col items-center gap-0.5 text-[10px]", investmentFaintTextClassName)}
+                >
+                  <CheckCircleOutlined aria-hidden className="text-base" />
+                  <span>已关注</span>
+                </span>
+              ) : (
+                <Tooltip title="添加到关注">
+                  <Button
+                    aria-label={`添加 ${item.instrumentName} 到关注`}
+                    color="danger"
+                    disabled={Boolean(creatingInstrumentCode)}
+                    icon={<PlusOutlined />}
+                    loading={creatingInstrumentCode === item.instrumentCode}
+                    onClick={() => void createWatchlistItem(item)}
+                    shape="circle"
+                    size="small"
+                    variant="outlined"
+                  />
+                </Tooltip>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <Empty
+          className="m-0 py-5"
+          description="没有匹配的基金或股票"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      )}
+    </div>
+  );
+
   return (
     <section
       className="investment-dashboard-shell flex min-h-0 w-full flex-1 flex-col gap-4"
@@ -390,7 +497,47 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
         <section className={cn("investment-watchlist-panel @container/investment-watchlist flex min-h-0 flex-col p-4", investmentPanelClassName)}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><Typography.Text className={investmentMutedTextClassName}>({data.watchlist.length})</Typography.Text></div>
-            <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_32px] items-center gap-2 sm:flex-none"><Input allowClear className="min-w-0" onChange={(event) => setKeyword(event.target.value)} placeholder="搜索代码/名称" prefix={<SearchOutlined />} value={keyword} /><Tooltip title="添加关注"><Button aria-label="添加关注" className="size-8 rounded-lg!" icon={<PlusOutlined />} onClick={() => setIsCreateOpen(true)} type="text" /></Tooltip></div>
+            <Popover
+              content={searchPopoverContent}
+              destroyOnHidden
+              onOpenChange={(open) => {
+                setIsSearchOpen(open);
+                if (!open) setIsSearching(false);
+              }}
+              open={isSearchOpen && Boolean(keyword.trim())}
+              placement="bottomRight"
+              styles={{ content: { padding: 0 } }}
+              trigger="click"
+            >
+              <div className="min-w-0 flex-1 sm:w-[360px] sm:flex-none">
+                <Input
+                  allowClear
+                  aria-controls="investment-search-results"
+                  aria-expanded={isSearchOpen && Boolean(keyword.trim())}
+                  aria-label="搜索基金或股票"
+                  className="min-w-0"
+                  id="investment-search-input"
+                  name="investmentSearch"
+                  onChange={(event) => {
+                    const nextKeyword = event.target.value;
+                    setKeyword(nextKeyword);
+                    setSearchResults([]);
+                    setIsSearching(false);
+                    setSearchError(false);
+                    setIsSearchOpen(Boolean(nextKeyword.trim()));
+                  }}
+                  onFocus={() => {
+                    if (keyword.trim()) setIsSearchOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setIsSearchOpen(false);
+                  }}
+                  placeholder="搜索代码/名称"
+                  prefix={<SearchOutlined aria-hidden />}
+                  value={keyword}
+                />
+              </div>
+            </Popover>
           </div>
           <Segmented className="mt-3 w-fit" onChange={(value) => setFilter(value as InvestmentFilter)} options={filterOptions} value={filter} />
           <div className={cn("home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs @min-[720px]/investment-watchlist:grid", investmentMutedTextClassName)}>
@@ -408,17 +555,6 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
       </div>
 
       <EvidenceStrip evidence={data.evidence} />
-
-      <Drawer destroyOnHidden footer={<Button loading={isCreating} onClick={() => void createWatchlistItem()} type="primary">加入关注</Button>} onClose={() => setIsCreateOpen(false)} open={isCreateOpen} title="添加关注" width={400}>
-        <div className="flex flex-col gap-4">
-          <Segmented onChange={(value) => { setSearchResults([]); setForm((current) => ({ ...current, instrumentType: value as "fund" | "stock" })); }} options={[{ label: "基金", value: "fund" }, { label: "股票", value: "stock" }]} value={form.instrumentType} />
-          <Input onChange={(event) => { setSearchResults([]); setForm((current) => ({ ...current, instrumentCode: event.target.value })); }} placeholder={form.instrumentType === "fund" ? "输入基金代码或名称搜索" : "输入 00 开头股票代码或名称搜索"} prefix={<SearchOutlined />} value={form.instrumentCode} />
-          <Input onChange={(event) => { setSearchResults([]); setForm((current) => ({ ...current, instrumentName: event.target.value })); }} placeholder="名称" value={form.instrumentName} />
-          {isSearching ? <Spin size="small" /> : null}
-          {searchResults.length ? <div className="home-preview-panel home-preview-divide-y divide-y border-y">{searchResults.map((item) => <button className="flex w-full items-center justify-between gap-3 py-2 text-left" key={`${item.instrumentType}-${item.instrumentCode}`} onClick={() => setForm({ instrumentCode: item.instrumentCode, instrumentName: item.instrumentName, instrumentType: item.instrumentType })} type="button"><span className="truncate">{item.instrumentName}</span><span className="shrink-0 text-xs text-black/45 dark:text-white/45">{item.instrumentCode}</span></button>)}</div> : null}
-          <Typography.Text type="secondary">可手工输入，也可按代码或名称从公开数据源搜索。股票仅允许 00 开头代码。</Typography.Text>
-        </div>
-      </Drawer>
 
       <Drawer destroyOnHidden footer={<Button loading={isSavingNotification} onClick={() => void saveNotification()} type="primary">保存设置</Button>} onClose={() => setIsNotificationOpen(false)} open={isNotificationOpen} title="企微机器人通知" width={400}>
         <div className="flex flex-col gap-5">

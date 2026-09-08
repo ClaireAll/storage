@@ -198,6 +198,15 @@ test("uses code-maintained rules and does not present unavailable public data as
   assert.match(rulesSource, /不构成投资建议/);
 });
 
+test("does not save stock search hits from the fund API as funds", async () => {
+  const dataSource = await readFile(dataPath, "utf8");
+
+  assert.match(dataSource, /FundBaseInfo\?: unknown/);
+  assert.match(dataSource, /item\.FundBaseInfo/);
+  assert.match(dataSource, /\[\.\.\.stocks, \.\.\.funds\]/);
+  assert.match(dataSource, /seenInstrumentCodes/);
+});
+
 test("keeps the WeCom webhook server-side and scopes notification settings to one user", async () => {
   const [routeSource, migrationSource] = await Promise.all([
     readFile(notificationRoutePath, "utf8"),

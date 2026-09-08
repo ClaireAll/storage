@@ -6,6 +6,16 @@ const reportScriptPath = new URL(
   import.meta.url,
 );
 
+test("日报总结读取临时会话材料，不依赖已删除的数据库正文", async () => {
+  const { buildCodexDailyReportContext } = await import(reportScriptPath);
+  const records = [{ thread_title: "修复构建", token_count: 100 }];
+  const sessions = [{ date: "2026-09-04", thread_title: "修复构建", user_tasks: "排查构建失败", assistant_summary: "固定依赖后测试通过" }];
+  const context = buildCodexDailyReportContext({ date: "2026-09-04", records, entries: sessions });
+  assert.deepEqual(context.sessions, sessions);
+  assert.deepEqual(context.records, records);
+  assert.throws(() => buildCodexDailyReportContext({ date: "2026-09-04", records, entries: [] }), /缺少.*会话/);
+});
+
 test("builds a complete daily report after importing Codex sessions", async () => {
   const { buildCodexDailyReport } = await import(reportScriptPath);
   const generatedAt = "2026-08-12T00:01:00.000Z";

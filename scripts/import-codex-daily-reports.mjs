@@ -99,10 +99,14 @@ function toCategory(value) {
 }
 
 function getCodexDailyReportFingerprint(entry) {
+  if (getEntryThreadId(entry)) {
+    return `thread:${getEntryThreadId(entry)}`;
+  }
+
   return [
     entry.thread_title,
-    entry.user_tasks,
-    entry.assistant_summary,
+    String(toCategory(entry.category)),
+    toIsoTimestamp(entry.created_at),
   ]
     .map((value) => toText(value).replace(/\s+/g, " ").trim())
     .join("\u0001");
@@ -626,7 +630,7 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
     throw new Error("日报数据必须是数组");
   }
 
-  return rawEntries
+  const normalizedEntries = rawEntries
     .map((entry) => {
       const date = toText(entry.date) || fallbackDate;
 
@@ -637,19 +641,10 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
       const threadTitle = toText(
         entry.thread_title ?? entry.threadTitle ?? entry.title,
       );
-      const userTasks = toText(
-        entry.user_tasks ?? entry.userTasks ?? entry.user,
-      );
-      const assistantSumma = toText(
-        entry.assistant_summa ??
-          entry.assistant_summary ??
-          entry.assistantSummary ??
-          entry.answerSummary,
-      );
       const createdAt = toIsoTimestamp(entry.created_at ?? entry.createdAt);
 
       return {
-        assistant_summary: assistantSumma,
+        codex_thread_id: getEntryThreadId(entry) || null,
         category:
           typeof entry.category === "number" && Number.isInteger(entry.category)
             ? entry.category
@@ -658,18 +653,28 @@ export function normalizeCodexDailyReportEntries(rawEntries, fallbackDate) {
                 title: threadTitle,
               }),
         date,
-        thread_title: threadTitle || "未命名任务",
-        token_count: resolveTokenCount({
-          ...entry,
-          assistant_summary: assistantSumma,
-          thread_title: threadTitle,
-          user_tasks: userTasks,
-        }),
-        user_tasks: userTasks,
+        thread_title: threadTitle,
+        token_count: resolveTokenCount(entry),
         ...(createdAt ? { created_at: createdAt } : {}),
       };
     })
-    .filter((entry) => entry.user_tasks || entry.assistant_summary);
+    .filter((entry) => entry.thread_title && !entry.thread_title.startsWith("Automation:"));
+
+  const sessions = new Map();
+  for (const entry of normalizedEntries) {
+    const key = `${entry.date}:${getCodexDailyReportFingerprint(entry)}`;
+    const previous = sessions.get(key);
+    if (!previous) {
+      sessions.set(key, entry);
+      continue;
+    }
+    previous.token_count += entry.token_count;
+    if (entry.created_at && (!previous.created_at || entry.created_at < previous.created_at)) {
+      previous.created_at = entry.created_at;
+      previous.thread_title = entry.thread_title;
+    }
+  }
+  return [...sessions.values()];
 }
 
 export async function saveCodexDailyReports({
@@ -683,30 +688,11 @@ export async function saveCodexDailyReports({
     throw new Error("缺少日报所属用户 id");
   }
 
-  const normalizedEntries = entries.map((entry) => {
-    const assistantSummary = toText(
-      entry.assistant_summary ?? entry.assistant_summa,
-    );
-    const createdAt = toIsoTimestamp(entry.created_at ?? entry.createdAt);
-    const threadTitle = toText(entry.thread_title) || "未命名任务";
-    const userTasks = toText(entry.user_tasks);
-
-    return {
-      assistant_summary: assistantSummary,
-      category: toCategory(entry.category),
-      date: entry.date || date,
-      id: ownerId,
-      thread_title: threadTitle,
-      token_count: resolveTokenCount({
-        ...entry,
-        assistant_summary: assistantSummary,
-        thread_title: threadTitle,
-        user_tasks: userTasks,
-      }),
-      user_tasks: userTasks,
-      ...(createdAt ? { created_at: createdAt } : {}),
-    };
-  });
+  const normalizedEntries = normalizeCodexDailyReportEntries(entries, date)
+    .map((entry) => ({ ...entry, id: ownerId }));
+  if (normalizedEntries.some((entry) => entry.date !== date)) {
+    throw new Error("导入记录必须属于指定日期");
+  }
 
   if (normalizedEntries.length === 0) {
     return { inserted: 0 };
@@ -714,7 +700,7 @@ export async function saveCodexDailyReports({
 
   const { data: existingEntries, error: selectError } = await supabase
     .from(table)
-    .select("r_id,thread_title,user_tasks,assistant_summary,token_count,created_at")
+    .select("r_id,codex_thread_id,thread_title,category,token_count,created_at")
     .eq("id", ownerId)
     .eq("date", date);
 
@@ -728,6 +714,21 @@ export async function saveCodexDailyReports({
       entry,
     ]),
   );
+  // 历史记录缺少会话 ID 时，仅接续时间和分类都唯一匹配的记录。
+  for (const entry of normalizedEntries) {
+    const key = getCodexDailyReportFingerprint(entry);
+    if (existingEntryByFingerprint.has(key) || !entry.codex_thread_id || !entry.created_at) continue;
+    const candidates = (existingEntries ?? []).filter((existing) =>
+      !existing.codex_thread_id &&
+      toCategory(existing.category) === entry.category &&
+      toIsoTimestamp(existing.created_at) === entry.created_at,
+    );
+    const incoming = normalizedEntries.filter((item) => item.created_at === entry.created_at && item.category === entry.category);
+    if (candidates.length > 1 || (candidates.length && incoming.length > 1)) {
+      throw new Error("历史会话匹配不唯一，停止导入以避免错误合并");
+    }
+    if (candidates.length === 1) existingEntryByFingerprint.set(key, candidates[0]);
+  }
   const rowsToInsert = normalizedEntries.filter(
     (entry) => !existingEntryByFingerprint.has(getCodexDailyReportFingerprint(entry)),
   );
@@ -746,8 +747,10 @@ export async function saveCodexDailyReports({
       const createdAtChanged =
         Boolean(entry.created_at) &&
         toIsoTimestamp(existingEntry.created_at) !== entry.created_at;
+      const titleChanged = existingEntry.thread_title !== entry.thread_title;
+      const threadIdChanged = entry.codex_thread_id && existingEntry.codex_thread_id !== entry.codex_thread_id;
 
-      if (!tokenChanged && !createdAtChanged) {
+      if (!tokenChanged && !createdAtChanged && !titleChanged && !threadIdChanged) {
         return null;
       }
 
@@ -755,6 +758,8 @@ export async function saveCodexDailyReports({
         r_id: existingEntry.r_id,
         ...(tokenChanged ? { token_count: entry.token_count } : {}),
         ...(createdAtChanged ? { created_at: entry.created_at } : {}),
+        ...(titleChanged ? { thread_title: entry.thread_title } : {}),
+        ...(threadIdChanged ? { codex_thread_id: entry.codex_thread_id } : {}),
       };
     })
     .filter(Boolean);

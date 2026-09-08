@@ -34,12 +34,16 @@ function toText(value) {
 /** Keeps historical automation job rows out of human-facing daily reports. */
 export function isDailyReportLogRecord(record) {
   const threadTitle = toText(record?.thread_title);
-  const userTasks = toText(record?.user_tasks);
+  return !threadTitle.startsWith("Automation:");
+}
 
-  return !(
-    threadTitle.startsWith("Automation:") ||
-    userTasks.startsWith("Automation:")
-  );
+/** 从本地临时会话材料构建总结上下文，数据库仅提供元数据和统计。 */
+export function buildCodexDailyReportContext({ date, records, entries }) {
+  const sessions = entries.filter((entry) => entry.date === date && isDailyReportLogRecord(entry));
+  if (records.length && !sessions.length) {
+    throw new Error("缺少当日本地会话材料，不能仅凭标题生成日报总结");
+  }
+  return { date, records, sessions };
 }
 
 function toTokenCount(value) {
@@ -159,7 +163,7 @@ function readSummary(args) {
 async function readDailyLogRecords(supabase, userId, date) {
   const { data, error } = await supabase
     .from("codex_log")
-    .select("thread_title,user_tasks,assistant_summary,category,token_count")
+    .select("thread_title,category,token_count")
     .eq("id", userId)
     .eq("date", date)
     .order("created_at", { ascending: true });
@@ -205,12 +209,16 @@ async function main() {
   );
 
   if (args.includes("--print-context")) {
+    const payload = readJsonFile(readArgument(args, "--entries"), "--entries（本地临时会话材料）");
+    const entries = Array.isArray(payload) ? payload : payload.entries;
+    if (!Array.isArray(entries)) throw new Error("entries 必须是数组");
     console.log(
       JSON.stringify(
-        {
+        buildCodexDailyReportContext({
           date,
           records: await readDailyLogRecords(supabase, userId, date),
-        },
+          entries,
+        }),
         null,
         2,
       ),

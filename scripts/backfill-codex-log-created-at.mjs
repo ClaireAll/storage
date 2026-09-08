@@ -3,7 +3,6 @@ import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import {
   generateCodexDailyEntries,
-  generateCodexDailyTaskEntries,
 } from "./generate-codex-daily-entries.mjs";
 
 function toText(value) {
@@ -20,9 +19,7 @@ function toIsoTimestamp(value) {
 function getFingerprint(entry) {
   return [
     toText(entry.date),
-    toText(entry.thread_title),
-    toText(entry.user_tasks),
-    toText(entry.assistant_summary),
+    toText(entry.codex_thread_id) || toText(entry.thread_title),
   ]
     .map((value) => value.replace(/\s+/g, " "))
     .join("\u0001");
@@ -42,84 +39,17 @@ function groupByFingerprint(items) {
   return groups;
 }
 
-function getTaskFingerprint(entry) {
-  return [toText(entry.date), toText(entry.user_tasks)]
-    .map((value) => value.replace(/\s+/g, " "))
-    .join("\u0001");
-}
-
-function groupByTaskFingerprint(items) {
-  const groups = new Map();
-
-  for (const item of items) {
-    const fingerprint = getTaskFingerprint(item);
-    const group = groups.get(fingerprint) ?? [];
-
-    group.push(item);
-    groups.set(fingerprint, group);
-  }
-
-  return groups;
-}
-
-/** Plans only safe, unique historical created_at updates. */
-export function planCreatedAtBackfill(entries, rows, taskEntries = []) {
+/** 仅为会话标识唯一对应的历史记录修正时间，歧义记录保持不变。 */
+export function planCreatedAtBackfill(entries, rows) {
   const entriesByFingerprint = groupByFingerprint(entries);
   const result = {
     ambiguous: 0,
     invalid: 0,
-    taskAmbiguous: 0,
-    taskInvalid: 0,
-    taskUnchanged: 0,
-    taskUnmatched: 0,
-    taskUpdated: 0,
     unchanged: 0,
     unmatched: 0,
     updates: [],
   };
-  const matchedRowIds = new Set();
-  const taskEntriesByFingerprint = groupByTaskFingerprint(taskEntries);
-  const rowsByTaskFingerprint = groupByTaskFingerprint(rows);
-
-  for (const [fingerprint, taskEntryGroup] of taskEntriesByFingerprint) {
-    const rowsForTask = rowsByTaskFingerprint.get(fingerprint) ?? [];
-
-    if (taskEntryGroup.length !== 1 || rowsForTask.length > 1) {
-      if (rowsForTask.length > 0) {
-        result.taskAmbiguous += 1;
-      } else {
-        result.taskUnmatched += 1;
-      }
-      continue;
-    }
-
-    if (rowsForTask.length === 0) {
-      result.taskUnmatched += 1;
-      continue;
-    }
-
-    const createdAt = toIsoTimestamp(taskEntryGroup[0].created_at);
-
-    if (!createdAt) {
-      result.taskInvalid += 1;
-      continue;
-    }
-
-    const row = rowsForTask[0];
-    matchedRowIds.add(row.r_id);
-
-    if (toIsoTimestamp(row.created_at) === createdAt) {
-      result.taskUnchanged += 1;
-      continue;
-    }
-
-    result.taskUpdated += 1;
-    result.updates.push({ created_at: createdAt, r_id: row.r_id });
-  }
-
-  const rowsByFingerprint = groupByFingerprint(
-    rows.filter((row) => !matchedRowIds.has(row.r_id)),
-  );
+  const rowsByFingerprint = groupByFingerprint(rows);
 
   for (const [fingerprint, entryGroup] of entriesByFingerprint) {
     const rowsForFingerprint = rowsByFingerprint.get(fingerprint) ?? [];
@@ -198,7 +128,7 @@ async function main() {
   const ownerId = await resolveOwnerId(supabase);
   const { data: rows, error } = await supabase
     .from("codex_log")
-    .select("r_id,date,thread_title,user_tasks,assistant_summary,created_at")
+    .select("r_id,date,codex_thread_id,thread_title,created_at")
     .eq("id", ownerId)
     .limit(10000);
 
@@ -208,19 +138,12 @@ async function main() {
 
   const dates = [...new Set((rows ?? []).map((row) => toText(row.date)).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)))];
   const entries = [];
-  const taskEntries = [];
 
   for (const date of dates) {
-    const [dailyEntries, dailyTaskEntries] = await Promise.all([
-      generateCodexDailyEntries({ targetDate: date }),
-      generateCodexDailyTaskEntries({ targetDate: date }),
-    ]);
-
-    entries.push(...dailyEntries);
-    taskEntries.push(...dailyTaskEntries);
+    entries.push(...await generateCodexDailyEntries({ targetDate: date }));
   }
 
-  const plan = planCreatedAtBackfill(entries, rows ?? [], taskEntries);
+  const plan = planCreatedAtBackfill(entries, rows ?? []);
 
   if (apply) {
     for (const update of plan.updates) {
@@ -242,7 +165,6 @@ async function main() {
       entries: entries.length,
       records: rows?.length ?? 0,
       sessionDates: dates.length,
-      taskEntries: taskEntries.length,
       updated: apply ? plan.updates.length : 0,
     }),
   );

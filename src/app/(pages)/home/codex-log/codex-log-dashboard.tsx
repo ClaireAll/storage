@@ -2,10 +2,7 @@
 
 import { CategoryIcon } from "@/app/(pages)/common/category-icon";
 import { themeConfigChangeEventName } from "@/app/(pages)/theme/constants";
-import {
-  OverlayScrollArea,
-  OverlayScrollbarHost,
-} from "@/app/(pages)/common/overlay-scrollbar";
+import { OverlayScrollArea } from "@/app/(pages)/common/overlay-scrollbar";
 import { cn } from "@/lib/utils";
 import {
   ArrowDownOutlined,
@@ -25,12 +22,9 @@ import {
   Input,
   Select,
   Statistic,
-  Table,
-  Tag,
+  Timeline,
   Tooltip,
   Typography,
-  type TableColumnsType,
-  type TableProps,
 } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import {
@@ -59,6 +53,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import type {
@@ -115,33 +110,6 @@ type MetricDelta = {
   text: string;
 };
 
-type TableSorterState = {
-  field:
-    | "assistant_summary"
-    | "thread_title"
-    | "time"
-    | "token_count"
-    | "user_tasks";
-  order: "ascend" | "descend" | null;
-};
-
-type TableFilterState = {
-  time: string[];
-  token_count: string[];
-};
-
-const hourFilters = [
-  { text: "上午", value: "morning" },
-  { text: "下午", value: "afternoon" },
-  { text: "晚上", value: "night" },
-];
-
-const tokenFilters = [
-  { text: "1k 以下", value: "small" },
-  { text: "1k - 10k", value: "medium" },
-  { text: "10k 以上", value: "large" },
-];
-
 const defaultPalette: ChartPalette = {
   accent: "#22c55e",
   border: "rgba(34, 197, 94, 0.32)",
@@ -174,8 +142,6 @@ const quietPanelClassName = cn(
   "rounded-lg border bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]",
   codexLogBorderClassNames.quietPanel,
 );
-const tableScrollbarClassName =
-  "[&_.ant-table-content]:overflow-auto [&_.ant-table-body]:overflow-auto";
 const metricToneClassNames = {
   codex: {
     card: "",
@@ -292,62 +258,10 @@ function buildNumberDelta(current: number, previous: number): MetricDelta {
   };
 }
 
-function getHourFilterValue(hour: number | null) {
-  if (hour === null) {
-    return "";
-  }
-
-  if (hour >= 6 && hour < 12) {
-    return "morning";
-  }
-
-  if (hour >= 12 && hour < 18) {
-    return "afternoon";
-  }
-
-  return "night";
-}
-
-function getTokenFilterValue(tokenCount: number) {
-  if (tokenCount < 1000) {
-    return "small";
-  }
-
-  if (tokenCount < 10000) {
-    return "medium";
-  }
-
-  return "large";
-}
-
-function compareText(left: string, right: string) {
-  return left.localeCompare(right, "zh-CN");
-}
-
 function getRecordTimestamp(record: CodexLogRecord) {
   const value = record.created_at ? new Date(record.created_at).getTime() : 0;
 
   return Number.isNaN(value) ? 0 : value;
-}
-
-function getSortedRecords(records: CodexLogRecord[], sorter: TableSorterState) {
-  if (!sorter.order) {
-    return records;
-  }
-
-  const direction = sorter.order === "ascend" ? 1 : -1;
-
-  return [...records].sort((left, right) => {
-    if (sorter.field === "time") {
-      return (getRecordTimestamp(left) - getRecordTimestamp(right)) * direction;
-    }
-
-    if (sorter.field === "token_count") {
-      return (left.token_count - right.token_count) * direction;
-    }
-
-    return compareText(left[sorter.field], right[sorter.field]) * direction;
-  });
 }
 
 function readThemePalette(): ChartPalette {
@@ -755,7 +669,7 @@ function LongestSessionList({
               <li className="codex-log-longest-row flex min-h-14 items-start gap-3 py-3 first:pt-0 last:pb-0">
                 <div className="min-w-0 flex-1">
                   <span className="codex-log-longest-title block truncate text-sm font-semibold text-(--home-theme-text)">
-                    {item.user_tasks}
+                    {item.thread_title}
                   </span>
                   <span
                     className="codex-log-longest-repository mt-1 block truncate text-xs font-semibold"
@@ -816,6 +730,60 @@ function SummaryBlock({ label, text }: { label: string; text: string }) {
   );
 }
 
+function SessionTimeline({
+  palette,
+  records,
+}: {
+  palette: ChartPalette;
+  records: CodexLogRecord[];
+}) {
+  if (!records.length) {
+    return <Empty description="暂无会话" image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+  }
+
+  return (
+    <Timeline
+      className="codex-log-session-timeline mb-0! [&_.ant-timeline-item-content]:min-w-0! [&_.ant-timeline-item-label]:text-start! [&_.ant-timeline-item-tail]:border-[color:var(--home-preview-divider-color)]!"
+      items={records.map((record, index) => {
+        const recordColor =
+          palette.columns[index % palette.columns.length] ?? palette.accent;
+        const sessionCardStyle: CSSProperties &
+          Record<"--codex-log-session-color", string> = {
+          "--codex-log-session-color": recordColor,
+        };
+
+        return {
+          content: (
+            <div
+              className={cn(
+                "codex-log-session-card inline-flex w-fit max-w-[min(32rem,100%)] min-w-0 items-baseline justify-between gap-3 px-3 py-2.5 text-left max-sm:flex-col max-sm:items-start max-sm:gap-2",
+                quietPanelClassName,
+                "border-0 bg-[color-mix(in_srgb,var(--codex-log-session-color)_14%,transparent)] dark:bg-[color-mix(in_srgb,var(--codex-log-session-color)_18%,transparent)]",
+              )}
+              style={sessionCardStyle}
+            >
+              <Typography.Text className="min-w-0 flex-1 wrap-break-word whitespace-normal text-pretty leading-5 text-(--home-theme-text)!">
+                {record.thread_title}
+              </Typography.Text>
+              <span className="shrink-0 whitespace-nowrap text-xs font-medium leading-5 tabular-nums text-[color-mix(in_srgb,var(--home-theme-text)_58%,transparent)]">
+                {formatToken(record.token_count)} Token
+              </span>
+            </div>
+          ),
+          color: recordColor,
+          key: record.key,
+          title: (
+            <span className="text-sm font-medium tabular-nums text-[color-mix(in_srgb,var(--home-theme-text)_62%,transparent)]">
+              {record.time}
+            </span>
+          ),
+        };
+      })}
+      mode="alternate"
+    />
+  );
+}
+
 export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const fullscreen = useHomeContentFullscreen();
   const router = useRouter();
@@ -823,20 +791,7 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
   const palette = useChartPalette();
   const [keyword, setKeyword] = useState("");
   const [repository, setRepository] = useState<string>("all");
-  const [tableFilters, setTableFilters] = useState<TableFilterState>({
-    time: [],
-    token_count: [],
-  });
-  const [tablePage, setTablePage] = useState(1);
-  const [tablePageSize, setTablePageSize] = useState(6);
-  const [tableSorter, setTableSorter] = useState<TableSorterState>({
-    field: "time",
-    order: "descend",
-  });
   const selectedDay = dayjs(data.selectedDate);
-  const tableScrollY = fullscreen?.isFullscreen
-    ? "clamp(260px, 36dvh, 440px)"
-    : 360;
   const trendOption = useMemo(
     () => buildTrendOption(data.trend, palette),
     [data.trend, palette],
@@ -880,112 +835,18 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       const matchesRepository =
         repository === "all" || record.repository === repository;
       const matchesKeyword =
-        !lowerKeyword ||
-        [
-          record.assistant_summary,
-          record.repository,
-          record.thread_title,
-          record.user_tasks,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(lowerKeyword);
+        !lowerKeyword || record.thread_title.toLowerCase().includes(lowerKeyword);
 
       return matchesRepository && matchesKeyword;
     });
   }, [data.records, keyword, repository]);
-  const tableRecords = useMemo(() => {
-    const nextRecords = filteredRecords.filter((record) => {
-      const matchesTime =
-        !tableFilters.time.length ||
-        tableFilters.time.includes(getHourFilterValue(record.hour));
-      const matchesToken =
-        !tableFilters.token_count.length ||
-        tableFilters.token_count.includes(
-          getTokenFilterValue(record.token_count),
-        );
-
-      return matchesTime && matchesToken;
-    });
-
-    return getSortedRecords(nextRecords, tableSorter);
-  }, [filteredRecords, tableFilters, tableSorter]);
-  const tableTotal = tableRecords.length;
-  const maxTablePage = Math.max(1, Math.ceil(tableTotal / tablePageSize));
-  const safeTablePage = Math.min(tablePage, maxTablePage);
-  const columns: TableColumnsType<CodexLogRecord> = [
-    {
-      dataIndex: "time",
-      filteredValue: tableFilters.time,
-      filters: hourFilters,
-      sorter: true,
-      sortOrder: tableSorter.field === "time" ? tableSorter.order : null,
-      sortDirections: ["descend", "ascend"],
-      title: "时间",
-      width: 86,
-    },
-    {
-      dataIndex: "repository",
-      render: (value: string) => (
-        <Tag className="max-w-full shrink-0 whitespace-normal">{value}</Tag>
+  const timelineRecords = useMemo(
+    () =>
+      [...filteredRecords].sort(
+        (left, right) => getRecordTimestamp(right) - getRecordTimestamp(left),
       ),
-      title: "状态",
-      width: 140,
-    },
-    {
-      dataIndex: "thread_title",
-      render: (value: string) => (
-        <span className="block min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
-          {value}
-        </span>
-      ),
-      sorter: true,
-      sortOrder:
-        tableSorter.field === "thread_title" ? tableSorter.order : null,
-      sortDirections: ["ascend", "descend"],
-      title: "会话",
-      width: 180,
-    },
-    {
-      dataIndex: "user_tasks",
-      render: (value: string) => (
-        <span className="block min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
-          {value}
-        </span>
-      ),
-      sorter: true,
-      sortOrder: tableSorter.field === "user_tasks" ? tableSorter.order : null,
-      sortDirections: ["ascend", "descend"],
-      title: "任务",
-      width: 300,
-    },
-    {
-      dataIndex: "assistant_summary",
-      render: (value: string) => (
-        <span className="block min-w-0 wrap-break-word whitespace-normal text-pretty leading-5">
-          {value}
-        </span>
-      ),
-      sorter: true,
-      sortOrder:
-        tableSorter.field === "assistant_summary" ? tableSorter.order : null,
-      sortDirections: ["ascend", "descend"],
-      title: "回答简述",
-      width: 352,
-    },
-    {
-      align: "right",
-      dataIndex: "token_count",
-      filteredValue: tableFilters.token_count,
-      filters: tokenFilters,
-      render: (value: number) => formatToken(value),
-      sorter: true,
-      sortOrder: tableSorter.field === "token_count" ? tableSorter.order : null,
-      sortDirections: ["descend", "ascend"],
-      title: "Token",
-      width: 112,
-    },
-  ];
+    [filteredRecords],
+  );
 
   function handleDateChange(value: Dayjs | null) {
     if (!value) {
@@ -994,41 +855,6 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
 
     router.push(`${pathname}?date=${value.format("YYYY-MM-DD")}`);
   }
-
-  const handleTableChange: TableProps<CodexLogRecord>["onChange"] = (
-    pagination,
-    filters,
-    sorter,
-    extra,
-  ) => {
-    const nextSorter = Array.isArray(sorter) ? sorter[0] : sorter;
-    const field = String(nextSorter.field ?? "");
-
-    setTableFilters({
-      time: (filters.time ?? []).map(String),
-      token_count: (filters.token_count ?? []).map(String),
-    });
-    setTablePage(extra.action === "paginate" ? (pagination.current ?? 1) : 1);
-    setTablePageSize(pagination.pageSize ?? tablePageSize);
-
-    if (
-      field === "assistant_summary" ||
-      field === "thread_title" ||
-      field === "time" ||
-      field === "token_count" ||
-      field === "user_tasks"
-    ) {
-      setTableSorter({
-        field,
-        order: nextSorter.order ?? null,
-      });
-    } else {
-      setTableSorter({
-        field: "time",
-        order: "descend",
-      });
-    }
-  };
 
   return (
     <OverlayScrollArea
@@ -1082,26 +908,20 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             onChange={handleDateChange}
             value={selectedDay.isValid() ? selectedDay : undefined}
           />
-          <Select
-            className="codex-log-repo-select col-span-2 w-full @3xl/codex-log:col-span-1"
-            onChange={(value) => {
-              setRepository(value);
-              setTablePage(1);
-            }}
-            options={repositoryOptions}
-            value={repository}
-          />
+              <Select
+                className="codex-log-repo-select col-span-2 w-full @3xl/codex-log:col-span-1"
+                onChange={setRepository}
+                options={repositoryOptions}
+                value={repository}
+              />
           <Input
-            allowClear
-            className="col-span-1 w-full @3xl/codex-log:col-span-1"
-            onChange={(event) => {
-              setKeyword(event.target.value);
-              setTablePage(1);
-            }}
-            placeholder="搜索任务或回答"
-            prefix={<SearchOutlined />}
-            value={keyword}
-          />
+                allowClear
+                className="col-span-1 w-full @3xl/codex-log:col-span-1"
+                onChange={(event) => setKeyword(event.target.value)}
+                placeholder="搜索会话"
+                prefix={<SearchOutlined />}
+                value={keyword}
+              />
           <Button
             aria-label="刷新日报"
             className="col-span-1 w-full @3xl/codex-log:col-span-1"
@@ -1158,41 +978,15 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
       </section>
 
       <DashboardPanel
-        className="codex-log-table-panel min-h-125 shrink-0 max-sm:min-h-115"
+        className="codex-log-session-panel shrink-0"
         extra={
           <Typography.Text type="secondary">
-            {formatNumber(tableTotal)} 条
+            {formatNumber(timelineRecords.length)} 条
           </Typography.Text>
         }
         title="会话记录"
       >
-        <OverlayScrollbarHost
-          className="min-h-0"
-          horizontal
-          horizontalTargetSelector=".ant-table-content"
-          targetSelector=".ant-table-body"
-        >
-          <Table
-            className={cn("codex-log-table", "min-w-0", tableScrollbarClassName)}
-          columns={columns}
-          dataSource={tableRecords}
-          onChange={handleTableChange}
-          pagination={{
-            current: safeTablePage,
-            pageSize: tablePageSize,
-            pageSizeOptions: ["6", "8", "12"],
-            showSizeChanger: true,
-            showTotal: (total, range) =>
-              `共 ${formatNumber(total)} 条 · ${range[0]}-${range[1]}`,
-            total: tableTotal,
-          }}
-          rowKey="key"
-          scroll={{ x: 1170, y: tableScrollY }}
-          showSorterTooltip={false}
-          size="middle"
-          tableLayout="fixed"
-          />
-        </OverlayScrollbarHost>
+        <SessionTimeline palette={palette} records={timelineRecords} />
       </DashboardPanel>
       <SummaryPanel initialSummary={data.dailySummary} />
     </OverlayScrollArea>

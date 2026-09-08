@@ -23,7 +23,7 @@ const themeConstantsPath = new URL(
   import.meta.url,
 );
 
-test("keeps the Codex table tall while constraining it to fullscreen height", async () => {
+test("renders session records as a timeline without nested table scrolling", async () => {
   const [dashboardSource, fullscreenSource] = await Promise.all([
     readFile(dashboardPath, "utf8"),
     readFile(fullscreenPath, "utf8"),
@@ -31,16 +31,18 @@ test("keeps the Codex table tall while constraining it to fullscreen height", as
 
   assert.match(fullscreenSource, /export function useHomeContentFullscreen/);
   assert.match(dashboardSource, /useHomeContentFullscreen\(\)/);
-  assert.match(dashboardSource, /const tableScrollY = fullscreen\?\.isFullscreen/);
-  assert.match(dashboardSource, /clamp\(260px, 36dvh, 440px\)/);
-  assert.match(dashboardSource, /scroll=\{\{ x: 1170, y: tableScrollY \}\}/);
+  assert.match(dashboardSource, /function SessionTimeline/);
+  assert.match(dashboardSource, /<Timeline/);
+  assert.doesNotMatch(dashboardSource, /const tableScrollY/);
+  assert.doesNotMatch(dashboardSource, /<Table/);
+  assert.doesNotMatch(dashboardSource, /scroll=\{\{ x: 1170/);
 });
 
 test("keeps the summary available without dashboard scroll render state", async () => {
   const source = await readFile(dashboardPath, "utf8");
 
   assert.doesNotMatch(source, /onScroll=\{handleDashboardScroll\}/);
-  assert.match(source, /codex-log-table-panel[^"`]*shrink-0/);
+  assert.match(source, /codex-log-session-panel[^"`]*shrink-0/);
   assert.match(source, /codex-log-summary-panel[^"`]*shrink-0/);
 });
 

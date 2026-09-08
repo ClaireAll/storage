@@ -94,22 +94,16 @@ test("skips entries with an invalid session timestamp", () => {
   assert.equal(result.invalid, 1);
 });
 
-test("uses a unique task match before the aggregate session fallback", () => {
+test("使用会话 ID 匹配，不依赖任务或回答正文", () => {
   const result = planCreatedAtBackfill(
-    [],
+    [{ date: "2026-08-10", codex_thread_id: "thread-1", created_at: "2026-08-10T02:03:04.000Z", thread_title: "新标题" }],
     [
       {
         created_at: "2026-08-11T00:05:00.000Z",
         date: "2026-08-10",
         r_id: "row-1",
-        user_tasks: "First task",
-      },
-    ],
-    [
-      {
-        created_at: "2026-08-10T02:03:04.000Z",
-        date: "2026-08-10",
-        user_tasks: "First task",
+        codex_thread_id: "thread-1",
+        thread_title: "旧标题",
       },
     ],
   );
