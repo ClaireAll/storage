@@ -103,11 +103,13 @@ test("uses shared preview tokens for README markdown boundaries", async () => {
   );
   assert.match(source, /\[&_table\]:max-w-full/);
   assert.match(source, /\[&_table\]:w-full/);
-  assert.match(source, /\[&_table\]:table-fixed/);
+  assert.match(source, /\[&_table\]:table-auto/);
   assert.match(source, /\[&_td\]:whitespace-normal/);
   assert.match(source, /\[&_td\]:wrap-break-word/);
   assert.match(source, /\[&_th\]:whitespace-normal/);
   assert.match(source, /\[&_th\]:wrap-break-word/);
+  assert.doesNotMatch(source, /table:has\(th:nth-child/);
+  assert.doesNotMatch(source, /\[&_table\]:table-fixed/);
   assert.match(source, /\[&_tbody_tr:nth-child\(odd\)\]:bg-\[color-mix\(in_srgb,var\(--home-theme-color\)_7%,transparent\)\]/);
   assert.doesNotMatch(source, /\[&_table\]:whitespace-nowrap/);
   assert.match(
