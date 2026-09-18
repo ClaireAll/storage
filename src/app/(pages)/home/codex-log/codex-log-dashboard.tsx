@@ -490,16 +490,16 @@ function buildTrendOption(
   return {
     color: [chartColumns[0], chartColumns[1] ?? chartColumns[0]],
     grid: {
-      bottom: 32,
+      bottom: 18,
       left: 42,
       right: 20,
-      top: 26,
+      top: 48,
     },
     legend: {
-      bottom: 0,
       icon: "roundRect",
       itemHeight: 8,
       itemWidth: 14,
+      top: 0,
       textStyle: {
         color: palette.muted,
       },

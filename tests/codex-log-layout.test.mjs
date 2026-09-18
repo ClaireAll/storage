@@ -188,6 +188,18 @@ test("uses the selected theme's eight chart columns for daily task bars", async 
   assert.doesNotMatch(dashboardSource, /const taskBarColors/);
 });
 
+test("places task trend legend above the chart", async () => {
+  const source = await readFile(dashboardPath, "utf8");
+  const trendOption = source.slice(
+    source.indexOf("function buildTrendOption"),
+    source.indexOf("function buildRepositoryOption"),
+  );
+
+  assert.match(trendOption, /legend:\s*\{[\s\S]*top:\s*0/);
+  assert.doesNotMatch(trendOption, /legend:\s*\{[\s\S]*bottom:\s*0/);
+  assert.match(trendOption, /grid:\s*\{[\s\S]*top:\s*48/);
+});
+
 test("matches preset theme chart columns without color-case drift", async () => {
   const source = await readFile(themeConstantsPath, "utf8");
 

@@ -556,7 +556,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
 
       <EvidenceStrip evidence={data.evidence} />
 
-      <Drawer destroyOnHidden footer={<Button loading={isSavingNotification} onClick={() => void saveNotification()} type="primary">保存设置</Button>} onClose={() => setIsNotificationOpen(false)} open={isNotificationOpen} title="企微机器人通知" width={400}>
+      <Drawer destroyOnHidden footer={<Button loading={isSavingNotification} onClick={() => void saveNotification()} type="primary">保存设置</Button>} onClose={() => setIsNotificationOpen(false)} open={isNotificationOpen} size={400} title="企微机器人通知">
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between gap-4"><Typography.Text>启用推送</Typography.Text><Switch checked={notificationForm.enabled} onChange={(enabled) => setNotificationForm((current) => ({ ...current, enabled }))} /></div>
           <Input onChange={(event) => setNotificationForm((current) => ({ ...current, webhookUrl: event.target.value }))} placeholder="粘贴企微机器人 Webhook 链接" value={notificationForm.webhookUrl} />

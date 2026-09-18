@@ -110,6 +110,7 @@ test("uses shared preview tokens for README markdown boundaries", async () => {
   assert.match(source, /\[&_th\]:wrap-break-word/);
   assert.doesNotMatch(source, /table:has\(th:nth-child/);
   assert.doesNotMatch(source, /\[&_table\]:table-fixed/);
+  assert.match(source, /\[&_th\]:bg-\[color-mix\(in_srgb,var\(--home-theme-color\)_12%,transparent\)\]/);
   assert.match(source, /\[&_tbody_tr:nth-child\(odd\)\]:bg-\[color-mix\(in_srgb,var\(--home-theme-color\)_7%,transparent\)\]/);
   assert.doesNotMatch(source, /\[&_table\]:whitespace-nowrap/);
   assert.match(
