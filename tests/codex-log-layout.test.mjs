@@ -100,6 +100,10 @@ test("uses the daily report symbol and responds to the report container width", 
     /codex-log-toolbar-actions grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_40px\] gap-2 @3xl\/codex-log:grid-cols-\[160px_minmax\(160px,1fr\)_minmax\(180px,1\.2fr\)_40px\]/,
   );
   assert.match(source, /codex-log-date-picker col-span-2 w-full @3xl\/codex-log:col-span-1/);
+  assert.match(
+    source,
+    /getPopupContainer=\{\(\) =>[\s\S]*document\.fullscreenElement instanceof HTMLElement[\s\S]*document\.body/,
+  );
   assert.match(source, /codex-log-repo-select col-span-2 w-full @3xl\/codex-log:col-span-1/);
   assert.match(source, /className="col-span-1 w-full @3xl\/codex-log:col-span-1"/);
   assert.match(

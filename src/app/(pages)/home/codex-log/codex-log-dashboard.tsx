@@ -905,6 +905,11 @@ export function CodexLogDashboard({ data }: CodexLogDashboardProps) {
             disabledDate={(current) =>
               !data.availableDates.includes(current.format("YYYY-MM-DD"))
             }
+            getPopupContainer={() =>
+              document.fullscreenElement instanceof HTMLElement
+                ? document.fullscreenElement
+                : document.body
+            }
             onChange={handleDateChange}
             value={selectedDay.isValid() ? selectedDay : undefined}
           />
