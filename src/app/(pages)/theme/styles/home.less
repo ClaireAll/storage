@@ -835,3 +835,40 @@
   }
 
 }
+
+.home-overview-pull-cord-active .home-overview-pull-cord-line {
+  animation: home-overview-pull-cord-line 180ms ease-out;
+}
+
+.home-overview-pull-cord-active .home-overview-pull-cord-handle {
+  animation: home-overview-pull-cord-handle 180ms ease-out;
+}
+
+@keyframes home-overview-pull-cord-line {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  50% {
+    transform: scaleY(1.18);
+  }
+}
+
+@keyframes home-overview-pull-cord-handle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-overview-pull-cord-active .home-overview-pull-cord-line,
+  .home-overview-pull-cord-active .home-overview-pull-cord-handle {
+    animation: none;
+  }
+}

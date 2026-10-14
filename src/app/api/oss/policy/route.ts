@@ -39,6 +39,7 @@ function getOssConfig() {
 
 /** OSS 允许前端上传的业务目录。 */
 type OssUploadDirectory =
+  | "atlas"
   | "avatars"
   | "clothes"
   | "pants"
@@ -192,6 +193,7 @@ export async function POST(request: Request) {
   }
 
   if (
+    directory !== "atlas" &&
     directory !== "avatars" &&
     directory !== "clothes" &&
     directory !== "pants" &&

@@ -29,6 +29,7 @@ function validateUploadFile(file: File) {
 
 /** 图片上传到 OSS 时可指定的业务目录。 */
 type OssUploadDirectory =
+  | "atlas"
   | "avatars"
   | "clothes"
   | "pants"

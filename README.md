@@ -1,6 +1,6 @@
 # Storage
 
-个人库存与资料管理应用，用来记录衣服、裤子、日用品、图书、爱好、化妆品、护肤品、笔记和 Codex 日报。项目包含主题系统、OSS 文件上传、AI 助手、万相图片生成、爱好分享页和 Codex 日报仪表板。
+个人库存与资料管理应用，用来记录衣服、裤子、日用品、图书、爱好、化妆品、护肤品、笔记、知识星图和 Codex 日报。项目包含主题系统、OSS 文件上传、AI 助手、万相图片生成、爱好分享页和 Codex 日报仪表板。
 
 ## 技术栈
 
@@ -17,6 +17,9 @@
 - DeepSeek
 - 阿里云百炼 / 万相
 - ECharts
+- React Flow（知识星图画布）
+- Tiptap（节点富文本）
+- d3-force（工作线程自动布局）
 - Swiper
 - pnpm
 
@@ -164,6 +167,37 @@ const supabase = createAdminClient();
 - `codex_log`：Codex 日报数据。
 - `codex_daily_report`：Codex 自动化生成的每日统计与总结。
 - `hobby_shares`：爱好分享快照。
+- `atlas_graphs`：按用户保存知识星图、外观设置和待清理图片对象键。
+
+### 知识星图：`atlas_graphs`
+
+每位用户一条图谱记录，服务端通过 NextAuth 获取用户身份，使用 service-role 访问。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `user_id` | `uuid` | 主键，服务端显式写入当前登录用户 id |
+| `graph` | `jsonb` | 节点、连线、分类、标签、富文本、位置、视口与外观 |
+| `pending_delete_keys` | `json` | 清理失败的 OSS 对象键数组，下次保存重试 |
+| `created_at` | `timestamptz` | 创建时间 |
+| `update_at` | `timestamptz` | 最近保存时间，字段名沿用现有表结构 |
+
+表创建后执行 `scripts/atlas-access.sql`：开启 RLS，并撤销 `anon`、`authenticated` 的直接访问权限。图谱只通过鉴权后的 `/api/atlas` 接口访问。
+
+## 知识星图
+
+入口位于笔记下方，路径为 `/home/atlas`。桌面支持编辑，移动端仅浏览。
+
+- 节点支持分类、多标签、富文本和图片；连线支持名称与有向关系。
+- 从连接点拖线到空白处可新增关联节点，名称在画布内输入；回车或失焦确认，Esc 或空名称取消。
+- 点击连线后可在右侧关系详情直接修改名称和方向；Delete、Backspace 删除选中内容，关联连线一起删除，可撤销。
+- 支持搜索、框选、多选、平移、缩放、固定节点与手动触发自动布局。
+- 背景纹理、颜色、节点外观、发光、连线和标签显示设置随图谱保存。
+- 使用保存按钮或 Ctrl/Cmd+S 手动保存，不自动保存；离开未保存页面时提供提醒。保存覆盖服务器上的现有图谱。
+- 首次无记录时显示本地示例，确认保存前不写入数据库。
+
+图片可粘贴、拖入或选择文件，支持 `image/*`，单张不超过 5 MB。保存前使用浏览器临时地址，保存时上传到公开 OSS 路径 `atlas/{userId}/{fileName}`，文件名使用 UUID。图谱不保存图片二进制。
+
+每次保存先写入图谱，再比较图片引用并清理不再使用的 OSS 对象；正文图片也参与引用检查。清理失败记录到 `pending_delete_keys`，下次保存重试，不运行定时清理。成功删除图片后清空本地撤销历史，避免恢复已删除资源。
 
 ### 分享表：`hobby_shares`
 
@@ -224,6 +258,7 @@ supabase/migrations/20260731_secure_hobby_share_creation.sql
 - `hobby`
 - `cosmetic`
 - `skincare`
+- `atlas`
 
 上传路径按用户隔离：
 
@@ -362,6 +397,7 @@ wan2.7-image-pro
 - `cosmetic/`：化妆品页面。
 - `skincare/`：护肤品页面。
 - `blog/`：笔记页面，左侧列表 + 右侧预览。
+- `atlas/`：知识星图画布、富文本、外观设置及工作线程自动布局。
 - `codex-log/`：Codex 日报仪表板，使用 ECharts 和 Ant Design Table。
 - `share/`：登录态下的爱好分享创建、查看和删除弹窗。
 
@@ -392,6 +428,7 @@ wan2.7-image-pro
 
 - `ai/chat`：DeepSeek 助手。
 - `ai/outfit-image`：万相搭配图生成。
+- `atlas`：读取、保存当前用户图谱，以及清理本次未保存上传的图片。
 - `blog`、`books`、`clothes`、`cosmetic`、`hobby`、`pants`、`skincare`、`toiletries`：库存分类增删改接口。
 - `knowledge`：文章推荐。
 - `oss/policy`：浏览器直传 OSS policy。

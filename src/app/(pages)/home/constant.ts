@@ -113,6 +113,12 @@ export const homeCategories: HomeCategory[] = [
     label: "笔记",
   },
   {
+    href: "/home/atlas",
+    iconClassName: "icon-atlas",
+    key: "atlas",
+    label: "知识星图",
+  },
+  {
     href: "codex",
     iconClassName: "icon-codex",
     key: "codex",

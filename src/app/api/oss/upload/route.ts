@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "../../../../../auth";
 
 type OssUploadDirectory =
+  | "atlas"
   | "avatars"
   | "clothes"
   | "pants"
@@ -155,6 +156,7 @@ async function createUniqueObjectKey({
 
 function isAllowedDirectory(directory: string): directory is OssUploadDirectory {
   return (
+    directory === "atlas" ||
     directory === "avatars" ||
     directory === "clothes" ||
     directory === "pants" ||

@@ -1,6 +1,7 @@
 import { createHmac } from "crypto";
 
 export type DeleteOwnOssObjectDirectory =
+  | "atlas"
   | "avatars"
   | "clothes"
   | "pants"

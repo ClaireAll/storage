@@ -110,6 +110,7 @@ export default function HomePage({
     useState(false);
   const [hobbySharePortalHost, setHobbySharePortalHost] =
     useState<HTMLDivElement | null>(null);
+  const [isOverviewCollapsed, setIsOverviewCollapsed] = useState(false);
   const [editingClothes, setEditingClothes] = useState<ClothesItem | null>(
     null,
   );
@@ -229,6 +230,9 @@ export default function HomePage({
     if (categoryHref === displayActiveCategoryHref) {
       return;
     }
+
+    const navigation = new CustomEvent("atlas-before-navigate", { cancelable: true, detail: { href: categoryHref } });
+    if (!window.dispatchEvent(navigation)) return;
 
     setCategoryNavigation({
       fromCategoryHref: activeCategoryHref,
@@ -394,6 +398,7 @@ export default function HomePage({
                   }
                   isCategoryContentLoading={isCategoryContentLoading}
                   isCategoryVisibilityEditing={isCategoryVisibilityEditing}
+                  isOverviewCollapsed={isOverviewCollapsed}
                   itemCount={itemCount}
                   onCancelCategoryVisibilityEditing={
                     cancelCategoryVisibilityEditing
@@ -407,6 +412,9 @@ export default function HomePage({
                     startCategoryVisibilityEditing
                   }
                   onToggleCategoryVisibility={toggleCategoryVisibility}
+                  onToggleOverview={() =>
+                    setIsOverviewCollapsed((collapsed) => !collapsed)
+                  }
                   surfaceBackground={activePalette.bg}
                   surfaceBorderColor={homeBorderColor}
                 >

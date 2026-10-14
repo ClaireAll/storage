@@ -71,6 +71,7 @@ type HomeDashboardProps = {
   itemCount: number;
   isCategoryVisibilityEditing: boolean;
   isCategoryContentLoading: boolean;
+  isOverviewCollapsed: boolean;
   surfaceBackground: string;
   surfaceBorderColor: string;
   onCancelCategoryVisibilityEditing: () => void;
@@ -79,6 +80,7 @@ type HomeDashboardProps = {
   onOpenQuickItemCreate: () => void;
   onStartCategoryVisibilityEditing: () => void;
   onToggleCategoryVisibility: (categoryKey: string) => void;
+  onToggleOverview: () => void;
 };
 
 export function HomeDashboard({
@@ -88,12 +90,14 @@ export function HomeDashboard({
   hiddenCategoryKeys,
   isCategoryContentLoading,
   isCategoryVisibilityEditing,
+  isOverviewCollapsed,
   onCancelCategoryVisibilityEditing,
   onCategoryNavigate,
   onFinishCategoryVisibilityEditing,
   onOpenQuickItemCreate,
   onStartCategoryVisibilityEditing,
   onToggleCategoryVisibility,
+  onToggleOverview,
   surfaceBackground,
   surfaceBorderColor,
 }: HomeDashboardProps) {
@@ -111,6 +115,7 @@ export function HomeDashboard({
     useState(false);
   const [isCategoryContentFullscreen, setIsCategoryContentFullscreen] =
     useState(false);
+  const [overviewPullSequence, setOverviewPullSequence] = useState(0);
   const [openCategoryKeys, setOpenCategoryKeys] = useState<string[]>([
     codexCategoryKey,
   ]);
@@ -507,11 +512,78 @@ export function HomeDashboard({
   }, [refreshFullscreenLayout]);
 
   return (
-    <main className="home-dashboard-main flex min-h-0 w-full flex-1 flex-col gap-5 overflow-hidden px-[clamp(32px,4vw,88px)] pb-6 pt-6 has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:overflow-visible max-md:px-4 max-md:py-5">
+    <main className="home-dashboard-main relative flex min-h-0 w-full flex-1 flex-col gap-5 overflow-hidden px-[clamp(32px,4vw,88px)] pb-6 pt-6 has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:overflow-visible max-md:px-4 max-md:py-5">
+      <Tooltip
+        placement="left"
+        title={isOverviewCollapsed ? "展开概览" : "收起概览"}
+      >
+        <Button
+          aria-controls="home-dashboard-overview"
+          aria-expanded={!isOverviewCollapsed}
+          aria-label={isOverviewCollapsed ? "展开概览" : "收起概览"}
+          className="home-overview-pull-cord group absolute! top-0 right-2 z-20 h-24! w-11! min-w-11! overflow-visible border-0! bg-transparent! p-0! text-(--home-theme-color)! shadow-none! hover:bg-transparent! active:bg-transparent! focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--home-theme-color) max-md:right-1"
+          data-overview-toggle="pull-cord"
+          onClick={() => {
+            setOverviewPullSequence((sequence) => sequence + 1);
+            onToggleOverview();
+          }}
+          type="text"
+        >
+          <svg
+            aria-hidden="true"
+            className={cn(
+              "absolute inset-0 h-full w-full overflow-visible",
+              overviewPullSequence > 0 && "home-overview-pull-cord-active",
+            )}
+            key={overviewPullSequence}
+            viewBox="0 0 44 96"
+          >
+            <line
+              className="home-overview-pull-cord-line origin-top opacity-50 transition-opacity duration-150 [transform-box:fill-box] group-hover:opacity-75"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="1.5"
+              x1="22"
+              x2="22"
+              y1="0"
+              y2="67"
+            />
+            <circle
+              className="home-overview-pull-cord-handle [transform-box:fill-box] origin-center transition-transform duration-150 group-hover:scale-105"
+              cx="22"
+              cy="75"
+              fill="color-mix(in srgb, var(--home-theme-bg) 88%, var(--home-theme-color) 12%)"
+              r="6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </Button>
+      </Tooltip>
       <div className="home-dashboard-grid grid min-h-0 w-full flex-1 grid-cols-[minmax(0,1fr)] gap-6 has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)_clamp(320px,24vw,420px)] max-[1100px]:has-[.ai-assistant-root-expanded]:grid-cols-[minmax(0,1fr)]">
-        <div className="home-dashboard-left-stack flex min-h-0 min-w-0 flex-col gap-5">
-      <section className="grid shrink-0 grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
-        {homeStats.map((stat) => {
+        <div
+          className={cn(
+            "home-dashboard-left-stack flex min-h-0 min-w-0 flex-col transition-[gap] duration-500 motion-reduce:transition-none",
+            isOverviewCollapsed ? "gap-0" : "gap-5",
+          )}
+        >
+          <section
+            aria-hidden={isOverviewCollapsed}
+            className={cn(
+              "grid shrink-0 transition-[grid-template-rows,opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+              isOverviewCollapsed
+                ? "pointer-events-none grid-rows-[0fr] -translate-y-2 opacity-0"
+                : "grid-rows-[1fr] translate-y-0 opacity-100",
+            )}
+            data-overview-state={
+              isOverviewCollapsed ? "collapsed" : "expanded"
+            }
+            id="home-dashboard-overview"
+            inert={isOverviewCollapsed}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <div className="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
+                {homeStats.map((stat) => {
           return (
             <Card
               className="home-soft-shadow"
@@ -618,10 +690,12 @@ export function HomeDashboard({
               ) : null}
             </Card>
           );
-        })}
-      </section>
+                })}
+              </div>
+            </div>
+          </section>
 
-      <section
+          <section
         className={cn(
           "home-category-workspace grid min-h-0 flex-1 gap-6 transition-[grid-template-columns] duration-200 max-[900px]:min-h-130 max-[900px]:grid-cols-1",
           isCategorySidebarCollapsed
@@ -734,9 +808,13 @@ export function HomeDashboard({
           className={cn(
             "home-category-content-card home-soft-shadow flex h-full min-h-0 overflow-hidden has-[.blog-reader-list-toggle]:overflow-visible has-data-investment-dashboard:max-[1180px]:h-auto has-data-investment-dashboard:max-[1180px]:overflow-visible max-[900px]:h-auto",
             isCategoryContentFullscreen && "home-category-content-fullscreen",
+            isCategoryContentFullscreen && activeCategoryHref === "/home/atlas" && "p-0!",
           )}
           classNames={{
-            body: "flex h-full min-h-0 w-full p-4! has-data-investment-dashboard:max-[1180px]:h-auto!",
+            body: cn(
+              "flex h-full min-h-0 w-full has-data-investment-dashboard:max-[1180px]:h-auto!",
+              isCategoryContentFullscreen && activeCategoryHref === "/home/atlas" ? "p-0!" : "p-4!",
+            ),
           }}
           data-scroll-pauses-background={
             isCategoryContentFullscreen ? "true" : undefined
@@ -761,7 +839,7 @@ export function HomeDashboard({
             </HomeContentFullscreenProvider>
           )}
         </Card>
-      </section>
+          </section>
         </div>
 
         {aiAssistant ? (
