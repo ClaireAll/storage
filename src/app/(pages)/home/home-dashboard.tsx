@@ -232,7 +232,9 @@ export function HomeDashboard({
                     />
                   ),
                   key: child.href,
-                  label: (
+                  label: isCategorySidebarCollapsed ? (
+                    child.label
+                  ) : (
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="min-w-0 flex-1 truncate">
                         {child.label}
@@ -323,6 +325,7 @@ export function HomeDashboard({
     [
       activeCategoryHref,
       hiddenCategoryKeys,
+      isCategorySidebarCollapsed,
       isCategoryVisibilityEditing,
       onToggleCategoryVisibility,
     ],

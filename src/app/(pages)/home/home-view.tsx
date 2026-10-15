@@ -110,7 +110,7 @@ export default function HomePage({
     useState(false);
   const [hobbySharePortalHost, setHobbySharePortalHost] =
     useState<HTMLDivElement | null>(null);
-  const [isOverviewCollapsed, setIsOverviewCollapsed] = useState(false);
+  const [isOverviewCollapsed, setIsOverviewCollapsed] = useState(true);
   const [editingClothes, setEditingClothes] = useState<ClothesItem | null>(
     null,
   );

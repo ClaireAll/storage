@@ -100,7 +100,30 @@ async function loadHomeDashboard(hooks) {
     }
     if (id === "./constant") {
       return {
-        homeCategories: [],
+        homeCategories: [
+          {
+            children: [
+              {
+                href: "/home/codex-log",
+                key: "daily-report",
+                label: "日报",
+              },
+              {
+                href: "/home/codex-plugin",
+                key: "plugin",
+                label: "Plugin",
+              },
+              {
+                href: "/home/codex-skills",
+                key: "skills",
+                label: "Skills",
+              },
+            ],
+            href: "codex",
+            key: "codex",
+            label: "Codex",
+          },
+        ],
         homeStats: [
           { label: "文章推荐" },
           { label: "位置" },
@@ -274,4 +297,46 @@ test("home header leaves overview toggling to the right-edge pull switch", async
 
   visit(sourceFile);
   assert.equal(overviewControlCount, 0);
+});
+
+test("collapsed category submenu keeps its item labels visible", async () => {
+  const hooks = createHookHarness();
+  const HomeDashboard = await loadHomeDashboard(hooks);
+  const baseProps = {
+    hiddenCategoryKeys: [],
+    isCategoryContentLoading: false,
+    isCategoryVisibilityEditing: false,
+    isOverviewCollapsed: true,
+    itemCount: 0,
+    onCancelCategoryVisibilityEditing: () => {},
+    onCategoryNavigate: () => {},
+    onFinishCategoryVisibilityEditing: () => {},
+    onOpenQuickItemCreate: () => {},
+    onStartCategoryVisibilityEditing: () => {},
+    onToggleCategoryVisibility: () => {},
+    onToggleOverview: () => {},
+    surfaceBackground: "#ffffff",
+    surfaceBorderColor: "#dddddd",
+  };
+  const render = () => {
+    hooks.beginRender();
+    return HomeDashboard(baseProps);
+  };
+
+  let dashboard = render();
+  const collapseButton = findElement(
+    dashboard,
+    (element) => element.props["aria-label"] === "收起分类",
+  );
+  assert.ok(collapseButton);
+  collapseButton.props.onClick();
+
+  dashboard = render();
+  const menu = findElement(dashboard, (element) => element.type === "Menu");
+  assert.ok(menu);
+  assert.equal(menu.props.inlineCollapsed, true);
+  assert.deepEqual(
+    menu.props.items[0].children.map((item) => item.label),
+    ["日报", "Plugin", "Skills"],
+  );
 });
