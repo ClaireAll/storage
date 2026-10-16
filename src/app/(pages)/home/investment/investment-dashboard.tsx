@@ -28,7 +28,6 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import * as echarts from "echarts";
 import {
   useCallback,
   useEffect,
@@ -41,9 +40,12 @@ import {
   splitSearchHighlight,
 } from "./investment-search-utils";
 import type { InvestmentFilter } from "./investment-search-utils";
+import { formatInvestmentPrice, getInvestmentNextRefreshDelay, getInvestmentQuoteLabel, getInvestmentRefreshInterval, getInvestmentSectorState, getSelectedInvestmentEntry, mergeInvestmentDashboard, mergeInvestmentQuotes, resolveInvestmentSelection } from "./investment-utils";
+import { InvestmentDetailPanel } from "./investment-detail-panel";
 import type {
   InvestmentDashboardData,
   InvestmentRecommendation,
+  InvestmentQuoteSnapshot,
   InvestmentSearchResult,
   InvestmentSectorSignal,
   InvestmentWatchlistEntry,
@@ -66,8 +68,8 @@ type NotificationForm = {
 
 const filterOptions: Array<{ label: string; value: InvestmentFilter }> = [
   { label: "全部", value: "all" },
-  { label: "基金", value: "fund" },
   { label: "股票", value: "stock" },
+  { label: "基金", value: "fund" },
 ];
 
 function formatChange(value: number | null) {
@@ -77,20 +79,17 @@ function formatChange(value: number | null) {
 
 function getChangeClass(value: number | null) {
   if (value === null || value === 0) return "text-[color:var(--home-theme-text)]";
-  return value > 0 ? "text-red-500" : "text-emerald-600";
+  return value > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400";
 }
 
 const investmentPanelClassName =
   "home-preview-panel rounded-xl border bg-[color-mix(in_srgb,var(--home-theme-bg)_18%,#ffffff_82%)] text-[color:var(--home-theme-text)] shadow-sm dark:bg-[color-mix(in_srgb,var(--home-theme-bg)_88%,#ffffff_12%)]";
 
 const investmentMutedTextClassName =
-  "text-[color-mix(in_srgb,var(--home-theme-text)_68%,transparent)]";
+  "text-[color-mix(in_srgb,var(--home-theme-text)_82%,transparent)]";
 
 const investmentFaintTextClassName =
-  "text-[color-mix(in_srgb,var(--home-theme-text)_56%,transparent)]";
-
-const investmentInsetSurfaceClassName =
-  "rounded-lg bg-[color-mix(in_srgb,var(--home-theme-bg)_28%,#ffffff_72%)] p-2 dark:bg-[color-mix(in_srgb,var(--home-theme-bg)_82%,#ffffff_18%)]";
+  "text-[color-mix(in_srgb,var(--home-theme-text)_72%,transparent)]";
 
 /** 根据投资品种展示对应的 iconfont 图标。 */
 function InvestmentInstrumentIcon({
@@ -109,55 +108,6 @@ function InvestmentInstrumentIcon({
   );
 }
 
-/** 复用 ECharts 渲染微型行情趋势，空序列不会显示成真实走势。 */
-function TrendChart({
-  className,
-  trend,
-  value,
-}: {
-  className?: string;
-  trend: number[];
-  value: number | null;
-}) {
-  const chartElement = useRef<HTMLDivElement>(null);
-  const stroke = value === null || value >= 0 ? "#e64f4f" : "#16a072";
-
-  useEffect(() => {
-    const element = chartElement.current;
-    if (!element || !trend.length) return;
-
-    const chart = echarts.init(element, undefined, { renderer: "canvas" });
-    chart.setOption({
-      animation: false,
-      grid: { bottom: 3, left: 1, right: 4, top: 3 },
-      xAxis: { boundaryGap: false, show: false, type: "category" },
-      yAxis: { show: false, type: "value" },
-      series: [{ data: trend, lineStyle: { color: stroke, width: 2 }, showSymbol: false, smooth: true, type: "line" }],
-      tooltip: { show: false },
-    });
-    const resizeObserver = new ResizeObserver(() => chart.resize());
-    resizeObserver.observe(element);
-
-    return () => {
-      resizeObserver.disconnect();
-      chart.dispose();
-    };
-  }, [stroke, trend]);
-
-  if (!trend.length) {
-    return <Typography.Text className={cn("text-[10px]", investmentFaintTextClassName, className)}>走势待更新</Typography.Text>;
-  }
-
-  return (
-    <div aria-label="趋势图" className={cn("min-w-0", className)}>
-      <div className="h-9 w-full @min-[720px]/investment-watchlist:h-11" ref={chartElement} />
-      <div className={cn("flex justify-between text-[10px]", investmentFaintTextClassName)}>
-        <span>起点</span><span>最新</span>
-      </div>
-    </div>
-  );
-}
-
 /** 关注项可拖拽列表、推荐关注和市场信号的主工作台。 */
 export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   const { message } = App.useApp();
@@ -165,6 +115,9 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   const [filter, setFilter] = useState<InvestmentFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
+  const refreshController = useRef<AbortController | null>(null);
+  const lastFullRefreshAt = useRef(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [creatingInstrumentCode, setCreatingInstrumentCode] = useState<string>();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -179,6 +132,17 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
     notifyOnSignal: false,
     webhookUrl: "",
   });
+  const [selection, setSelection] = useState(() => resolveInvestmentSelection(initialData.watchlist, {}));
+  const [connectionStatus, setConnectionStatus] = useState<"active" | "hidden" | "offline">("active");
+  const resolvedSelection = resolveInvestmentSelection(data.watchlist, selection);
+  if (resolvedSelection.all !== selection.all || resolvedSelection.stock !== selection.stock || resolvedSelection.fund !== selection.fund) {
+    setSelection(resolvedSelection);
+  }
+  const selectedId = resolvedSelection[filter];
+  const selectedItem = useMemo(() => getSelectedInvestmentEntry(data.watchlist, filter, selectedId), [data.watchlist, filter, selectedId]);
+  const interval = getInvestmentRefreshInterval();
+  const refreshLabel = connectionStatus === "offline" ? "离线，自动检查已暂停" : connectionStatus === "hidden" ? "后台暂停自动检查" : interval === 15_000 ? "前台每 15 秒检查" : interval === 60_000 ? "收盘后每分钟检查" : "休市时每 5 分钟检查";
+  const feedNotice = connectionStatus === "offline" ? "当前已离线，自动检查已暂停；保留最近行情，联网后立即重新检查。" : connectionStatus === "hidden" ? "页面在后台，自动检查已暂停；返回前台后立即重新检查。" : refreshError ? "刷新失败，正在保留上次数据并自动重试。" : undefined;
 
   const visibleWatchlist = useMemo(() => {
     return data.watchlist.filter((item) =>
@@ -191,19 +155,86 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
     [data.watchlist, filter, searchResults],
   );
 
-  const refreshDashboard = useCallback(async (showSuccess = true) => {
+  const refreshDashboard = useCallback(async (showSuccess = true, quotesOnly = false) => {
+    refreshController.current?.abort();
+    const controller = new AbortController();
+    refreshController.current = controller;
+    if (!quotesOnly) lastFullRefreshAt.current = Date.now();
     setIsRefreshing(true);
     try {
-      const response = await fetch(`/api/investment/dashboard?t=${Date.now()}`);
+      const response = await fetch(`/api/investment/dashboard?mode=${quotesOnly ? "quotes" : "full"}&t=${Date.now()}`, {
+        cache: "no-store",
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+      });
       if (!response.ok) throw new Error("refresh failed");
-      setData((await response.json()) as InvestmentDashboardData);
-      if (showSuccess) message.success("行情已刷新");
+      const next = await response.json();
+      if (controller.signal.aborted) return;
+      if (quotesOnly) {
+        setData(current => mergeInvestmentQuotes(current, next as InvestmentQuoteSnapshot));
+      } else {
+        setData(current => mergeInvestmentDashboard(current, next as InvestmentDashboardData));
+      }
+      setRefreshError(false);
+      if (showSuccess) message.success("已检查最新行情");
     } catch {
-      message.error("行情刷新失败，保留最近可用数据");
+      if (!controller.signal.aborted) {
+        setRefreshError(true);
+        if (showSuccess) message.error("行情刷新失败，保留最近可用数据");
+      }
     } finally {
-      setIsRefreshing(false);
+      if (refreshController.current === controller) {
+        refreshController.current = null;
+        setIsRefreshing(false);
+      }
     }
   }, [message]);
+
+  useEffect(() => {
+    let disposed = false;
+    lastFullRefreshAt.current = Date.now();
+    let timer: ReturnType<typeof setTimeout>;
+    const isPageActive = () => document.visibilityState !== "hidden" && navigator.onLine;
+    const syncConnectionStatus = () => setConnectionStatus(!navigator.onLine ? "offline" : document.visibilityState === "hidden" ? "hidden" : "active");
+    const tick = async () => {
+      if (disposed || !isPageActive()) return;
+      const startedAt = Date.now();
+      if (!refreshController.current) {
+        await refreshDashboard(false, Date.now() - lastFullRefreshAt.current < 300_000);
+      }
+      if (!disposed && isPageActive()) {
+        clearTimeout(timer);
+        timer = setTimeout(() => void tick(), Math.max(1000, getInvestmentNextRefreshDelay(new Date(startedAt)) - (Date.now() - startedAt)));
+      }
+    };
+    const resume = () => {
+      if (disposed) return;
+      clearTimeout(timer);
+      syncConnectionStatus();
+      if (!isPageActive()) {
+        refreshController.current?.abort();
+        return;
+      }
+      void tick();
+    };
+    void Promise.resolve().then(() => {
+      if (disposed) return;
+      syncConnectionStatus();
+      void tick();
+    });
+    document.addEventListener("visibilitychange", resume);
+    window.addEventListener("focus", resume);
+    window.addEventListener("online", resume);
+    window.addEventListener("offline", resume);
+    return () => {
+      disposed = true;
+      clearTimeout(timer);
+      refreshController.current?.abort();
+      document.removeEventListener("visibilitychange", resume);
+      window.removeEventListener("focus", resume);
+      window.removeEventListener("online", resume);
+      window.removeEventListener("offline", resume);
+    };
+  }, [refreshDashboard]);
 
   useEffect(() => {
     const searchKeyword = keyword.trim();
@@ -264,7 +295,8 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   }, [isNotificationOpen, message]);
 
   async function saveOrder(nextItems: InvestmentWatchlistEntry[]) {
-    const order = JSON.stringify(nextItems.map((item) => item.instrumentCode));
+    refreshController.current?.abort();
+    const order = JSON.stringify(nextItems.map((item) => `${item.instrumentType}:${item.instrumentCode}`));
     setData((currentData) => ({
       ...currentData,
       watchlist: nextItems.map((item) => ({ ...item, instrumentOrder: order })),
@@ -282,10 +314,10 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
     }
   }
 
-  function moveDraggedItem(targetId: string) {
-    if (!draggedId || draggedId === targetId) return;
+  function moveDraggedItem(targetId: string, sourceId = draggedId) {
+    if (!sourceId || sourceId === targetId) return;
     const currentItems = data.watchlist;
-    const fromIndex = currentItems.findIndex((item) => item.id === draggedId);
+    const fromIndex = currentItems.findIndex((item) => item.id === sourceId);
     const targetIndex = currentItems.findIndex((item) => item.id === targetId);
     if (fromIndex < 0 || targetIndex < 0) return;
     const nextItems = [...currentItems];
@@ -296,6 +328,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   }
 
   async function removeWatchlistItem(id: string) {
+    refreshController.current?.abort();
     const response = await fetch("/api/investment", {
       body: JSON.stringify({ id }),
       headers: { "Content-Type": "application/json" },
@@ -310,6 +343,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
 
   /** 将搜索结果或推荐项加入当前用户的关注列表。 */
   async function createWatchlistItem(nextItem: InvestmentInstrumentInput) {
+    refreshController.current?.abort();
     setCreatingInstrumentCode(nextItem.instrumentCode);
     try {
       const response = await fetch("/api/investment", {
@@ -333,7 +367,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
   }
 
   function addRecommendation(item: InvestmentRecommendation) {
-    if (data.watchlist.some((watchlistItem) => watchlistItem.instrumentCode === item.instrumentCode)) {
+    if (data.watchlist.some((watchlistItem) => watchlistItem.instrumentCode === item.instrumentCode && watchlistItem.instrumentType === item.instrumentType)) {
       message.info("该项目已在我的关注中");
       return;
     }
@@ -472,7 +506,7 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
 
   return (
     <section
-      className="investment-dashboard-shell flex min-h-0 w-full flex-1 flex-col gap-4"
+      className="investment-dashboard-shell flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden"
       data-investment-dashboard
     >
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-1">
@@ -482,84 +516,113 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
             iconClassName="text-xl text-red-500"
             name="icon-investment"
           />
-          <Typography.Title className="m-0! text-[22px]! max-sm:text-xl!" level={2}>今日市场信号</Typography.Title>
+          <Typography.Title className="m-0! text-2xl! max-sm:text-xl!" level={2}>投资</Typography.Title>
+          <span className={cn("hidden text-sm sm:inline", investmentMutedTextClassName)}>股票与基金 · 我的关注</span>
           <HomeContentFullscreenButton />
-          <Tag className="m-0 border-0 bg-emerald-50 px-2 py-1 text-emerald-700">{data.marketStateLabel}</Tag>
         </div>
-        <div className={cn("flex items-center gap-1 text-xs", investmentMutedTextClassName)}>
-          <span>公开行情 · 更新于 {data.dataUpdatedAt}</span>
-          <Tooltip title="手动刷新"><Button aria-label="手动刷新" icon={<ReloadOutlined />} loading={isRefreshing} onClick={() => void refreshDashboard()} type="text" /></Tooltip>
+        <div className={cn("flex flex-wrap items-center gap-3 text-[13px]", investmentMutedTextClassName)}>
+          <Tag className="m-0!" color={connectionStatus !== "active" ? "warning" : data.marketState === "trading" ? "success" : "default"}>{connectionStatus === "offline" ? "离线" : connectionStatus === "hidden" ? "后台已暂停" : data.marketStateLabel}</Tag>
+          <Tooltip title={`公开行情 · 最近检查 ${data.quotesCheckedAt}`}><span className="hidden tabular-nums xl:inline">最近检查 {data.quotesCheckedAt.split(" ")[1] ?? data.quotesCheckedAt}</span></Tooltip>
+          <Button aria-label="手动刷新" disabled={connectionStatus === "offline"} icon={<ReloadOutlined />} loading={isRefreshing} onClick={() => void refreshDashboard()}>刷新</Button>
           <Tooltip title="通知设置"><Button aria-label="通知设置" icon={<SettingOutlined />} onClick={() => { setNotificationForm({ enabled: false, notifyOnRecommendation: false, notifyOnSignal: false, webhookUrl: "" }); setIsNotificationOpen(true); }} type="text" /></Tooltip>
         </div>
       </header>
 
-      <div className="investment-dashboard-grid grid min-h-0 flex-1 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 max-[1180px]:grid-cols-1">
-        <section className={cn("investment-watchlist-panel @container/investment-watchlist flex min-h-0 flex-col p-4", investmentPanelClassName)}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><Typography.Text className={investmentMutedTextClassName}>({data.watchlist.length})</Typography.Text></div>
-            <Popover
-              content={searchPopoverContent}
-              destroyOnHidden
-              onOpenChange={(open) => {
-                setIsSearchOpen(open);
-                if (!open) setIsSearching(false);
-              }}
-              open={isSearchOpen && Boolean(keyword.trim())}
-              placement="bottomRight"
-              styles={{ content: { padding: 0 } }}
-              trigger="click"
-            >
-              <div className="min-w-0 flex-1 sm:w-[360px] sm:flex-none">
-                <Input
-                  allowClear
-                  aria-controls="investment-search-results"
-                  aria-expanded={isSearchOpen && Boolean(keyword.trim())}
-                  aria-label="搜索基金或股票"
-                  className="min-w-0"
-                  id="investment-search-input"
-                  name="investmentSearch"
-                  onChange={(event) => {
-                    const nextKeyword = event.target.value;
-                    setKeyword(nextKeyword);
-                    setSearchResults([]);
-                    setIsSearching(false);
-                    setSearchError(false);
-                    setIsSearchOpen(Boolean(nextKeyword.trim()));
+      <OverlayScrollArea aria-label="投资工作区" className="@container/investment-workspace min-h-0 flex-1" role="region" viewportClassName="overflow-x-hidden [scrollbar-gutter:stable]" vertical>
+        <div className="flex min-w-0 flex-col gap-4 pb-1">
+          {feedNotice ? <div aria-live="polite" className="rounded-lg bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300" role="status">{feedNotice}</div> : null}
+          <div className="investment-dashboard-grid grid min-w-0 grid-cols-1 items-stretch gap-4 @min-[900px]/investment-workspace:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
+            <section aria-label="我的关注列表" className={cn("investment-watchlist-panel min-w-0 overflow-hidden", investmentPanelClassName)}>
+              <div className="home-preview-divider border-b p-4">
+                <div className="mb-3 flex items-center gap-2"><Typography.Title className="m-0! text-lg!" level={3}>我的关注</Typography.Title><span className={cn("tabular-nums", investmentMutedTextClassName)}>{data.watchlist.length}</span></div>
+                <Popover
+                  content={searchPopoverContent}
+                  destroyOnHidden
+                  onOpenChange={(open) => {
+                    setIsSearchOpen(open);
+                    if (!open) setIsSearching(false);
                   }}
-                  onFocus={() => {
-                    if (keyword.trim()) setIsSearchOpen(true);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") setIsSearchOpen(false);
-                  }}
-                  placeholder="搜索代码/名称"
-                  prefix={<SearchOutlined aria-hidden />}
-                  value={keyword}
-                />
+                  open={isSearchOpen && Boolean(keyword.trim())}
+                  placement="bottomLeft"
+                  styles={{ content: { padding: 0 } }}
+                  trigger="click"
+                >
+                  <div className="min-w-0 w-full">
+                    <Input
+                      allowClear
+                      aria-controls="investment-search-results"
+                      aria-expanded={isSearchOpen && Boolean(keyword.trim())}
+                      aria-label="搜索基金或股票"
+                      className="min-w-0 h-10"
+                      id="investment-search-input"
+                      name="investmentSearch"
+                      onChange={(event) => {
+                        const nextKeyword = event.target.value;
+                        setKeyword(nextKeyword);
+                        setSearchResults([]);
+                        setIsSearching(false);
+                        setSearchError(false);
+                        setIsSearchOpen(Boolean(nextKeyword.trim()));
+                      }}
+                      onFocus={() => {
+                        if (keyword.trim()) setIsSearchOpen(true);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") setIsSearchOpen(false);
+                      }}
+                      placeholder="搜索代码/名称"
+                      prefix={<SearchOutlined aria-hidden />}
+                      value={keyword}
+                    />
+                  </div>
+                </Popover>
+                <Segmented block className="mt-3" onChange={(value) => setFilter(value as InvestmentFilter)} options={filterOptions.map(option => ({ ...option, label: `${option.label} ${data.watchlist.filter(item => option.value === "all" || item.instrumentType === option.value).length}` }))} value={filter} />
               </div>
-            </Popover>
-          </div>
-          <Segmented className="mt-3 w-fit" onChange={(value) => setFilter(value as InvestmentFilter)} options={filterOptions} value={filter} />
-          <div className={cn("home-preview-divider mt-4 hidden grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] gap-2 border-b pb-2 text-xs @min-[720px]/investment-watchlist:grid", investmentMutedTextClassName)}>
-            <span>代码 / 名称</span><span>今日涨跌</span><span>下一交易日预测</span><span>趋势</span><span />
-          </div>
-          <OverlayScrollArea className="min-h-0 flex-1" viewportClassName="overflow-x-hidden" vertical>
-            {visibleWatchlist.length ? <div>{visibleWatchlist.map((item) => <WatchlistRow key={item.id} item={item} onDragEnd={() => setDraggedId(undefined)} onDragStart={() => setDraggedId(item.id)} onDrop={() => moveDraggedItem(item.id)} onRemove={() => void removeWatchlistItem(item.id)} />)}</div> : <Empty className="mt-18" description="还没有匹配的关注项" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-          </OverlayScrollArea>
-        </section>
+              {visibleWatchlist.length ? (
+                <ul className="m-0 list-none p-0">
+                  {visibleWatchlist.map((item, index) => (
+                    <WatchlistRow
+                      key={item.id}
+                      item={item}
+                      selected={selectedItem?.id === item.id}
+                      onSelect={() => setSelection(current => ({ ...current, all: item.id, [filter]: item.id, [item.instrumentType]: item.id }))}
+                      onDragEnd={() => setDraggedId(undefined)}
+                      onDragStart={() => setDraggedId(item.id)}
+                      onDrop={() => moveDraggedItem(item.id)}
+                      onRemove={() => void removeWatchlistItem(item.id)}
+                      onMove={(offset) => {
+                        const target = visibleWatchlist[index + offset];
+                        if (target) moveDraggedItem(target.id, item.id);
+                      }}
+                    />
+                  ))}
+                </ul>
+              ) : <Empty className="my-12" description={data.watchlist.length ? "此分类暂无关注项" : "搜索代码或名称，添加第一个关注"} image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+            </section>
 
-        <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4">
-          <RecommendationPanel items={data.recommended} onAdd={addRecommendation} />
-          <MarketSignalPanel items={data.sectors} />
+            <section aria-label="标的行情详情" id="investment-selected-detail" className={cn("investment-detail-panel min-w-0 overflow-hidden", investmentPanelClassName)}>
+              <InvestmentDetailPanel item={selectedItem} changeLabel={formatChange(selectedItem?.quote.changePercent ?? null)} changeClassName={getChangeClass(selectedItem?.quote.changePercent ?? null)} refreshLabel={refreshLabel} />
+            </section>
+          </div>
+
+          <div className={cn("investment-discovery-panel grid min-w-0 grid-cols-1 gap-5 p-5 @min-[1000px]/investment-workspace:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]", investmentPanelClassName)}>
+            <MarketSignalPanel items={data.sectors} />
+            <RecommendationPanel items={data.recommended} watchlist={data.watchlist} creatingInstrumentCode={creatingInstrumentCode} onAdd={addRecommendation} />
+          </div>
+
+          <EvidenceStrip evidence={data.evidence} />
+          <div className={cn("flex flex-wrap gap-x-4 gap-y-1 px-1 text-[13px]", investmentMutedTextClassName)}>
+            <span>{refreshLabel}；基金盘中估值与正式净值分别标注。</span>
+            <Tooltip title={`市场信号与候选规则每 5 分钟检查，最近检查 ${data.dataUpdatedAt}`}><span>市场信号每 5 分钟检查</span></Tooltip>
+            <span>规则判断不构成投资建议。</span>
+          </div>
         </div>
-      </div>
-
-      <EvidenceStrip evidence={data.evidence} />
+      </OverlayScrollArea>
 
       <Drawer destroyOnHidden footer={<Button loading={isSavingNotification} onClick={() => void saveNotification()} type="primary">保存设置</Button>} onClose={() => setIsNotificationOpen(false)} open={isNotificationOpen} size={400} title="企微机器人通知">
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between gap-4"><Typography.Text>启用推送</Typography.Text><Switch checked={notificationForm.enabled} onChange={(enabled) => setNotificationForm((current) => ({ ...current, enabled }))} /></div>
-          <Input onChange={(event) => setNotificationForm((current) => ({ ...current, webhookUrl: event.target.value }))} placeholder="粘贴企微机器人 Webhook 链接" value={notificationForm.webhookUrl} />
+          <Input aria-label="企微机器人 Webhook 链接" onChange={(event) => setNotificationForm((current) => ({ ...current, webhookUrl: event.target.value }))} placeholder="粘贴企微机器人 Webhook 链接" value={notificationForm.webhookUrl} />
           <div className="flex items-center justify-between gap-4"><div><Typography.Text>推荐关注出现</Typography.Text><Typography.Text className="block text-xs" type="secondary">规则模型输出三条候选时推送</Typography.Text></div><Switch checked={notificationForm.notifyOnRecommendation} onChange={(notifyOnRecommendation) => setNotificationForm((current) => ({ ...current, notifyOnRecommendation }))} /></div>
           <div className="flex items-center justify-between gap-4"><div><Typography.Text>板块信号偏涨或偏弱</Typography.Text><Typography.Text className="block text-xs" type="secondary">方向判断发生时推送</Typography.Text></div><Switch checked={notificationForm.notifyOnSignal} onChange={(notifyOnSignal) => setNotificationForm((current) => ({ ...current, notifyOnSignal }))} /></div>
           <Typography.Text type="secondary">Webhook 仅保存在服务端，页面再次打开时不会回显完整地址。</Typography.Text>
@@ -570,258 +633,145 @@ export function InvestmentDashboard({ initialData }: InvestmentDashboardProps) {
 }
 
 function WatchlistRow({
-  item,
-  onDragEnd,
-  onDragStart,
-  onDrop,
-  onRemove,
+  item, selected, onSelect, onDragEnd, onDragStart, onDrop, onRemove, onMove,
 }: {
   item: InvestmentWatchlistEntry;
+  selected: boolean;
+  onSelect: () => void;
   onDragEnd: () => void;
   onDragStart: () => void;
   onDrop: () => void;
   onRemove: () => void;
+  onMove: (offset: number) => void;
 }) {
+  const timeLabel = item.quote.kind === "nav" ? "净值日期" : item.instrumentType === "fund" ? "估值时间" : "行情时间";
   return (
-    <div
-      className="home-preview-divider flex flex-col gap-3 border-b py-4 last:border-b-0 @min-[720px]/investment-watchlist:grid @min-[720px]/investment-watchlist:grid-cols-[minmax(0,1.15fr)_82px_114px_minmax(0,.8fr)_30px] @min-[720px]/investment-watchlist:items-center @min-[720px]/investment-watchlist:gap-2"
+    <li
+      className={cn("home-preview-divider relative flex min-w-0 border-b last:border-b-0", selected && "bg-[color-mix(in_srgb,var(--home-theme-color)_10%,transparent)]")}
       draggable
       onDragEnd={onDragEnd}
       onDragOver={(event) => event.preventDefault()}
       onDragStart={onDragStart}
       onDrop={onDrop}
     >
-      <div className="flex min-w-0 items-start gap-2 @min-[720px]/investment-watchlist:items-center">
-        <DragOutlined className={cn("mt-1 cursor-grab @min-[720px]/investment-watchlist:mt-0", investmentFaintTextClassName)} />
-        <InvestmentInstrumentIcon
-          className="size-7"
-          instrumentType={item.instrumentType}
-        />
-        <div className="min-w-0 flex-1">
-          <Typography.Text className="block truncate" strong>
-            {item.instrumentName}
-          </Typography.Text>
-          <Typography.Text className={cn("text-xs", investmentMutedTextClassName)}>
-            {item.instrumentCode} · {item.instrumentType === "fund" ? "基金" : "股票"}
-          </Typography.Text>
-        </div>
-        <Popconfirm
-          cancelText="取消"
-          okText="移除"
-          onConfirm={onRemove}
-          title="移除此关注项？"
-        >
-          <Button
-            aria-label={`删除 ${item.instrumentName}`}
-            className="shrink-0 @min-[720px]/investment-watchlist:hidden"
-            icon={<DeleteOutlined />}
-            size="small"
-            type="text"
-          />
+      {selected ? <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 bg-[color:var(--home-theme-color)]" /> : null}
+      <button
+        aria-controls="investment-selected-detail"
+        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+        aria-label={`查看 ${item.instrumentName} 行情`}
+        aria-pressed={selected}
+        className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent py-4 pl-4 pr-1 text-left text-inherit hover:bg-[color-mix(in_srgb,var(--home-theme-text)_4%,transparent)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--home-theme-color)]"
+        onClick={onSelect}
+        onKeyDown={(event) => {
+          if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+            event.preventDefault();
+            onMove(event.key === "ArrowUp" ? -1 : 1);
+          }
+        }}
+        type="button"
+      >
+        <span className="flex min-w-0 items-start justify-between gap-3">
+          <span className="min-w-0 flex-1">
+            <strong className="block text-base font-semibold leading-6 [overflow-wrap:anywhere]">{item.instrumentName}</strong>
+            <span className="mt-1 flex flex-wrap items-center gap-2">
+              <span className={cn("text-[13px] tabular-nums", investmentMutedTextClassName)}>{item.instrumentCode}</span>
+              <Tag className="m-0! text-xs!" color={item.instrumentType === "stock" ? "blue" : "gold"}>{item.instrumentType === "stock" ? "股票" : "基金"}</Tag>
+            </span>
+          </span>
+          <span className="shrink-0 text-right tabular-nums">
+            <span className="block text-xl font-semibold leading-7">{formatInvestmentPrice(item.quote, item.instrumentType)}</span>
+            <span className={cn("mt-1 block text-lg font-semibold leading-6", getChangeClass(item.quote.changePercent))}>{formatChange(item.quote.changePercent)}</span>
+          </span>
+        </span>
+        <Tooltip title={item.quote.source}>
+          <span className={cn("mt-2 block text-[13px] leading-5", investmentMutedTextClassName)}>
+            {getInvestmentQuoteLabel(item.quote)} · {timeLabel} {item.quote.updatedAt ? <time dateTime={`${item.quote.updatedAt.replace(" ", "T")}+08:00`}>{item.quote.updatedAt.replace(" 00:00:00", "")}</time> : "待更新"}
+          </span>
+        </Tooltip>
+      </button>
+      <div className="flex w-8 shrink-0 flex-col items-center justify-center gap-2 pr-2">
+        <Tooltip title="拖动排序；键盘选中后 Alt + ↑ / ↓ 调整顺序">
+          <DragOutlined aria-hidden className={cn("cursor-grab text-xs", investmentFaintTextClassName)} />
+        </Tooltip>
+        <Popconfirm cancelText="取消" okText="移除" onConfirm={onRemove} title="移除此关注项？">
+          <Button aria-label={`删除 ${item.instrumentName}`} icon={<DeleteOutlined />} size="small" type="text" />
         </Popconfirm>
       </div>
-      <div className="grid grid-cols-2 gap-2 @min-[720px]/investment-watchlist:contents">
-        <MetricCell
-          className={cn(investmentInsetSurfaceClassName, "@min-[720px]/investment-watchlist:rounded-none @min-[720px]/investment-watchlist:bg-transparent @min-[720px]/investment-watchlist:p-0")}
-          detail={`${item.quote.source}${item.quote.updatedAt ? ` · ${item.quote.updatedAt}` : ""}`}
-          label="今日涨跌"
-          labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
-          value={formatChange(item.quote.changePercent)}
-          valueClassName={getChangeClass(item.quote.changePercent)}
-        />
-        <MetricCell
-          className={cn(investmentInsetSurfaceClassName, "@min-[720px]/investment-watchlist:rounded-none @min-[720px]/investment-watchlist:bg-transparent @min-[720px]/investment-watchlist:p-0")}
-          detail={item.forecast.label}
-          label="下一交易日预测"
-          labelClassName="mr-2 text-xs @min-[720px]/investment-watchlist:hidden"
-          value={item.forecast.value}
-          valueClassName={
-            item.forecast.value.includes("-") || item.forecast.value === "偏弱"
-              ? "text-emerald-600"
-              : "text-red-500"
-          }
-        />
-      </div>
-      <TrendChart
-        className={cn(investmentInsetSurfaceClassName, "@min-[720px]/investment-watchlist:rounded-none @min-[720px]/investment-watchlist:bg-transparent @min-[720px]/investment-watchlist:p-0")}
-        trend={item.trend}
-        value={item.quote.changePercent}
-      />
-      <Popconfirm
-        cancelText="取消"
-        okText="移除"
-        onConfirm={onRemove}
-        title="移除此关注项？"
-      >
-        <Button
-          aria-label={`删除 ${item.instrumentName}`}
-          className="hidden justify-self-end @min-[720px]/investment-watchlist:inline-flex"
-          icon={<DeleteOutlined />}
-          size="small"
-          type="text"
-        />
-      </Popconfirm>
-    </div>
-  );
-}
-
-function MetricCell({
-  className,
-  detail,
-  label,
-  labelClassName,
-  value,
-  valueClassName,
-}: {
-  className?: string;
-  detail: string;
-  label: string;
-  labelClassName?: string;
-  value: string;
-  valueClassName?: string;
-}) {
-  return (
-    <div className={className}>
-      <Typography.Text
-        className={cn(
-          "mr-2 text-xs",
-          investmentMutedTextClassName,
-          labelClassName ?? "min-[720px]:hidden",
-        )}
-      >
-        {label}
-      </Typography.Text>
-      <Typography.Text className={cn("font-semibold", valueClassName)}>
-        {value}
-      </Typography.Text>
-      <Typography.Text className={cn("mt-0.5 block truncate text-[10px]", investmentFaintTextClassName)}>
-        {detail}
-      </Typography.Text>
-    </div>
+    </li>
   );
 }
 
 function RecommendationPanel({
-  items,
-  onAdd,
+  items, watchlist, creatingInstrumentCode, onAdd,
 }: {
   items: InvestmentRecommendation[];
+  watchlist: InvestmentWatchlistEntry[];
+  creatingInstrumentCode?: string;
   onAdd: (item: InvestmentRecommendation) => void;
 }) {
   return (
-    <section className={cn(investmentPanelClassName, "p-4")}>
-      <div className="flex items-center gap-2">
-        <Typography.Title className="m-0! text-lg!" level={3}>
-          推荐关注
-        </Typography.Title>
-        <Tag className="m-0 rounded-full border-0 bg-emerald-50 text-emerald-700">
-          {items.length}
-        </Tag>
+    <section aria-label="候选观察" className="min-w-0">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h3 className="m-0 text-base font-semibold">候选观察</h3>
+        <span className={cn("text-[13px]", investmentMutedTextClassName)}>规则筛选 · 非投资建议</span>
       </div>
-      <Typography.Text className={cn("mt-1 block text-xs", investmentMutedTextClassName)}>
-        基金展示下一交易日估计；股票只展示方向判断。
-      </Typography.Text>
-      <div className="home-preview-divide-y mt-2 divide-y">
-        {items.map((item) => (
-          <div
-            className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 py-3"
-            key={item.instrumentCode}
-          >
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <InvestmentInstrumentIcon instrumentType={item.instrumentType} />
-                <Typography.Text className="truncate" strong>
-                  {item.instrumentName}
-                </Typography.Text>
+      {items.length ? <ul className="home-preview-divide-y m-0 list-none divide-y p-0">
+        {items.map(item => {
+          const isWatched = watchlist.some(row => row.instrumentCode === item.instrumentCode && row.instrumentType === item.instrumentType);
+          return (
+            <li className="flex min-w-0 items-center gap-3 py-3" key={`${item.instrumentType}:${item.instrumentCode}`}>
+              <InvestmentInstrumentIcon instrumentType={item.instrumentType} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-sm font-medium">{item.instrumentName}</span>
+                  <span className={cn("text-[13px] tabular-nums", investmentMutedTextClassName)}>{item.instrumentCode}</span>
+                  <Tag className="m-0! text-xs!" color={item.instrumentType === "stock" ? "blue" : "gold"}>{item.instrumentType === "stock" ? "股票" : "基金"}</Tag>
+                </div>
+                <Tooltip title={`${item.reason}；${getInvestmentQuoteLabel(item.quote)} · ${item.quote.source} · ${item.updatedAt ?? "来源未提供时间"}；${item.source}`}>
+                  <span className={cn("mt-1 block truncate text-[13px]", investmentMutedTextClassName)}>{item.reason}</span>
+                </Tooltip>
               </div>
-              <Typography.Text className={cn("ml-8 block truncate text-xs", investmentMutedTextClassName)}>
-                {item.instrumentCode} · {item.reason}
-              </Typography.Text>
-            </div>
-            <div className="text-right">
-              <Typography.Text
-                className={cn("font-semibold", getChangeClass(item.changePercent))}
-              >
-                {formatChange(item.changePercent)}
-              </Typography.Text>
-              <Typography.Text
-                className={cn(
-                  "ml-2 text-sm font-semibold",
-                  item.forecast.includes("-") ? "text-emerald-600" : "text-red-500",
-                )}
-              >
-                {item.forecast}
-              </Typography.Text>
-              <div className={cn("text-[10px]", investmentFaintTextClassName)}>
-                {item.source}
-                {item.updatedAt ? ` · ${item.updatedAt}` : ""}
-              </div>
-            </div>
-            <Button onClick={() => onAdd(item)} size="small">
-              加入关注
-            </Button>
-          </div>
-        ))}
-      </div>
+              <span className={cn("shrink-0 text-sm font-semibold tabular-nums", getChangeClass(item.changePercent))}>{formatChange(item.changePercent)}</span>
+              <Tooltip title={isWatched ? "已在我的关注中" : "添加到关注"}>
+                <Button
+                  aria-label={isWatched ? `${item.instrumentName} 已关注` : `添加 ${item.instrumentName} 到关注`}
+                  disabled={isWatched || Boolean(creatingInstrumentCode)}
+                  icon={isWatched ? <CheckCircleOutlined /> : <PlusOutlined />}
+                  loading={!isWatched && creatingInstrumentCode === item.instrumentCode}
+                  onClick={() => onAdd(item)}
+                  shape="circle"
+                  size="small"
+                />
+              </Tooltip>
+            </li>
+          );
+        })}
+      </ul> : <p className={cn("my-6 text-sm", investmentMutedTextClassName)}>暂无可用候选，等待公开行情与规则更新。</p>}
     </section>
   );
 }
 
 function MarketSignalPanel({ items }: { items: InvestmentSectorSignal[] }) {
   return (
-    <section className={cn(investmentPanelClassName, "flex min-h-0 flex-col p-4")}>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <Typography.Title className="m-0! text-lg!" level={3}>
-          市场信号地图
-        </Typography.Title>
-        <Typography.Text className={investmentMutedTextClassName}>
-          下一交易日判断
-        </Typography.Text>
+    <section aria-label="板块信号" className="min-w-0">
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h3 className="m-0 text-base font-semibold">板块信号</h3>
+        <span className={cn("text-[13px]", investmentMutedTextClassName)}>规则信号 · 仅供参考</span>
       </div>
-      <OverlayScrollArea
-        className="mt-3 min-h-0 flex-1"
-        viewportClassName="overflow-x-hidden"
-        vertical
-      >
-        <div className="home-preview-divide-y divide-y">
-          {items.map((item) => (
-            <div
-              className="flex flex-col gap-2 py-3 min-[760px]:grid min-[760px]:grid-cols-[minmax(108px,.7fr)_72px_100px_minmax(80px,.65fr)_minmax(0,1.1fr)] min-[760px]:items-center min-[760px]:gap-3"
-              key={item.name}
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <div aria-label="板块图标预留" className="size-6 shrink-0" />
-                <Typography.Text className="truncate" strong>
-                  {item.name}
-                </Typography.Text>
-              </div>
-              <MetricCell
-                detail={item.isLive ? item.source : "等待公开行情"}
-                label="今日涨跌"
-                value={formatChange(item.changePercent)}
-                valueClassName={getChangeClass(item.changePercent)}
-              />
-              <MetricCell
-                detail="下一交易日"
-                label="规则判断"
-                value={`${item.direction}${item.forecastPercent === undefined ? "" : ` ${formatChange(item.forecastPercent)}`}`}
-                valueClassName={
-                  item.direction === "偏弱"
-                    ? "text-emerald-600"
-                    : item.direction === "偏涨"
-                      ? "text-red-500"
-                      : undefined
-                }
-              />
-              <TrendChart trend={item.trend} value={item.changePercent} />
-              <Typography.Text className={cn("line-clamp-2 text-xs", investmentMutedTextClassName)}>
-                {item.reason}
-                {item.updatedAt ? ` · ${item.updatedAt}` : ""}
-              </Typography.Text>
-            </div>
-          ))}
-        </div>
-      </OverlayScrollArea>
+      {items.length ? <ul className="m-0 grid list-none grid-cols-2 gap-x-4 gap-y-4 p-0 @min-[1100px]/investment-workspace:grid-cols-3">
+        {items.map(item => {
+          const state = getInvestmentSectorState(item);
+          return <li className="min-w-0" key={`${item.source}-${item.name}`}>
+            <Tooltip title={`${item.reason}；${item.source} · ${item.updatedAt ?? "来源未提供时间"}`}>
+              <span className="block truncate text-sm">{item.name}</span>
+            </Tooltip>
+            <span className={cn("mt-1 block text-xl font-semibold tabular-nums", getChangeClass(item.changePercent))}>{formatChange(item.changePercent)}</span>
+            <span className={cn("mt-1 block text-[13px]", investmentMutedTextClassName)}>{state.label} · {state.direction === "待判断" ? "待判断" : `规则${state.direction}`}</span>
+            <span className={cn("mt-1 block text-xs", investmentFaintTextClassName)}>{item.source}</span>
+            <span className={cn("mt-1 block text-xs tabular-nums", investmentFaintTextClassName)}>{item.updatedAt ? `行情时间 ${item.updatedAt}` : "来源未提供行情时间"}</span>
+          </li>;
+        })}
+      </ul> : <p className={cn("my-6 text-sm", investmentMutedTextClassName)}>板块行情暂不可用，等待下次更新。</p>}
     </section>
   );
 }

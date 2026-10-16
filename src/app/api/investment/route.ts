@@ -1,4 +1,6 @@
 import type { InvestmentInstrumentType } from "@/app/utils/database";
+import { resolveInvestmentInstrument } from "@/app/(pages)/home/investment/investment-data";
+import { matchInvestmentIdentity } from "@/app/(pages)/home/investment/investment-search-utils";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
@@ -49,24 +51,33 @@ export async function POST(request: Request) {
 
   if (typeof parsed.error === "string") return jsonError(parsed.error, 400);
 
+  const instrument = await resolveInvestmentInstrument({
+    instrumentCode: parsed.instrumentCode,
+    instrumentName: parsed.instrumentName,
+    instrumentType: parsed.instrumentType,
+  });
+  if (!instrument) return jsonError("暂时无法核实品种，请重新搜索后添加", 422);
+
   const supabase = createAdminClient();
-  const { data: existingItem, error: existingError } = await supabase
+  const { data: existingItems, error: existingError } = await supabase
     .from("investment")
-    .select("id")
+    .select("id,instrument_name,instrument_type")
     .eq("user_id", session.user.id)
-    .eq("instrument_code", parsed.instrumentCode)
-    .eq("instrument_type", parsed.instrumentType)
-    .maybeSingle();
+    .eq("instrument_code", instrument.instrumentCode)
+    .returns<Array<{ id: string; instrument_name: string; instrument_type: InvestmentInstrumentType }>>();
 
   if (existingError) return jsonError(existingError.message, 500);
+  const existingItem = existingItems?.find(item => item.instrument_type === instrument.instrumentType || matchInvestmentIdentity({
+    instrumentCode: instrument.instrumentCode, instrumentName: item.instrument_name, instrumentType: item.instrument_type,
+  }, [instrument]));
   if (existingItem) return jsonError("该项目已在我的关注中", 409);
 
   const { data, error } = await supabase
     .from("investment")
     .insert({
-      instrument_code: parsed.instrumentCode,
-      instrument_name: parsed.instrumentName,
-      instrument_type: parsed.instrumentType,
+      instrument_code: instrument.instrumentCode,
+      instrument_name: instrument.instrumentName,
+      instrument_type: instrument.instrumentType,
       user_id: session.user.id,
     })
     .select("id,instrument_code,instrument_name,instrument_type,created_at,instrument_order")

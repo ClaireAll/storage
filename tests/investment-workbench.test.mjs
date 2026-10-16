@@ -11,6 +11,7 @@ const dashboardPath = new URL(
   "../src/app/(pages)/home/investment/investment-dashboard.tsx",
   import.meta.url,
 );
+const detailPath = new URL("../src/app/(pages)/home/investment/investment-detail-panel.tsx", import.meta.url);
 const pagePath = new URL(
   "../src/app/(pages)/home/investment/page.tsx",
   import.meta.url,
@@ -89,7 +90,7 @@ test("keeps investment controls responsive and available in fullscreen", async (
     readFile(homeViewPath, "utf8"),
   ]);
   const watchlistRowSource =
-    dashboardSource.match(/function WatchlistRow[\s\S]*?function MetricCell/)?.[0] ??
+    dashboardSource.match(/function WatchlistRow[\s\S]*?function RecommendationPanel/)?.[0] ??
     "";
 
   assert.match(
@@ -99,21 +100,20 @@ test("keeps investment controls responsive and available in fullscreen", async (
   assert.match(dashboardSource, /<HomeContentFullscreenButton \/>/);
   assert.match(
     dashboardSource,
-    /investment-dashboard-grid[^"]*max-\[1180px\]:grid-cols-1/,
+    /investment-dashboard-grid[^"]*grid-cols-1[^"\n]*@min-\[900px\]\/investment-workspace:grid-cols-/,
   );
   assert.match(
     dashboardSource,
-    /investment-watchlist-panel[^"`]*@container\/investment-watchlist/,
+    /@container\/investment-workspace/,
   );
   assert.match(
     watchlistRowSource,
-    /@min-\[720px\]\/investment-watchlist:grid/,
+    /aria-pressed=\{selected\}/,
   );
-  assert.match(watchlistRowSource, /grid grid-cols-2 gap-2/);
-  assert.match(watchlistRowSource, /@min-\[720px\]\/investment-watchlist:contents/);
-  assert.match(watchlistRowSource, /@min-\[720px\]\/investment-watchlist:hidden/);
-  assert.match(watchlistRowSource, /@min-\[720px\]\/investment-watchlist:inline-flex/);
-  assert.doesNotMatch(watchlistRowSource, /min-\[720px\]:grid/);
+  assert.match(watchlistRowSource, /onClick=\{onSelect\}/);
+  assert.match(watchlistRowSource, /focus-visible:outline/);
+  assert.match(watchlistRowSource, /aria-label=\{`删除/);
+  assert.match(dashboardSource, /<InvestmentDetailPanel item=\{selectedItem\}/);
   assert.match(dashboardSource, /iconClassName="text-xl text-red-500"/);
   assert.match(
     homeDashboardSource,
@@ -142,17 +142,18 @@ test("keeps investment watchlist access scoped to the signed-in user", async () 
 
 test("implements filtering, drag sorting, recommendations, and state-aware data labels", async () => {
   const source = await readFile(dashboardPath, "utf8");
+  const detail = await readFile(detailPath, "utf8");
 
   assert.match(source, /Segmented/);
   assert.match(source, /onDragStart/);
   assert.match(source, /onDrop/);
-  assert.match(source, /推荐关注/);
-  assert.match(source, /市场信号地图/);
-  assert.match(source, /下一交易日预测/);
+  assert.match(source, /候选观察/);
+  assert.match(source, /板块信号/);
+  assert.match(detail, /规则预测/);
   assert.match(source, /规则 MD/);
   assert.match(source, /公开行情/);
-  assert.match(source, /aria-label="趋势图"/);
-  assert.match(source, /echarts/);
+  assert.match(detail, /role="img"/);
+  assert.match(detail, /echarts/);
   assert.match(source, /企微机器人通知/);
 });
 
@@ -176,7 +177,7 @@ test("uses shared preview border tokens for investment surfaces", async () => {
   assert.match(dashboardSource, /dark:bg-\[color-mix\(in_srgb,var\(--home-theme-bg\)_88%,#ffffff_12%\)\]/);
   assert.match(dashboardSource, /const investmentMutedTextClassName =/);
   assert.match(dashboardSource, /const investmentFaintTextClassName =/);
-  assert.match(dashboardSource, /const investmentInsetSurfaceClassName =/);
+  assert.match(dashboardSource, /var\(--home-theme-color\)/);
   assert.doesNotMatch(
     dashboardSource,
     /(?:border|divide)-black\/(?:7|8)|dark:(?:border|divide)-white\/(?:10|12)/,
@@ -193,18 +194,9 @@ test("uses code-maintained rules and does not present unavailable public data as
   assert.match(dataSource, /investment-rules\.md/);
   assert.match(dataSource, /getInvestmentEvidence/);
   assert.match(dataSource, /getFallbackSectorSignals/);
-  assert.match(dataSource, /getFundQuote/);
+  assert.match(dataSource, /getInvestmentQuotes/);
   assert.match(rulesSource, /公开来源/);
   assert.match(rulesSource, /不构成投资建议/);
-});
-
-test("does not save stock search hits from the fund API as funds", async () => {
-  const dataSource = await readFile(dataPath, "utf8");
-
-  assert.match(dataSource, /FundBaseInfo\?: unknown/);
-  assert.match(dataSource, /item\.FundBaseInfo/);
-  assert.match(dataSource, /\[\.\.\.stocks, \.\.\.funds\]/);
-  assert.match(dataSource, /seenInstrumentCodes/);
 });
 
 test("keeps the WeCom webhook server-side and scopes notification settings to one user", async () => {

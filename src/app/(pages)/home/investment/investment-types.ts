@@ -8,8 +8,11 @@ export type InvestmentMarketState =
   | "non-trading";
 
 export type InvestmentQuote = {
+  price?: number | null;
   changePercent: number | null;
+  kind: "stock" | "estimate" | "nav" | "unavailable";
   isLive: boolean;
+  refreshFailed?: boolean;
   source: string;
   updatedAt: string | null;
 };
@@ -25,6 +28,8 @@ export type InvestmentWatchlistEntry = InvestmentWatchlistItem & {
   forecast: InvestmentForecast;
   quote: InvestmentQuote;
   trend: number[];
+  trendLabels?: string[];
+  trendDate?: string;
 };
 
 export type InvestmentEvidence = {
@@ -37,6 +42,7 @@ export type InvestmentEvidence = {
 
 export type InvestmentDashboardData = {
   dataUpdatedAt: string;
+  quotesCheckedAt: string;
   evidence: InvestmentEvidence[];
   marketState: InvestmentMarketState;
   marketStateLabel: string;
@@ -46,6 +52,7 @@ export type InvestmentDashboardData = {
 };
 
 export type InvestmentRecommendation = {
+  quote: InvestmentQuote;
   changePercent: number | null;
   confidence: "中" | "中偏高";
   forecast: string;
@@ -57,11 +64,28 @@ export type InvestmentRecommendation = {
   updatedAt: string | null;
 };
 
+export type InvestmentQuoteUpdate = {
+  instrumentCode: string;
+  instrumentType: "fund" | "stock";
+  quote: InvestmentQuote;
+  trend?: number[];
+  trendLabels?: string[];
+  trendDate?: string;
+};
+
+export type InvestmentQuoteSnapshot = Pick<InvestmentDashboardData,
+  "marketState" | "marketStateLabel" | "quotesCheckedAt"
+> & {
+  quotes: InvestmentQuoteUpdate[];
+  instruments?: Array<Pick<InvestmentWatchlistEntry, "id" | "instrumentCode" | "instrumentName" | "instrumentType">>;
+};
+
 export type InvestmentSectorSignal = {
   changePercent: number | null;
-  direction: "偏涨" | "偏弱" | "震荡";
+  direction: "偏涨" | "偏弱" | "震荡" | "待判断";
   forecastPercent?: number;
   isLive: boolean;
+  refreshFailed?: boolean;
   name: string;
   reason: string;
   source: string;

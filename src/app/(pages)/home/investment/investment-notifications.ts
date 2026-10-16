@@ -2,6 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/utils/supabase/admin";
 import type { InvestmentRecommendation, InvestmentSectorSignal } from "./investment-types";
+import { getInvestmentSectorState } from "./investment-utils";
 
 type InvestmentNotificationRow = {
   enabled: boolean;
@@ -29,7 +30,9 @@ export async function dispatchInvestmentNotifications(
 
     const dateKey = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Shanghai" });
     const recommendationKey = `${dateKey}:${recommendations.map((item) => `${item.instrumentCode}:${item.forecast}`).join("|")}`;
-    const signalItems = sectors.filter((item) => item.direction !== "震荡" && item.changePercent !== null);
+    const signalItems = sectors
+      .map(item => ({ ...item, direction: getInvestmentSectorState(item).direction }))
+      .filter(item => item.direction === "偏涨" || item.direction === "偏弱");
     const signalKey = `${dateKey}:${signalItems.map((item) => `${item.name}:${item.direction}`).join("|")}`;
     const updates: Record<string, string> = {};
 

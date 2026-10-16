@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>速查 · 镜像和容器</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <div class="shell reference-page">
+    <p class="eyebrow">知识星图 / 速查 01</p>
+    <h1>镜像决定起点，<br>容器保留自己的改动。</h1>
+    <p class="intro">亲爱的主人，这页供实际使用时快速查阅，不需要把所有术语背下来。</p>
+    <section id="glossary">
+      <h2>三个词，够用即可</h2>
+      <ul>
+        <li><strong>镜像 Image：</strong>创建容器时使用的文件和配置。已创建镜像的内容不直接改写，更新会形成新的镜像。<a href="https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-an-image/">官方依据</a></li>
+        <li><strong>容器 Container：</strong>以镜像为基础创建的隔离运行环境，不等于镜像本身。<a href="https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/">官方依据</a></li>
+        <li><strong>可写层：</strong>当前场景中容器自己的文件修改所在之处。删除该容器会移除这层，原镜像不随之改写。<a href="https://docs.docker.com/engine/storage/drivers/#container-and-layers">官方依据</a></li>
+      </ul>
+    </section>
+    <section id="check">
+      <h2>遇到文件问题，先分清位置</h2>
+      <p>文件原本就在镜像里？还是只在某个容器里新建或修改？另外，有没有共享挂载或程序同步？</p>
+      <p class="boundary">本节只讨论没有共享挂载、没有同步、没有另存新镜像的情况。数据卷与绑定挂载需要另行判断。</p>
+      <p>也别把“停止后重新启动同一个容器”，混同于“删除后创建另一个容器”。</p>
+    </section>
+    <a class="reference-link" href="../lessons/0001-image-vs-container.html#recall">返回第一节，先凭记忆答一次 →</a>
+    <p class="caption">不清楚时，把具体场景或你的解释发回聊天里；本页不会自动记录学习结果。</p>
+  </div>
+</body>
+</html>

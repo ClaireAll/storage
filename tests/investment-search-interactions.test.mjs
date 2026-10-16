@@ -43,7 +43,7 @@ test("marks search results that already exist in the watchlist", async () => {
       { instrumentCode: "008888", instrumentName: "华夏国证半导体芯片ETF联接C", instrumentType: "fund" },
       { instrumentCode: "000021", instrumentName: "深科技", instrumentType: "stock" },
     ],
-    [{ instrumentCode: "008888" }],
+    [{ instrumentCode: "008888", instrumentType: "fund" }],
     "all",
   );
 
@@ -86,4 +86,36 @@ test("splits every case-insensitive keyword match into highlighted segments", as
     { highlighted: true, text: "Chip" },
     { highlighted: false, text: "Link" },
   ]);
+});
+
+test("mixed search identifies Shennan Circuits as a stock and ignores index hits", async () => {
+  const { parseInvestmentSuggestions } = await loadSearchUtils();
+  assert.equal(typeof parseInvestmentSuggestions, "function");
+  const rows = parseInvestmentSuggestions({ Datas: [
+    { CODE: "002916", NAME: "深南电路", CATEGORY: 150, STOCKMARKET: "2", FundBaseInfo: null },
+    { CODE: "008888", NAME: "华夏国证半导体芯片ETF联接C", CATEGORY: 700, FundBaseInfo: { FCODE: "008888" } },
+    { CODE: "000001", NAME: "上证指数", CATEGORY: 600, STOCKMARKET: "1", FundBaseInfo: null },
+  ] });
+  assert.deepEqual(rows.map(row => [row.instrumentCode, row.instrumentType]), [["002916", "stock"], ["008888", "fund"]]);
+});
+
+test("a legacy wrong type is corrected by matching code and name, not a numeric prefix", async () => {
+  const { matchInvestmentIdentity } = await loadSearchUtils();
+  assert.equal(typeof matchInvestmentIdentity, "function");
+  const results = [
+    { instrumentCode: "000001", instrumentName: "平安银行", instrumentType: "stock" },
+    { instrumentCode: "000001", instrumentName: "华夏成长混合", instrumentType: "fund" },
+  ];
+  assert.equal(matchInvestmentIdentity({ instrumentCode: "000001", instrumentName: "平安银行", instrumentType: "fund" }, results).instrumentType, "stock");
+  assert.equal(matchInvestmentIdentity({ instrumentCode: "000001", instrumentName: "华夏成长混合", instrumentType: "fund" }, results).instrumentType, "fund");
+  assert.equal(matchInvestmentIdentity({ instrumentCode: "000001", instrumentName: "未知名称", instrumentType: "fund" }, results), null);
+});
+
+test("watch status distinguishes a stock and fund sharing the same six-digit code", async () => {
+  const { buildInvestmentSearchRows } = await loadSearchUtils();
+  const rows = buildInvestmentSearchRows([
+    { instrumentCode: "000001", instrumentName: "平安银行", instrumentType: "stock" },
+    { instrumentCode: "000001", instrumentName: "华夏成长混合", instrumentType: "fund" },
+  ], [{ instrumentCode: "000001", instrumentType: "fund" }], "all");
+  assert.deepEqual(rows.map(row => row.isWatched), [false, true]);
 });

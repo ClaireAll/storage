@@ -54,11 +54,13 @@ import {
   BgColorsOutlined,
   SelectOutlined,
   DragOutlined,
+  RetweetOutlined,
 } from "@ant-design/icons";
 import { uploadImageToOss } from "@/utils/oss";
 import { HomeContentFullscreenButton } from "../home-content-fullscreen";
 import { AtlasEditor } from "./atlas-editor";
 import { AtlasInspector } from "./atlas-inspector";
+import { AtlasInspectorLayout } from "./atlas-inspector-layout";
 import { opaqueAtlasColor, randomAtlasColor } from "./atlas-colors";
 import {
   AtlasAppearancePanel,
@@ -258,6 +260,7 @@ function AtlasCanvas() {
   const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<Set<string>>(new Set());
   const [appearanceOpen, setAppearanceOpen] = useState(false);
+  const [expandedInspectorId, setExpandedInspectorId] = useState<string | null>(null);
   const [categoryDraft, setCategoryDraft] = useState<AtlasCategory | null>(
     null,
   );
@@ -1168,6 +1171,36 @@ function AtlasCanvas() {
         />
       )}
       <div className="flex min-h-0 flex-1 overflow-hidden">
+        <AtlasInspectorLayout
+          visible={!readOnly && !appearanceOpen && !!selection}
+          expanded={expandedInspectorId === selection?.id}
+          details={
+        <AtlasInspector
+          key={selection?.id}
+          expanded={expandedInspectorId === selection?.id}
+          onToggleExpanded={() => setExpandedInspectorId(previous => previous === selection?.id ? null : selection?.id ?? null)}
+          graph={graph}
+          readOnly={readOnly}
+          saving={saving}
+          selection={appearanceOpen ? null : selection}
+          selectedNode={selectedNode}
+          selectedEdge={selectedEdge}
+          patchNode={patchNode}
+          setSelection={value => { setSelection(value); setSelectedNodeIds(new Set(value?.type === "node" ? [value.id] : [])); setSelectedEdgeIds(new Set(value?.type === "edge" ? [value.id] : [])); }}
+          patchEdge={patchEdge}
+          change={change}
+          deleteNode={deleteNode}
+          addImage={addImage}
+          chooseImage={(insert) => {
+            insertImage.current = insert;
+            imageInput.current?.click();
+          }}
+          focus={(id) => {
+            void flowRef.current?.fitView({ nodes: [{ id }], maxZoom: 1 });
+          }}
+        />
+          }
+        >
         <div
           className="relative min-h-0 min-w-0 flex-1"
           style={{ backgroundColor: canvasBackground }}
@@ -1296,27 +1329,7 @@ function AtlasCanvas() {
             </div>
           )}
         </div>
-        <AtlasInspector
-          graph={graph}
-          readOnly={readOnly}
-          saving={saving}
-          selection={appearanceOpen ? null : selection}
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          patchNode={patchNode}
-          setSelection={value => { setSelection(value); setSelectedNodeIds(new Set(value?.type === "node" ? [value.id] : [])); setSelectedEdgeIds(new Set(value?.type === "edge" ? [value.id] : [])); }}
-          patchEdge={patchEdge}
-          change={change}
-          deleteNode={deleteNode}
-          addImage={addImage}
-          chooseImage={(insert) => {
-            insertImage.current = insert;
-            imageInput.current?.click();
-          }}
-          focus={(id) => {
-            void flowRef.current?.fitView({ nodes: [{ id }], maxZoom: 1 });
-          }}
-        />
+        </AtlasInspectorLayout>
         {appearanceOpen && !readOnly && (
           <AtlasAppearancePanel
             value={appearance}
@@ -1361,6 +1374,28 @@ function AtlasCanvas() {
                 onChangeComplete={color => {
                   if (graphRef.current && !savingRef.current) change(updateAtlasCategory(graphRef.current, category.id, { color: color.toHexString() }));
                 }}
+                panelRender={panel => (
+                  // 展平内层后，原生 234px 面板宽度由外层网格承接。
+                  <div className="grid w-[234px] grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-3 [&_.ant-color-picker-inner-content]:contents! [&_.ant-color-picker-panel]:contents! [&_.ant-color-picker-slider-container]:contents! [&_.ant-color-picker-select]:col-span-3 [&_.ant-color-picker-select]:mb-0! [&_.ant-color-picker-slider-group]:col-start-1 [&_.ant-color-picker-slider-group]:row-start-2 [&_.ant-color-picker-color-block]:col-start-3 [&_.ant-color-picker-color-block]:row-start-2 [&_.ant-color-picker-input-container]:col-span-3 [&_.ant-color-picker-input-container]:row-start-3">
+                    {panel}
+                    <div className="col-start-2 row-start-2 flex items-center">
+                      <Tooltip title="随机颜色" trigger={["hover", "focus"]}>
+                        <Button
+                          aria-label={`随机选择${category.name}颜色`}
+                          className="size-6! p-0!"
+                          disabled={saving}
+                          icon={<RetweetOutlined aria-hidden />}
+                          onClick={() => {
+                            if (graphRef.current && !savingRef.current) change(updateAtlasCategory(graphRef.current, category.id, { color: randomAtlasColor() }));
+                          }}
+                          shape="circle"
+                          size="small"
+                          type="text"
+                        />
+                      </Tooltip>
+                    </div>
+                  </div>
+                )}
               >
                 <Button type="text" disabled={saving} aria-label={`选择${category.name}颜色`} className="size-8! shrink-0 p-0!">
                   <span className="size-3 rounded-full" style={{ backgroundColor: category.color }} />
